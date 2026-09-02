@@ -1,10 +1,11 @@
 import { ImagePlus, Send, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 import { demoId } from "./demoAgent";
-import type { DemoAttachment } from "./types";
+import type { DemoAttachment, DemoCard } from "./types";
 
 type Props = {
   busy: boolean;
+  cards: DemoCard[];
   onSend: (text: string, attachments: DemoAttachment[]) => void;
 };
 
@@ -17,12 +18,25 @@ function readImage(file: File): Promise<DemoAttachment> {
   });
 }
 
-export function AgentComposer({ busy, onSend }: Props) {
+export function AgentComposer({ busy, cards, onSend }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<DemoAttachment[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
+  const [activeMention, setActiveMention] = useState(0);
+  const mentionMatch = text.match(/@([^@\s]*)$/);
+  const mentionQuery = mentionMatch?.[1].toLocaleLowerCase();
+  const mentionCards = mentionMatch ? cards.filter((card) =>
+    !mentionQuery || card.title.toLocaleLowerCase().includes(mentionQuery)
+      || card.question.toLocaleLowerCase().includes(mentionQuery)).slice(0, 5) : [];
+
+  const chooseMention = (card: DemoCard) => {
+    if (!mentionMatch) return;
+    const start = mentionMatch.index ?? text.length;
+    setText(`${text.slice(0, start)}@${card.title} `);
+    setActiveMention(0);
+  };
 
   const addFiles = async (files: File[]) => {
     setError("");
@@ -71,13 +85,33 @@ export function AgentComposer({ busy, onSend }: Props) {
       </div>}
       <textarea
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => { setText(event.target.value); setActiveMention(0); }}
         onKeyDown={(event) => {
+          if (mentionCards.length && event.key === "ArrowDown") {
+            event.preventDefault(); setActiveMention((index) => (index + 1) % mentionCards.length); return;
+          }
+          if (mentionCards.length && event.key === "ArrowUp") {
+            event.preventDefault(); setActiveMention((index) => (index - 1 + mentionCards.length) % mentionCards.length); return;
+          }
+          if (mentionCards.length && event.key === "Enter") {
+            event.preventDefault(); chooseMention(mentionCards[activeMention] ?? mentionCards[0]); return;
+          }
           if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); }
         }}
         placeholder="描述要创建或修改的卡片，也可以拖入题目图片…"
         rows={3}
       />
+      {mentionCards.length > 0 && <div className="agent-mention-menu" role="listbox" aria-label="引用卡片">
+        <small>引用卡片</small>
+        {mentionCards.map((card, index) => <button
+          className={index === activeMention ? "active" : ""}
+          type="button"
+          role="option"
+          aria-selected={index === activeMention}
+          key={card.id}
+          onMouseDown={(event) => { event.preventDefault(); chooseMention(card); }}
+        ><strong>@{card.title}</strong><span>{card.question}</span></button>)}
+      </div>}
       {error && <small className="agent-input-error">{error}</small>}
       <footer>
         <button type="button" onClick={() => inputRef.current?.click()} disabled={attachments.length >= 3 || busy}>

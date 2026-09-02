@@ -18,4 +18,11 @@ describe("demo agent", () => {
     expect(cards[0].errorReason).toContain("$x<-1$");
     expect(cards[1]).toEqual(initialDemoCards[1]);
   });
+
+  it("uses an at mention as the update target", () => {
+    const proposal = buildDemoProposal("修改 @待整理图片题 的错因", [], initialDemoCards);
+    expect(proposal.kind).toBe("update");
+    expect(proposal.targetId).toBe("demo-image-card");
+    expect(proposal.changes[0].value).toBe("待整理图片题");
+  });
 });

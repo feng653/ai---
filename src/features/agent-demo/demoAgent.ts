@@ -3,6 +3,7 @@ import type { DemoAttachment, DemoCard, DemoMessage, DemoProposal } from "./type
 export const initialDemoCards: DemoCard[] = [
   {
     id: "demo-derivative",
+    title: "导数与单调区间",
     subject: "数学",
     question: "已知 $f(x)=x^3-3x$，求函数的单调区间。",
     correctAnswer: "递增区间为 $(-\\infty,-1)$ 与 $(1,+\\infty)$。",
@@ -11,6 +12,7 @@ export const initialDemoCards: DemoCard[] = [
   },
   {
     id: "demo-image-card",
+    title: "待整理图片题",
     subject: "数学",
     question: "仅有题目图片，等待整理。",
     correctAnswer: "",
@@ -30,16 +32,23 @@ export const initialDemoMessages: DemoMessage[] = [
 let sequence = 0;
 export const demoId = (prefix: string) => `${prefix}-${Date.now()}-${sequence++}`;
 
-export function buildDemoProposal(text: string, attachments: DemoAttachment[]): DemoProposal {
+export function buildDemoProposal(
+  text: string,
+  attachments: DemoAttachment[],
+  cards: DemoCard[] = initialDemoCards,
+): DemoProposal {
   const update = /修改|更新|改成|补充/.test(text);
   if (update) {
+    const target = cards.find((card) => text.includes(`@${card.title}`))
+      ?? cards.find((card) => card.id === "demo-derivative")
+      ?? cards[0];
     return {
       id: demoId("proposal"),
       kind: "update",
-      targetId: "demo-derivative",
+      targetId: target?.id,
       patch: { errorReason: "由 $x^2>1$ 推导时只保留了正数分支，应同时考虑 $x<-1$。" },
       changes: [
-        { label: "目标卡片", value: "导数与单调区间" },
+        { label: "目标卡片", value: target?.title ?? "未找到卡片" },
         { label: "错误原因", value: "由 $x^2>1$ 推导时只保留了正数分支，应同时考虑 $x<-1$。" },
       ],
       status: "pending",
@@ -47,6 +56,7 @@ export function buildDemoProposal(text: string, attachments: DemoAttachment[]): 
   }
   const fromImage = attachments.length > 0;
   const patch: Partial<DemoCard> = {
+    title: "平方不等式",
     subject: "数学",
     question: fromImage ? "解不等式 $x^2>4$。" : (text || "解不等式 $x^2>4$。"),
     correctAnswer: "$x<-2$ 或 $x>2$",
@@ -71,7 +81,7 @@ export function applyDemoProposal(cards: DemoCard[], proposal: DemoProposal): De
     return cards.map((card) => card.id === proposal.targetId ? { ...card, ...proposal.patch } : card);
   }
   return [{
-    id: demoId("card"), subject: "数学", question: "", correctAnswer: "",
+    id: demoId("card"), title: "新错题", subject: "数学", question: "", correctAnswer: "",
     errorReason: "", status: "draft", ...proposal.patch,
   }, ...cards];
 }

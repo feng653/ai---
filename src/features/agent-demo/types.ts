@@ -6,6 +6,7 @@ export type DemoAttachment = {
 
 export type DemoCard = {
   id: string;
+  title: string;
   subject: string;
   question: string;
   correctAnswer: string;
