@@ -8,6 +8,8 @@ const CardDetailPage = lazy(() => import("./features/cards/CardDetailPage")
   .then((module) => ({ default: module.CardDetailPage })));
 const CardEditorPage = lazy(() => import("./features/cards/CardEditorPage")
   .then((module) => ({ default: module.CardEditorPage })));
+const AgentDemoPage = lazy(() => import("./features/agent-demo/AgentDemoPage")
+  .then((module) => ({ default: module.AgentDemoPage })));
 
 function LoadingPage() {
   return <div className="page-content"><div className="empty-state"><span className="loading-spinner" /></div></div>;
@@ -22,6 +24,7 @@ export default function App() {
           <Route path="cards/new" element={<CardEditorPage />} />
           <Route path="cards/:id" element={<CardDetailPage />} />
           <Route path="cards/:id/edit" element={<CardEditorPage />} />
+          <Route path="agent-demo" element={<AgentDemoPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

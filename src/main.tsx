@@ -6,6 +6,7 @@ import App from "./App";
 import "katex/dist/katex.min.css";
 import "./styles/global.css";
 import "./styles/image-editor.css";
+import "./styles/agent-demo.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

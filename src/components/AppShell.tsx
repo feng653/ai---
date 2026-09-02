@@ -1,4 +1,4 @@
-import { BookOpenCheck, CirclePlus, Search, Sparkles } from "lucide-react";
+import { Bot, BookOpenCheck, CirclePlus, Search, Sparkles } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAiStatus, useConnectAi } from "../hooks/useAi";
 import { errorMessage } from "../services/errorMessage";
@@ -30,6 +30,7 @@ export function AppShell() {
         <nav className="side-nav">
           <NavLink to="/" end><BookOpenCheck size={18} />我的错题</NavLink>
           <NavLink to="/cards/new"><CirclePlus size={18} />新增错题</NavLink>
+          <NavLink to="/agent-demo"><Bot size={18} />AI Agent Demo</NavLink>
         </nav>
         <div className="local-note">
           <span>本地优先</span>
@@ -43,7 +44,8 @@ export function AppShell() {
             <span className="brand-mark"><BookOpenCheck size={18} /></span>知拾
           </button>
           <div className="breadcrumb">
-            {location.pathname === "/" ? <><Search size={16} />错题库</> : "整理错题"}
+            {location.pathname === "/" ? <><Search size={16} />错题库</>
+              : location.pathname === "/agent-demo" ? <><Bot size={16} />AI Agent Demo</> : "整理错题"}
           </div>
           <div className="top-actions">
             <button
