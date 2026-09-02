@@ -79,7 +79,7 @@ export function AiReviewPanel(props: Props) {
         <div className="ai-idle">
           <p>识别题目、分析答案、诊断错因并推荐知识点。生成后由你确认。</p>
           <button className="button primary wide" type="button" onClick={organize} disabled={connecting}>
-            <Sparkles size={17} />{connected ? "AI 整理" : "连接并使用 AI"}
+            <Sparkles size={17} />AI 整理
           </button>
           <small>未连接 AI 不影响手动编辑和保存。</small>
         </div>
