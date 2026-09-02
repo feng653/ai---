@@ -1,6 +1,5 @@
-use super::proposal;
 use super::settings::ApiProviderConfig;
-use super::AiProposal;
+use super::{deepseek, proposal, AgentRequest, AiProposal};
 use crate::domain::CardInput;
 use crate::error::AppError;
 use base64::Engine;
@@ -10,34 +9,28 @@ use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use uuid::Uuid;
-
 const MAX_ERROR_BYTES: usize = 2048;
 const MAX_RESPONSE_BYTES: usize = 1024 * 1024;
-const MAX_IMAGE_INPUT_BYTES: usize = 32 * 1024 * 1024;
-
+pub(super) const MAX_IMAGE_INPUT_BYTES: usize = 32 * 1024 * 1024;
 #[derive(Debug, Deserialize)]
 struct ChatResponse {
     choices: Vec<Choice>,
 }
-
 #[derive(Debug, Deserialize)]
 struct Choice {
     message: Message,
 }
-
 #[derive(Debug, Deserialize)]
 struct Message {
     content: Option<String>,
 }
-
 pub struct OrganizeInput {
     pub card: CardInput,
     pub base_revision: u64,
     pub asset_paths: Vec<PathBuf>,
-    pub agent_instruction: Option<String>,
-    pub agent_history: Option<Vec<String>>,
+    pub agent: Option<AgentRequest>,
+    pub official_web_search: bool,
 }
-
 pub fn http_client() -> Result<Client, AppError> {
     Client::builder()
         .timeout(Duration::from_secs(180))
@@ -46,7 +39,6 @@ pub fn http_client() -> Result<Client, AppError> {
         .build()
         .map_err(|error| AppError::new("PROVIDER_ERROR", format!("HTTP 客户端创建失败：{error}")))
 }
-
 pub async fn test_connection(
     client: &Client,
     config: &ApiProviderConfig,
@@ -75,37 +67,82 @@ pub async fn organize(
         card,
         base_revision,
         asset_paths,
-        agent_instruction,
-        agent_history,
+        agent,
+        official_web_search,
     } = input;
-    let prompt = proposal::build_prompt(
-        &card,
-        asset_paths.len(),
-        agent_instruction.as_deref(),
-        agent_history.as_deref().unwrap_or(&[]),
-    )?;
+    let agent_mode = agent.is_some();
+    let web_search = agent
+        .as_ref()
+        .is_some_and(|request| request.web_search && official_web_search);
+    let prompt = if let Some(request) = agent.as_ref() {
+        super::prompt::build_agent_prompt(
+            &card,
+            asset_paths.len(),
+            &request.instruction,
+            &request.history,
+            request.target_provided,
+            web_search,
+        )?
+    } else {
+        proposal::build_prompt(&card, asset_paths.len(), None, &[])?
+    };
+    if web_search {
+        let json = deepseek::agent(client, config, api_key, &prompt, &asset_paths).await?;
+        return proposal::parse_agent_response(
+            &json,
+            &card,
+            Uuid::new_v4().to_string(),
+            base_revision,
+            agent
+                .as_ref()
+                .is_some_and(|request| request.target_provided),
+            web_search,
+        );
+    }
     let content = request_content(&prompt, &asset_paths)?;
     let body = json!({
         "model": config.model,
         "messages": [
-            {"role": "system", "content": "你是数学错题整理器。必须只输出符合要求的 JSON 对象，不要输出 Markdown。"},
+            {"role": "system", "content": "你是知拾数学学习 Agent。必须只输出符合要求的 JSON 对象，不要输出 Markdown。"},
             {"role": "user", "content": content}
         ],
         "response_format": {"type": "json_object"},
         "max_tokens": 4096,
         "stream": false
     });
+    let text = post_json(client, config, api_key, "chat/completions", &body).await?;
+    let json = extract_content(&text)?;
+    if agent_mode {
+        proposal::parse_agent_response(
+            &json,
+            &card,
+            Uuid::new_v4().to_string(),
+            base_revision,
+            agent.is_some_and(|request| request.target_provided),
+            false,
+        )
+    } else {
+        proposal::parse_proposal(&json, &card, Uuid::new_v4().to_string(), base_revision)
+    }
+}
+
+pub(super) async fn post_json(
+    client: &Client,
+    config: &ApiProviderConfig,
+    api_key: &str,
+    path: &str,
+    body: &Value,
+) -> Result<String, AppError> {
     let response = client
-        .post(endpoint(&config.base_url, "chat/completions"))
+        .post(endpoint(&config.base_url, path))
         .bearer_auth(api_key)
-        .json(&body)
+        .json(body)
         .send()
         .await
         .map_err(network_error)?;
     let (status, text) = read_limited(response, MAX_RESPONSE_BYTES).await?;
     ensure_success(status, text.clone())?;
-    let json = extract_content(&text)?;
-    proposal::parse_proposal(&json, &card, Uuid::new_v4().to_string(), base_revision)
+    Ok(text)
 }
 
 fn request_content(prompt: &str, images: &[PathBuf]) -> Result<Value, AppError> {
@@ -132,7 +169,7 @@ fn request_content(prompt: &str, images: &[PathBuf]) -> Result<Value, AppError> 
     Ok(Value::Array(blocks))
 }
 
-fn image_mime(path: &Path) -> Result<&'static str, AppError> {
+pub(super) fn image_mime(path: &Path) -> Result<&'static str, AppError> {
     match path
         .extension()
         .and_then(|value| value.to_str())

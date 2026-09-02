@@ -1,7 +1,7 @@
 use super::codex_auth::{login, logout};
 use super::process::{execute, probe, ExecutionPaths};
 use super::proposal;
-use super::{AiProgress, AiProposal};
+use super::{AgentRequest, AiProgress, AiProposal};
 use crate::domain::{CardInput, ProviderStatus};
 use crate::error::AppError;
 use std::path::{Path, PathBuf};
@@ -118,8 +118,7 @@ impl CodexProvider {
         input: CardInput,
         base_revision: u64,
         asset_paths: Vec<PathBuf>,
-        agent_instruction: Option<String>,
-        agent_history: Option<Vec<String>>,
+        agent: Option<AgentRequest>,
         mut progress: F,
     ) -> Result<AiProposal, AppError>
     where
@@ -142,12 +141,20 @@ impl CodexProvider {
         let schema_path = directory.path().join("output.schema.json");
         let output_path = directory.path().join("proposal.json");
         std::fs::write(&schema_path, OUTPUT_SCHEMA)?;
-        let prompt = proposal::build_prompt(
-            &input,
-            images.len(),
-            agent_instruction.as_deref(),
-            agent_history.as_deref().unwrap_or(&[]),
-        )?;
+        let agent_mode = agent.is_some();
+        let web_search = agent.as_ref().is_some_and(|request| request.web_search);
+        let prompt = if let Some(request) = agent.as_ref() {
+            super::prompt::build_agent_prompt(
+                &input,
+                images.len(),
+                &request.instruction,
+                &request.history,
+                request.target_provided,
+                request.web_search,
+            )?
+        } else {
+            proposal::build_prompt(&input, images.len(), None, &[])?
+        };
         progress(AiProgress {
             stage: "analyzing",
             message: "Codex 正在分析题目与作答…".into(),
@@ -162,6 +169,7 @@ impl CodexProvider {
             },
             &images,
             &prompt,
+            web_search,
             |_| {},
         )
         .inspect_err(|error| {
@@ -171,7 +179,18 @@ impl CodexProvider {
             stage: "validating",
             message: "正在验证结构化结果…".into(),
         });
-        proposal::parse_proposal(&json, &input, Uuid::new_v4().to_string(), base_revision)
+        if agent_mode {
+            proposal::parse_agent_response(
+                &json,
+                &input,
+                Uuid::new_v4().to_string(),
+                base_revision,
+                agent.is_some_and(|request| request.target_provided),
+                web_search,
+            )
+        } else {
+            proposal::parse_proposal(&json, &input, Uuid::new_v4().to_string(), base_revision)
+        }
     }
 
     fn executable(&self) -> Result<&Path, AppError> {

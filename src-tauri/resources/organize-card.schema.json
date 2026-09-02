@@ -2,6 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["reply", "create_card", "update_card"]
+    },
+    "message": { "type": "string", "maxLength": 8000 },
+    "sources": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "maxLength": 300 },
+          "url": { "type": "string", "maxLength": 2048 }
+        },
+        "required": ["title", "url"],
+        "additionalProperties": false
+      }
+    },
     "question": { "$ref": "#/$defs/stringSuggestionOrNull" },
     "userAnswer": { "$ref": "#/$defs/stringSuggestionOrNull" },
     "correctAnswer": { "$ref": "#/$defs/stringSuggestionOrNull" },
@@ -71,6 +89,9 @@
     }
   },
   "required": [
+    "action",
+    "message",
+    "sources",
     "question",
     "userAnswer",
     "correctAnswer",

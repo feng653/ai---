@@ -1,4 +1,6 @@
-use crate::ai::{AiManager, AiProgress, AiProposal, ApiProviderInput, ProviderSummary};
+use crate::ai::{
+    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, ProviderSummary,
+};
 use crate::domain::{Card, CardAsset, CardFilter, CardInput, ProviderStatus};
 use crate::error::AppError;
 use crate::storage::Storage;
@@ -128,26 +130,22 @@ pub async fn organize_card(
     agent_turn: Option<AgentTurn>,
 ) -> Result<AiProposal, AppError> {
     let asset_paths = storage.resolve_asset_paths(&input.assets)?;
-    let (agent_instruction, agent_history) = agent_turn
-        .map(|turn| (Some(turn.instruction), Some(turn.history)))
-        .unwrap_or((None, None));
+    let agent = agent_turn.map(|turn| AgentRequest {
+        instruction: turn.instruction,
+        history: turn.history,
+        target_provided: turn.target_provided,
+        web_search: turn.web_search,
+    });
     manager
-        .organize(
-            input,
-            base_revision,
-            asset_paths,
-            agent_instruction,
-            agent_history,
-            move |progress| {
-                let _ = window.emit(
-                    "ai-progress",
-                    AiProgressPayload {
-                        request_id: request_id.clone(),
-                        progress,
-                    },
-                );
-            },
-        )
+        .organize(input, base_revision, asset_paths, agent, move |progress| {
+            let _ = window.emit(
+                "ai-progress",
+                AiProgressPayload {
+                    request_id: request_id.clone(),
+                    progress,
+                },
+            );
+        })
         .await
 }
 
@@ -156,6 +154,9 @@ pub async fn organize_card(
 pub struct AgentTurn {
     instruction: String,
     history: Vec<String>,
+    target_provided: bool,
+    #[serde(default)]
+    web_search: bool,
 }
 
 #[derive(Clone, Serialize)]

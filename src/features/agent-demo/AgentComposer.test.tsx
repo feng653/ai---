@@ -22,7 +22,7 @@ describe("AgentComposer", () => {
       dataTransfer: { files: [image] },
     });
     await screen.findByAltText("question.png");
-    fireEvent.change(screen.getByPlaceholderText(/描述要创建或修改/), { target: { value: "创建卡片" } });
+    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), { target: { value: "创建卡片" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => expect(onSend).toHaveBeenCalledOnce());
@@ -34,7 +34,7 @@ describe("AgentComposer", () => {
   it("autocompletes a referenced card after typing at", () => {
     const onSend = vi.fn();
     const view = render(<AgentComposer busy={false} cards={cards} onSend={onSend} />);
-    const input = view.getByPlaceholderText(/描述要创建或修改/);
+    const input = view.getByPlaceholderText(/提问，或描述要创建/);
     fireEvent.change(input, { target: { value: "修改 @导" } });
     fireEvent.mouseDown(view.getByRole("option", { name: /@导数与单调区间/ }));
     expect(input).toHaveValue("修改 @导数与单调区间 ");

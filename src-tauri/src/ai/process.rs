@@ -64,36 +64,13 @@ pub fn execute<F>(
     paths: ExecutionPaths<'_>,
     images: &[PathBuf],
     prompt: &str,
+    live_web_search: bool,
     mut on_event: F,
 ) -> Result<String, AppError>
 where
     F: FnMut(&str),
 {
-    let mut arguments = vec![
-        "exec".into(),
-        "--ephemeral".into(),
-        "--ignore-user-config".into(),
-        "--ignore-rules".into(),
-        "--sandbox".into(),
-        "read-only".into(),
-        "--skip-git-repo-check".into(),
-        "--color".into(),
-        "never".into(),
-        "--json".into(),
-        "-c".into(),
-        "shell_environment_policy.inherit=none".into(),
-        "--output-schema".into(),
-        paths.schema.as_os_str().into(),
-        "-o".into(),
-        paths.output.as_os_str().into(),
-        "-C".into(),
-        paths.work_dir.as_os_str().into(),
-    ];
-    for image in images {
-        arguments.push("--image".into());
-        arguments.push(image.as_os_str().into());
-    }
-    arguments.push("-".into());
+    let arguments = build_arguments(&paths, images, live_web_search);
     prepare_codex_home(paths.codex_home)?;
     let capture = run_cli(
         executable,
@@ -117,6 +94,44 @@ where
     }
     std::fs::read_to_string(paths.output)
         .map_err(|error| AppError::new("INVALID_AI_OUTPUT", format!("Codex 结果读取失败：{error}")))
+}
+
+pub(super) fn build_arguments(
+    paths: &ExecutionPaths<'_>,
+    images: &[PathBuf],
+    live_web_search: bool,
+) -> Vec<OsString> {
+    let mut arguments = if live_web_search {
+        vec!["--search".into()]
+    } else {
+        Vec::new()
+    };
+    arguments.extend([
+        "exec".into(),
+        "--ephemeral".into(),
+        "--ignore-user-config".into(),
+        "--ignore-rules".into(),
+        "--sandbox".into(),
+        "read-only".into(),
+        "--skip-git-repo-check".into(),
+        "--color".into(),
+        "never".into(),
+        "--json".into(),
+        "-c".into(),
+        "shell_environment_policy.inherit=none".into(),
+        "--output-schema".into(),
+        paths.schema.as_os_str().into(),
+        "-o".into(),
+        paths.output.as_os_str().into(),
+        "-C".into(),
+        paths.work_dir.as_os_str().into(),
+    ]);
+    for image in images {
+        arguments.push("--image".into());
+        arguments.push(image.as_os_str().into());
+    }
+    arguments.push("-".into());
+    arguments
 }
 
 pub(super) struct ProcessCapture {

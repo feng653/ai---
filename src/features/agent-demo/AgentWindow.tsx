@@ -1,4 +1,4 @@
-import { Bot, MessageSquarePlus, Minus, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Bot, Globe2, MessageSquarePlus, Minus, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { validateCardInput, type Card, type CardAsset } from "../../domain/card";
 import { useAiStatus, useConnectAi } from "../../hooks/useAi";
@@ -18,11 +18,10 @@ import type { AgentAttachment, AgentMessage as Message, AgentProposal } from "./
 const welcome: Message = {
   id: "welcome",
   role: "agent",
-  text: "我可以根据文字或图片创建卡片。需要修改已有卡片时，请先输入 @ 引用目标；执行前会给你确认。",
+  text: "我可以直接回答问题，也可以根据文字或图片创建卡片。需要修改已有卡片时，请先输入 @ 引用目标；写入前会给你确认。",
 };
 
 type AgentContext = { proposalId?: string; card?: Card; label: string };
-const requestsAnotherCard = (text: string) => /新建|创建|新增|另一张|新卡片/.test(text);
 
 export function AgentWindow() {
   const [open, setOpen] = useState(false);
@@ -32,6 +31,7 @@ export function AgentWindow() {
   const [error, setError] = useState("");
   const [context, setContext] = useState<AgentContext | null>(null);
   const [conversationVersion, setConversationVersion] = useState(0);
+  const [webSearch, setWebSearch] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const cardsQuery = useCards();
   const saveCard = useSaveCard();
@@ -50,8 +50,8 @@ export function AgentWindow() {
     return () => window.removeEventListener("keydown", close);
   }, []);
 
-  const addAgentMessage = (text: string, proposalId?: string) => setMessages((items) => [
-    ...items, { id: agentId("message"), role: "agent", text, proposalId },
+  const addAgentMessage = (text: string, proposalId?: string, sources?: Message["sources"]) => setMessages((items) => [
+    ...items, { id: agentId("message"), role: "agent", text, proposalId, sources },
   ]);
 
   const removeAssets = async (ids: string[]) => {
@@ -73,7 +73,7 @@ export function AgentWindow() {
       if (referencedIds.length > 1) throw new Error("一次只能修改一张引用卡片");
       const explicit = referencedIds[0] ? cards.find((card) => card.id === referencedIds[0]) : undefined;
       if (referencedIds[0] && !explicit) throw new Error("引用的卡片已不存在，请重新选择");
-      const continueContext = !explicit && !requestsAnotherCard(text);
+      const continueContext = !explicit;
       const previous = continueContext && context?.proposalId
         ? proposals.find((item) => item.id === context.proposalId && item.status === "pending") : undefined;
       const targetCard = explicit ?? (continueContext ? context?.card : undefined);
@@ -88,17 +88,28 @@ export function AgentWindow() {
       for (const attachment of attachments) imported.push(await cardService.importAsset(attachment.file));
       const base = previous ? extendAgentInput(previous.input, imported) : prepareAgentInput(targetCard, imported);
       const request = text || "根据附图创建并整理一张数学错题卡片";
-      const instruction = previous ? `${request}\n这是对上一份未确认提案的继续修改。` : request;
-      const ai = await aiService.organize(base, target?.revision ?? 0, setProgress, instruction, history);
-      const proposal = buildAgentProposal(ai, base, target, imported, previous?.newAssetIds);
+      const ai = await aiService.organize(
+        base, target?.revision ?? 0, setProgress, request, history, Boolean(target), webSearch,
+      );
+      if (ai.action === "reply") {
+        await removeAssets(imported.map((asset) => asset.id));
+        addAgentMessage(ai.message, undefined, ai.sources);
+        return;
+      }
+      const chosenTarget = ai.action === "update_card" ? target : undefined;
+      const continueCreate = ai.action === "create_card" && previous?.kind === "create";
+      const proposalBase = chosenTarget || continueCreate
+        ? base : prepareAgentInput(undefined, imported);
+      const inheritedAssets = chosenTarget || continueCreate ? previous?.newAssetIds : [];
+      const proposal = buildAgentProposal(ai, proposalBase, chosenTarget, imported, inheritedAssets);
       setProposals((items) => [
         ...items.map((item) => item.id === previous?.id ? { ...item, status: "superseded" as const } : item),
         proposal,
       ]);
-      setContext({ proposalId: proposal.id, label: target?.label ?? "新卡片提案" });
-      addAgentMessage(target
-        ? `已${previous ? "继续" : ""}生成“${proposal.targetLabel}”的修改提案，请核对后确认。`
-        : `已${previous ? "继续修改" : "生成"}新卡片提案，请核对后确认。`, proposal.id);
+      setContext({ proposalId: proposal.id, label: chosenTarget?.label ?? "新卡片提案" });
+      addAgentMessage(ai.message || (chosenTarget
+        ? `已生成“${proposal.targetLabel}”的修改提案，请核对后确认。`
+        : "已生成新卡片提案，请核对后确认。"), proposal.id, ai.sources);
     } catch (reason) {
       await removeAssets(imported.map((asset) => asset.id));
       const message = errorMessage(reason, "Agent 执行失败");
@@ -174,7 +185,9 @@ export function AgentWindow() {
           <button type="button" title="新对话" aria-label="新对话" disabled={busy} onClick={() => void newConversation()}><MessageSquarePlus size={15} /></button>
           <button type="button" title="收起" aria-label="收起 AI Agent" onClick={() => setOpen(false)}><Minus size={17} /></button>
         </header>
-        <div className="agent-window-safety"><ShieldCheck size={14} />AI 只生成提案，确认后才会写入卡片</div>
+        <div className="agent-window-safety"><ShieldCheck size={14} /><span>AI 可直接回答；卡片写入仍需你的确认</span>
+          <label><Globe2 size={12} /><input type="checkbox" checked={webSearch} disabled={busy}
+            onChange={(event) => setWebSearch(event.target.checked)} />联网搜索</label></div>
         <CardReferenceList cards={cards} loading={cardsQuery.isLoading} />
         <div className="agent-conversation">
           {messages.map((message) => <AgentMessage key={message.id} message={message}

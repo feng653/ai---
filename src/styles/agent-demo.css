@@ -18,6 +18,8 @@
 .agent-window-header button { width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; display: grid; place-items: center; color: var(--ink-2); background: var(--surface-soft); }
 .agent-window-header > button:first-of-type { margin-left: auto; }
 .agent-window-safety { padding: 7px 12px; display: flex; align-items: center; gap: 6px; color: var(--brand); background: #f5faf7; font-size: 8px; }
+.agent-window-safety label { margin-left: auto; display: flex; align-items: center; gap: 3px; cursor: pointer; white-space: nowrap; }
+.agent-window-safety input { width: 12px; height: 12px; margin: 0; accent-color: var(--brand); }
 .demo-card-library { border-bottom: 1px solid var(--line); background: #fff; }
 .demo-card-library summary { min-height: 35px; padding: 0 12px; display: flex; align-items: center; gap: 6px; color: var(--ink-2); cursor: pointer; list-style: none; font-size: 9px; }
 .demo-card-library summary::-webkit-details-marker { display: none; }
@@ -42,9 +44,13 @@
 .agent-message-body { min-width: 0; }
 .agent-message-body > small { display: block; margin: 0 0 4px 2px; color: var(--ink-3); font-size: 7px; }
 .agent-message.user .agent-message-body > small { text-align: right; }
-.agent-message-body > div:not(.message-images):not(.agent-proposal) { padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px 11px 11px; background: #fff; font-size: 9px; line-height: 1.6; }
+.agent-message-body > div:not(.message-images):not(.agent-proposal):not(.agent-message-sources) { padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px 11px 11px; background: #fff; font-size: 9px; line-height: 1.6; }
 .agent-message.user .agent-message-body > div:not(.message-images) { border-color: var(--brand); border-radius: 11px 4px 11px 11px; color: #fff; background: var(--brand); }
 .agent-message-body p { margin: 0; }
+.agent-message-sources { margin-top: 5px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.agent-message-sources small { color: var(--ink-3); font-size: 7px; }
+.agent-message-sources a { padding: 2px 5px; border-radius: 6px; color: var(--brand); background: var(--brand-soft); font-size: 7px; text-decoration: none; }
+.agent-message-sources a:hover { text-decoration: underline; }
 .message-images { margin-bottom: 5px; display: flex; justify-content: flex-end; gap: 5px; }
 .message-images img { width: 68px; height: 58px; object-fit: cover; border: 1px solid var(--line); border-radius: 8px; }
 .agent-thinking { margin: 3px 0 10px 34px; display: flex; align-items: center; gap: 4px; color: var(--ink-3); font-size: 8px; }

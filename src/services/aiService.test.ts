@@ -30,7 +30,10 @@ describe("TauriAiService", () => {
       const requestId = (args as { requestId: string }).requestId;
       handler?.({ payload: { requestId: "another-run", stage: "analyzing", message: "ignore" } });
       handler?.({ payload: { requestId, stage: "validating", message: "正在验证" } });
-      return { runId: "run-1", baseRevision: 2, promptVersion: "v2", fields: {}, warnings: [] };
+      return {
+        action: "reply", message: "已完成", sources: [],
+        runId: "run-1", baseRevision: 2, promptVersion: "v2", fields: {}, warnings: [],
+      };
     });
     const progress = vi.fn();
     const service = new TauriAiService();
@@ -46,8 +49,26 @@ describe("TauriAiService", () => {
       input,
       baseRevision: 2,
       requestId: expect.any(String),
-      agentTurn: { instruction: "再简短一点", history: ["先给出完整解法"] },
+      agentTurn: {
+        instruction: "再简短一点",
+        history: ["先给出完整解法"],
+        targetProvided: false,
+        webSearch: false,
+      },
     });
+  });
+
+  it("forwards the Agent web-search switch", async () => {
+    vi.mocked(listen).mockResolvedValue(vi.fn());
+    vi.mocked(invoke).mockResolvedValue({
+      action: "reply", message: "回答", sources: [], fields: {}, warnings: [],
+      runId: "run-1", baseRevision: 0, promptVersion: "v5",
+    });
+    const service = new TauriAiService();
+    await service.organize(emptyCardInput(), 0, undefined, "查找最新资料", [], false, true);
+    expect(invoke).toHaveBeenCalledWith("organize_card", expect.objectContaining({
+      agentTurn: expect.objectContaining({ webSearch: true }),
+    }));
   });
 });
 

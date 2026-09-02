@@ -19,6 +19,10 @@ export function AgentMessage({ message, proposal, onApply, onReject }: Props) {
         {message.attachments?.length ? <div className="message-images">{message.attachments.map((image) =>
           <img key={image.id} src={image.previewUrl} alt={image.name} />)}</div> : null}
         <MathContent>{message.text}</MathContent>
+        {message.sources?.length ? <div className="agent-message-sources"><small>参考来源</small>
+          {message.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+            {source.title}
+          </a>)}</div> : null}
         {proposal && <AgentProposalCard proposal={proposal} onApply={() => onApply(proposal.id)} onReject={() => onReject(proposal.id)} />}
       </div>
     </article>

@@ -52,6 +52,9 @@ export type AiProposal = {
   runId: string;
   baseRevision: number;
   promptVersion: string;
+  action: "reply" | "create_card" | "update_card";
+  message: string;
+  sources: Array<{ title: string; url: string }>;
   fields: AiProposalFields;
   warnings: string[];
 };

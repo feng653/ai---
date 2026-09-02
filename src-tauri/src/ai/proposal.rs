@@ -1,11 +1,26 @@
 use crate::domain::{CardInput, KnowledgePoint};
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+
+mod clean;
 
 pub use super::prompt::build_prompt;
 
-pub const PROMPT_VERSION: &str = "agent-card-v4-latex";
+pub const PROMPT_VERSION: &str = "agent-choice-v5-search";
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AiAction {
+    Reply,
+    CreateCard,
+    UpdateCard,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiSource {
+    title: String,
+    url: String,
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -59,6 +74,12 @@ pub struct AiProposalFields {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CodexOutput {
+    #[serde(default)]
+    action: Option<AiAction>,
+    #[serde(default)]
+    message: String,
+    #[serde(default)]
+    sources: Vec<AiSource>,
     question: Option<ProposedField<String>>,
     user_answer: Option<ProposedField<String>>,
     correct_answer: Option<ProposedField<String>>,
@@ -76,6 +97,9 @@ pub struct AiProposal {
     run_id: String,
     base_revision: u64,
     prompt_version: &'static str,
+    action: AiAction,
+    message: String,
+    sources: Vec<AiSource>,
     fields: AiProposalFields,
     warnings: Vec<String>,
 }
@@ -86,20 +110,87 @@ pub fn parse_proposal(
     run_id: String,
     base_revision: u64,
 ) -> Result<AiProposal, AppError> {
+    parse_output(json, input, run_id, base_revision, false, false, false)
+}
+
+pub fn parse_agent_response(
+    json: &str,
+    input: &CardInput,
+    run_id: String,
+    base_revision: u64,
+    has_target: bool,
+    web_search: bool,
+) -> Result<AiProposal, AppError> {
+    parse_output(
+        json,
+        input,
+        run_id,
+        base_revision,
+        true,
+        has_target,
+        web_search,
+    )
+}
+
+fn parse_output(
+    json: &str,
+    input: &CardInput,
+    run_id: String,
+    base_revision: u64,
+    agent_mode: bool,
+    has_target: bool,
+    web_search: bool,
+) -> Result<AiProposal, AppError> {
     let output: CodexOutput = serde_json::from_str(json).map_err(|error| {
         AppError::new("INVALID_AI_OUTPUT", format!("AI 结构化输出无效：{error}"))
     })?;
-    let mut fields = AiProposalFields {
-        question: clean_text(output.question),
-        user_answer: clean_text(output.user_answer),
-        correct_answer: clean_text(output.correct_answer),
-        solution: clean_text(output.solution),
-        error_location: clean_text(output.error_location),
-        error_reason: clean_text(output.error_reason),
-        error_type: clean_text(output.error_type),
-        knowledge_points: clean_points(output.knowledge_points),
+    let action = if agent_mode {
+        output
+            .action
+            .ok_or_else(|| AppError::new("INVALID_AI_OUTPUT", "Agent 响应缺少 action"))?
+    } else if has_target {
+        AiAction::UpdateCard
+    } else {
+        AiAction::CreateCard
     };
-    let mut warnings = clean_warnings(output.warnings);
+    if action == AiAction::UpdateCard && !has_target {
+        return Err(AppError::new(
+            "INVALID_AI_OUTPUT",
+            "Agent 未获得目标卡片，不能生成修改提案",
+        ));
+    }
+    let message = output.message.trim().chars().take(8000).collect::<String>();
+    if agent_mode && message.is_empty() {
+        return Err(AppError::new("INVALID_AI_OUTPUT", "Agent 响应内容为空"));
+    }
+    let sources = if web_search {
+        clean::sources(output.sources)
+    } else {
+        Vec::new()
+    };
+    if action == AiAction::Reply {
+        return Ok(AiProposal {
+            run_id,
+            base_revision,
+            prompt_version: PROMPT_VERSION,
+            action,
+            message,
+            sources,
+            fields: AiProposalFields::default(),
+            warnings: clean::warnings(output.warnings),
+        });
+    }
+    let mut fields = AiProposalFields {
+        question: clean::text(output.question),
+        user_answer: clean::text(output.user_answer),
+        correct_answer: clean::text(output.correct_answer),
+        solution: clean::text(output.solution),
+        error_location: clean::text(output.error_location),
+        error_reason: clean::text(output.error_reason),
+        error_type: clean::text(output.error_type),
+        knowledge_points: clean::points(output.knowledge_points),
+    };
+    let mut warnings = clean::warnings(output.warnings);
     if input.user_answer.trim().is_empty() {
         fields.error_location = None;
         fields.error_reason = None;
@@ -107,86 +198,16 @@ pub fn parse_proposal(
             "无法判断".into(),
             "没有用户作答过程",
         ));
-        add_warning(&mut warnings, "缺少作答过程，暂时无法判断具体错误原因。");
+        clean::add_warning(&mut warnings, "缺少作答过程，暂时无法判断具体错误原因。");
     }
     Ok(AiProposal {
         run_id,
         base_revision,
         prompt_version: PROMPT_VERSION,
+        action,
+        message,
+        sources,
         fields,
         warnings,
     })
-}
-
-fn clean_text(mut field: Option<ProposedField<String>>) -> Option<ProposedField<String>> {
-    let value = field.as_mut()?;
-    value.value = normalize_math_delimiters(value.value.trim());
-    if value.value.is_empty() {
-        return None;
-    }
-    clean_uncertainty(value);
-    field
-}
-
-fn normalize_math_delimiters(value: &str) -> String {
-    value
-        .replace("\\[", "\n\n$$\n")
-        .replace("\\]", "\n$$\n\n")
-        .replace("\\(", "$")
-        .replace("\\)", "$")
-}
-
-fn clean_points(
-    mut field: Option<ProposedField<Vec<KnowledgePoint>>>,
-) -> Option<ProposedField<Vec<KnowledgePoint>>> {
-    let value = field.as_mut()?;
-    for point in &mut value.value {
-        point.id = None;
-        point.subject = point.subject.trim().to_owned();
-        point.chapter = point
-            .chapter
-            .take()
-            .map(|item| item.trim().to_owned())
-            .filter(|item| !item.is_empty());
-        point.name = point.name.trim().to_owned();
-    }
-    value
-        .value
-        .retain(|point| !point.subject.is_empty() && !point.name.is_empty());
-    value.value.truncate(3);
-    if value.value.is_empty() {
-        return None;
-    }
-    clean_uncertainty(value);
-    field
-}
-
-fn clean_uncertainty<T>(field: &mut ProposedField<T>) {
-    field.uncertain_reason = field
-        .uncertain_reason
-        .take()
-        .map(|reason| reason.trim().to_owned())
-        .filter(|reason| !reason.is_empty());
-    if field.uncertain && field.uncertain_reason.is_none() {
-        field.uncertain_reason = Some("AI 标记此项为不确定".into());
-    }
-    if !field.uncertain {
-        field.uncertain_reason = None;
-    }
-}
-
-fn clean_warnings(values: Vec<String>) -> Vec<String> {
-    let mut seen = HashSet::new();
-    values
-        .into_iter()
-        .map(|value| value.trim().to_owned())
-        .filter(|value| !value.is_empty() && seen.insert(value.clone()))
-        .take(8)
-        .collect()
-}
-
-fn add_warning(warnings: &mut Vec<String>, warning: &str) {
-    if !warnings.iter().any(|item| item == warning) {
-        warnings.push(warning.into());
-    }
 }

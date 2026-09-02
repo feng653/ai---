@@ -1,4 +1,5 @@
-use super::proposal::{build_prompt, parse_proposal};
+use super::prompt::build_agent_prompt;
+use super::proposal::{build_prompt, parse_agent_response, parse_proposal};
 use crate::domain::CardInput;
 
 fn input(user_answer: &str) -> CardInput {
@@ -53,6 +54,16 @@ fn prompt_excludes_internal_asset_paths_and_marks_input_untrusted() {
 }
 
 #[test]
+fn agent_prompt_exposes_all_actions_and_target_boundary() {
+    let prompt = build_agent_prompt(&input(""), 0, "解释二次函数", &[], false, true).unwrap();
+    assert!(prompt.contains("reply"));
+    assert!(prompt.contains("create_card"));
+    assert!(prompt.contains("update_card"));
+    assert!(prompt.contains("targetProvided=false"));
+    assert!(prompt.contains("webSearchEnabled=true"));
+}
+
+#[test]
 fn normalizes_supported_latex_delimiters() {
     let proposal = parse_proposal(output(), &input("x>2"), "run-1".into(), 0).unwrap();
     let value = serde_json::to_value(proposal).unwrap();
@@ -77,5 +88,38 @@ fn missing_user_work_removes_specific_diagnosis() {
 #[test]
 fn malformed_output_fails_closed() {
     let error = parse_proposal("not-json", &input("x>2"), "run-1".into(), 0).unwrap_err();
+    assert_eq!(error.code, "INVALID_AI_OUTPUT");
+}
+
+#[test]
+fn agent_can_return_a_direct_answer_with_safe_sources() {
+    let json = r#"{
+      "action":"reply",
+      "message":"直接回答",
+      "sources":[
+        {"title":"官方资料","url":"https://example.com/docs"},
+        {"title":"不安全链接","url":"javascript:alert(1)"}
+      ],
+      "warnings":[]
+    }"#;
+    let proposal = parse_agent_response(json, &input(""), "run-1".into(), 0, false, true).unwrap();
+    let value = serde_json::to_value(proposal).unwrap();
+    assert_eq!(value["action"], "reply");
+    assert_eq!(value["message"], "直接回答");
+    assert_eq!(value["sources"].as_array().unwrap().len(), 1);
+    assert_eq!(value["fields"], serde_json::json!({}));
+
+    let offline = parse_agent_response(json, &input(""), "run-2".into(), 0, false, false).unwrap();
+    assert!(serde_json::to_value(offline).unwrap()["sources"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+}
+
+#[test]
+fn agent_cannot_modify_without_a_target_card() {
+    let json = r#"{"action":"update_card","message":"修改提案","warnings":[]}"#;
+    let error =
+        parse_agent_response(json, &input("x>2"), "run-1".into(), 0, false, false).unwrap_err();
     assert_eq!(error.code, "INVALID_AI_OUTPUT");
 }

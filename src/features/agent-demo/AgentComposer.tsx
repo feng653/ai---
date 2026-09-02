@@ -104,7 +104,7 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
           }
           if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); }
         }}
-        placeholder="描述要创建或修改的卡片，也可以拖入题目图片…"
+        placeholder="提问，或描述要创建的卡片；修改时请 @ 卡片…"
         rows={3}
       />
       {mentionCards.length > 0 && <div className="agent-mention-menu" role="listbox" aria-label="引用卡片">

@@ -14,6 +14,7 @@ const asset: CardAsset = {
   mimeType: "image/png", byteSize: 10, width: 1, height: 1,
 };
 const ai: AiProposal = {
+  action: "update_card", message: "已生成修改提案", sources: [],
   runId: "run-1", baseRevision: 3, promptVersion: "v4", warnings: ["请复核"],
   fields: {
     solution: { value: "新解法 $f'(x)$", uncertain: false, source: "inference" },

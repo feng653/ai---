@@ -27,6 +27,8 @@ export interface AiService {
     onProgress?: (progress: AiProgress) => void,
     agentInstruction?: string,
     agentHistory?: string[],
+    agentTarget?: boolean,
+    agentWebSearch?: boolean,
   ): Promise<AiProposal>;
 }
 
@@ -105,6 +107,8 @@ export class TauriAiService implements AiService {
     onProgress?: (progress: AiProgress) => void,
     agentInstruction?: string,
     agentHistory?: string[],
+    agentTarget = false,
+    agentWebSearch = false,
   ): Promise<AiProposal> {
     const requestId = crypto.randomUUID();
     const unlisten = await listen<AiProgressEvent>("ai-progress", (event) => {
@@ -116,6 +120,7 @@ export class TauriAiService implements AiService {
         input, baseRevision, requestId,
         agentTurn: agentInstruction?.trim() ? {
           instruction: agentInstruction.trim(), history: agentHistory?.slice(-8) ?? [],
+          targetProvided: agentTarget, webSearch: agentWebSearch,
         } : null,
       });
     } finally {

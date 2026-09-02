@@ -28,24 +28,25 @@ describe("AgentWindow", () => {
     expect(screen.queryByRole("dialog", { name: "AI Agent" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
     expect(screen.getByRole("dialog", { name: "AI Agent" })).toBeInTheDocument();
-    expect(screen.getByText("AI 只生成提案，确认后才会写入卡片")).toBeInTheDocument();
-    const input = screen.getByPlaceholderText(/描述要创建或修改/);
+    expect(screen.getByText("AI 可直接回答；卡片写入仍需你的确认")).toBeInTheDocument();
+    const input = screen.getByPlaceholderText(/提问，或描述要创建/);
     fireEvent.change(input, { target: { value: "尚未发送的内容" } });
     fireEvent.click(screen.getByRole("button", { name: "新对话" }));
-    await waitFor(() => expect(screen.getByPlaceholderText(/描述要创建或修改/)).toHaveValue(""));
+    await waitFor(() => expect(screen.getByPlaceholderText(/提问，或描述要创建/)).toHaveValue(""));
     fireEvent.click(screen.getByRole("button", { name: "收起 AI Agent" }));
     expect(screen.queryByRole("dialog", { name: "AI Agent" })).toBeNull();
   });
 
   it("saves a real AI proposal only after confirmation", async () => {
     vi.mocked(aiService.organize).mockResolvedValue({
+      action: "create_card", message: "已生成新卡片提案", sources: [],
       runId: "run", baseRevision: 0, promptVersion: "v4", warnings: [],
       fields: { question: { value: "解方程 $x=1$", uncertain: false, source: "user_text" } },
     });
     save.mockResolvedValue({ revision: 1 });
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/描述要创建或修改/), {
+    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
       target: { value: "创建卡片：解方程 x=1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -56,10 +57,31 @@ describe("AgentWindow", () => {
     expect(save.mock.calls[0][0].input.question).toBe("解方程 $x=1$");
   });
 
+  it("shows a direct answer with web sources without creating a proposal", async () => {
+    vi.mocked(aiService.organize).mockResolvedValue({
+      action: "reply", message: "这是直接回答。", sources: [{ title: "官方资料", url: "https://example.com/docs" }],
+      runId: "run", baseRevision: 0, promptVersion: "v5", warnings: [], fields: {},
+    });
+    render(<AgentWindow />);
+    fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "联网搜索" }));
+    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+      target: { value: "请直接解释这个概念" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByText("这是直接回答。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "官方资料" })).toHaveAttribute("href", "https://example.com/docs");
+    expect(screen.queryByRole("button", { name: "确认执行" })).toBeNull();
+    expect(save).not.toHaveBeenCalled();
+    expect(vi.mocked(aiService.organize).mock.calls[0][5]).toBe(false);
+    expect(vi.mocked(aiService.organize).mock.calls[0][6]).toBe(true);
+  });
+
   it("does not create a conversation from a chat command", async () => {
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/描述要创建或修改/), {
+    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
       target: { value: "请创建一个新对话" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -70,6 +92,7 @@ describe("AgentWindow", () => {
   it("continues editing the pending proposal across turns", async () => {
     vi.mocked(aiService.organize)
       .mockResolvedValueOnce({
+        action: "create_card", message: "已生成新卡片提案", sources: [],
         runId: "run-1", baseRevision: 0, promptVersion: "v4", warnings: [],
         fields: {
           question: { value: "解方程 $x=1$", uncertain: false, source: "user_text" },
@@ -77,13 +100,14 @@ describe("AgentWindow", () => {
         },
       })
       .mockResolvedValueOnce({
+        action: "create_card", message: "已更新待确认提案", sources: [],
         runId: "run-2", baseRevision: 0, promptVersion: "v4", warnings: [],
         fields: { solution: { value: "解得 $x=1$。", uncertain: false, source: "inference" } },
       });
     save.mockResolvedValue({ revision: 1, question: "解方程 $x=1$", knowledgePoints: [] });
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    const input = screen.getByPlaceholderText(/描述要创建或修改/);
+    const input = screen.getByPlaceholderText(/提问，或描述要创建/);
     fireEvent.change(input, { target: { value: "创建卡片：解方程 x=1" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
     await screen.findByRole("button", { name: "确认执行" });

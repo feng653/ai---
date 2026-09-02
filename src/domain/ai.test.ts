@@ -3,6 +3,9 @@ import { emptyCardInput } from "./card";
 import { applyAiProposal, getDefaultAcceptedFields, type AiProposal } from "./ai";
 
 const proposal: AiProposal = {
+  action: "create_card",
+  message: "已生成卡片提案",
+  sources: [],
   runId: "run-1",
   baseRevision: 0,
   promptVersion: "v1",

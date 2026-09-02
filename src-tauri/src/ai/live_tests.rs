@@ -1,4 +1,5 @@
 use super::codex::CodexProvider;
+use super::AgentRequest;
 use crate::domain::CardInput;
 
 #[test]
@@ -28,13 +29,17 @@ fn codex_live_agent_create_proposal() {
             input,
             0,
             vec![],
-            Some("创建一张卡片：解不等式 x² > 4".into()),
-            None,
+            Some(AgentRequest {
+                instruction: "创建一张卡片：解不等式 x² > 4".into(),
+                history: vec![],
+                target_provided: false,
+                web_search: false,
+            }),
             |_| {},
         )
         .expect("real Codex run failed");
     let value = serde_json::to_value(proposal).unwrap();
-    assert_eq!(value["promptVersion"], "agent-card-v4-latex");
+    assert_eq!(value["promptVersion"], "agent-choice-v5-search");
     assert!(value["fields"]["question"]["value"]
         .as_str()
         .is_some_and(|question| question.contains('4')));
@@ -68,8 +73,12 @@ fn codex_live_agent_follow_up_proposal() {
             input,
             1,
             vec![],
-            Some("把刚才的解题过程压缩成一句话".into()),
-            Some(vec!["用户：先生成完整解题过程".into()]),
+            Some(AgentRequest {
+                instruction: "把刚才的解题过程压缩成一句话".into(),
+                history: vec!["用户：先生成完整解题过程".into()],
+                target_provided: true,
+                web_search: false,
+            }),
             |_| {},
         )
         .expect("real Codex follow-up failed");
