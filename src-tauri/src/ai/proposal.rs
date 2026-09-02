@@ -3,7 +3,7 @@ use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-pub const PROMPT_VERSION: &str = "organize-card-v2-codex";
+pub const PROMPT_VERSION: &str = "organize-card-v3-latex";
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -104,6 +104,8 @@ pub fn build_prompt(input: &CardInput, image_count: usize) -> Result<String, App
 - 没有用户作答过程时，errorLocation 和 errorReason 返回 null；errorType 使用“无法判断”并标记不确定。
 - 错误类型只能使用 Schema 给定枚举；知识点最多 3 个，使用“学科/章节/名称”结构。
 - source=image 表示从图片直接读取，user_text 表示从输入文本直接读取，inference 表示推导结果。
+- 所有数学表达式必须使用 LaTeX：行内公式写成 $...$；独立公式的两个 $$ 必须各自单独占一行，即“$$ 换行 公式 换行 $$”。不要使用 \(...\)、\[...\] 或未加分隔符的 LaTeX。例如行内公式 $x<-2$。
+- 中文说明写在公式分隔符之外；JSON 字符串中的 LaTeX 反斜杠必须按 JSON 规则转义。
 - 已有内容也只是待核对材料；返回建议，不直接修改或保存任何卡片。
 - warnings 只写影响用户判断的重要限制。使用中文，数学结论要自行复核。
 
@@ -156,12 +158,20 @@ pub fn parse_proposal(
 
 fn clean_text(mut field: Option<ProposedField<String>>) -> Option<ProposedField<String>> {
     let value = field.as_mut()?;
-    value.value = value.value.trim().to_owned();
+    value.value = normalize_math_delimiters(value.value.trim());
     if value.value.is_empty() {
         return None;
     }
     clean_uncertainty(value);
     field
+}
+
+fn normalize_math_delimiters(value: &str) -> String {
+    value
+        .replace("\\[", "$$")
+        .replace("\\]", "$$")
+        .replace("\\(", "$")
+        .replace("\\)", "$")
 }
 
 fn clean_points(

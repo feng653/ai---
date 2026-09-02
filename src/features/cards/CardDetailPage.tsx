@@ -65,12 +65,12 @@ export function CardDetailPage() {
       <section className="detail-block diagnosis-block">
         <h3>错因诊断</h3>
         <dl>
-          <div><dt>第一处错误 · {item.errorType || "未分类"}</dt><dd>{item.errorLocation || "暂未定位错误位置"}</dd></div>
-          <div><dt>为什么会错</dt><dd>{item.errorReason || "尚未进行诊断，可手动填写或使用 AI 整理。"}</dd></div>
+          <div><dt>第一处错误 · {item.errorType || "未分类"}</dt><dd><MathContent>{item.errorLocation || "暂未定位错误位置"}</MathContent></dd></div>
+          <div><dt>为什么会错</dt><dd><MathContent>{item.errorReason || "尚未进行诊断，可手动填写或使用 AI 整理。"}</MathContent></dd></div>
         </dl>
       </section>
 
-      {item.supplementalNote && <section className="detail-block"><h3>补充说明</h3><p>{item.supplementalNote}</p></section>}
+      {item.supplementalNote && <section className="detail-block"><h3>补充说明</h3><MathContent>{item.supplementalNote}</MathContent></section>}
 
       <section className="detail-block">
         <h3>关联知识点</h3>

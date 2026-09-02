@@ -26,11 +26,11 @@ fn codex_live_text_proposal() {
         .organize(input, 0, vec![], |_| {})
         .expect("real Codex run failed");
     let value = serde_json::to_value(proposal).unwrap();
-    assert_eq!(value["promptVersion"], "organize-card-v2-codex");
+    assert_eq!(value["promptVersion"], "organize-card-v3-latex");
     let answer = value["fields"]["correctAnswer"]["value"]
         .as_str()
         .expect("Codex must return a proposed correct answer");
-    assert!(answer.contains("-2") && answer.contains('2'));
+    assert!(answer.contains("-2") && answer.contains('2') && answer.contains('$'));
     assert!(value["fields"]["errorReason"]["value"]
         .as_str()
         .is_some_and(|reason| !reason.trim().is_empty()));

@@ -1,6 +1,7 @@
 import { BookOpen, Clock3, Filter, Image, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MathContent } from "../../components/MathContent";
 import type { CardStatus } from "../../domain/card";
 import { useCards } from "../../hooks/useCards";
 
@@ -106,8 +107,8 @@ export function CardsPage() {
                 <span className={`card-status ${card.status}`}>{statusLabel[card.status]}</span>
               </header>
               {card.assets.length > 0 && <span className="image-badge"><Image size={13} />原题图片</span>}
-              <h2>{card.question || "仅保存了原始题目图片"}</h2>
-              <p className="diagnosis-preview">{card.errorReason || "还没有错因诊断，可以手动完善或使用 AI 整理。"}</p>
+              <MathContent className="question-title">{card.question || "仅保存了原始题目图片"}</MathContent>
+              <MathContent className="diagnosis-preview">{card.errorReason || "还没有错因诊断，可以手动完善或使用 AI 整理。"}</MathContent>
               <footer>
                 <div className="tag-list">
                   {card.knowledgePoints.length ? card.knowledgePoints.slice(0, 3).map((point) => (

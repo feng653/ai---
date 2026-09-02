@@ -28,8 +28,8 @@ fn output() -> &'static str {
     r#"{
       "question": null,
       "userAnswer": null,
-      "correctAnswer": {"value":"x<-2 或 x>2","uncertain":false,"uncertainReason":null,"source":"inference"},
-      "solution": {"value":"由 |x|>2 得结论","uncertain":false,"uncertainReason":null,"source":"inference"},
+      "correctAnswer": {"value":"\\(x<-2\\) 或 $x>2$","uncertain":false,"uncertainReason":null,"source":"inference"},
+      "solution": {"value":"由 $|x|>2$ 得结论","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorLocation": {"value":"第一步","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorReason": {"value":"漏掉负数分支","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorType": {"value":"方法错误","uncertain":false,"uncertainReason":null,"source":"inference"},
@@ -45,6 +45,14 @@ fn prompt_excludes_internal_asset_paths_and_marks_input_untrusted() {
     assert!(prompt.contains("\"attachedImageCount\": 1"));
     assert!(!prompt.contains("private.png"));
     assert!(!prompt.contains("secret-id"));
+    assert!(prompt.contains("行内公式写成 $...$"));
+}
+
+#[test]
+fn normalizes_supported_latex_delimiters() {
+    let proposal = parse_proposal(output(), &input("x>2"), "run-1".into(), 0).unwrap();
+    let value = serde_json::to_value(proposal).unwrap();
+    assert_eq!(value["fields"]["correctAnswer"]["value"], "$x<-2$ 或 $x>2$");
 }
 
 #[test]

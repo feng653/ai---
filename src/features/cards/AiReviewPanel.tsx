@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { AiProposal, ProposalKey } from "../../domain/ai";
 import type { KnowledgePoint } from "../../domain/card";
 import type { AiProgress } from "../../services/aiService";
+import { MathContent } from "../../components/MathContent";
 
 const labels: Record<ProposalKey, string> = {
   question: "题目", userAnswer: "我的答案", correctAnswer: "正确答案",
@@ -16,6 +17,12 @@ function proposalText(value: unknown): string {
       `${item.subject} › ${item.chapter || "未分类章节"} › ${item.name}`).join("\n");
   }
   return String(value ?? "");
+}
+
+function ProposalValue({ field, value }: { field: ProposalKey; value: unknown }) {
+  const text = proposalText(value);
+  if (field === "knowledgePoints" || field === "errorType") return <small>{text}</small>;
+  return <MathContent className="proposal-value">{text}</MathContent>;
 }
 
 type Props = {
@@ -57,7 +64,7 @@ export function AiReviewPanel(props: Props) {
                 />
                 <span>
                   <strong>{labels[key]}{conflict && <em>编辑后有变化</em>}</strong>
-                  <small>{proposalText(suggestion.value)}</small>
+                  <ProposalValue field={key} value={suggestion.value} />
                   {suggestion.uncertain && <i>{suggestion.uncertainReason || "AI 对此项不确定"}</i>}
                 </span>
               </label>
