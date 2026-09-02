@@ -29,7 +29,7 @@ fn output() -> &'static str {
       "question": null,
       "userAnswer": null,
       "correctAnswer": {"value":"\\(x<-2\\) 或 $x>2$","uncertain":false,"uncertainReason":null,"source":"inference"},
-      "solution": {"value":"由 $|x|>2$ 得结论","uncertain":false,"uncertainReason":null,"source":"inference"},
+      "solution": {"value":"由 \\[|x|>2\\] 得结论","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorLocation": {"value":"第一步","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorReason": {"value":"漏掉负数分支","uncertain":false,"uncertainReason":null,"source":"inference"},
       "errorType": {"value":"方法错误","uncertain":false,"uncertainReason":null,"source":"inference"},
@@ -53,6 +53,10 @@ fn normalizes_supported_latex_delimiters() {
     let proposal = parse_proposal(output(), &input("x>2"), "run-1".into(), 0).unwrap();
     let value = serde_json::to_value(proposal).unwrap();
     assert_eq!(value["fields"]["correctAnswer"]["value"], "$x<-2$ 或 $x>2$");
+    assert_eq!(
+        value["fields"]["solution"]["value"],
+        "由 \n\n$$\n|x|>2\n$$\n\n 得结论"
+    );
 }
 
 #[test]

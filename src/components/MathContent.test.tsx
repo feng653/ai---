@@ -17,4 +17,11 @@ describe("MathContent", () => {
     expect(container.querySelector("script")).toBeNull();
     expect(container.querySelector(".katex")).not.toBeNull();
   });
+
+  it("renders the stored bracket-delimited matrix formula", () => {
+    const stored = String.raw`证明：\[\begin{vmatrix}E_m&B\\A&E_n\end{vmatrix}=|E_n-AB|=|E_m-BA|.\]`;
+    const { container } = render(<MathContent>{stored}</MathContent>);
+    expect(container.querySelector(".katex-display")).not.toBeNull();
+    expect(container.querySelectorAll(".katex")).toHaveLength(1);
+  });
 });

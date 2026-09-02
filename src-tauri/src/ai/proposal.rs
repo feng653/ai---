@@ -168,8 +168,8 @@ fn clean_text(mut field: Option<ProposedField<String>>) -> Option<ProposedField<
 
 fn normalize_math_delimiters(value: &str) -> String {
     value
-        .replace("\\[", "$$")
-        .replace("\\]", "$$")
+        .replace("\\[", "\n\n$$\n")
+        .replace("\\]", "\n$$\n\n")
         .replace("\\(", "$")
         .replace("\\)", "$")
 }
