@@ -1,10 +1,11 @@
-use super::CodexProvider;
+use super::codex::CodexProvider;
 use crate::domain::CardInput;
 
 #[test]
 #[ignore = "requires a logged-in Codex CLI and performs a real model call"]
 fn codex_live_agent_create_proposal() {
-    let provider = CodexProvider::new();
+    let directory = tempfile::tempdir().unwrap();
+    let provider = CodexProvider::new(directory.path());
     let status = provider
         .connect()
         .expect("Codex CLI must be installed and logged in");
@@ -47,7 +48,8 @@ fn codex_live_agent_create_proposal() {
 #[test]
 #[ignore = "requires a logged-in Codex CLI and performs a real model call"]
 fn codex_live_agent_follow_up_proposal() {
-    let provider = CodexProvider::new();
+    let directory = tempfile::tempdir().unwrap();
+    let provider = CodexProvider::new(directory.path());
     let input = CardInput {
         subject: "数学".into(),
         question: "解不等式 $x^2>4$。".into(),

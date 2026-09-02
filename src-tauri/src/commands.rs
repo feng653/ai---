@@ -1,4 +1,4 @@
-use crate::ai::{AiProgress, AiProposal, CodexProvider};
+use crate::ai::{AiManager, AiProgress, AiProposal, ApiProviderInput, ProviderSummary};
 use crate::domain::{Card, CardAsset, CardFilter, CardInput, ProviderStatus};
 use crate::error::AppError;
 use crate::storage::Storage;
@@ -55,23 +55,71 @@ pub fn read_asset(storage: State<'_, Storage>, id: String) -> Result<Vec<u8>, Ap
 }
 
 #[tauri::command]
-pub fn get_ai_provider_status(provider: State<'_, Arc<CodexProvider>>) -> ProviderStatus {
-    provider.status()
+pub fn get_ai_provider_status(manager: State<'_, Arc<AiManager>>) -> ProviderStatus {
+    manager.status()
 }
 
 #[tauri::command]
 pub async fn connect_ai_provider(
-    provider: State<'_, Arc<CodexProvider>>,
+    manager: State<'_, Arc<AiManager>>,
 ) -> Result<ProviderStatus, AppError> {
-    let provider = Arc::clone(provider.inner());
-    tauri::async_runtime::spawn_blocking(move || provider.connect())
+    manager.connect().await
+}
+
+#[tauri::command]
+pub fn list_ai_providers(
+    manager: State<'_, Arc<AiManager>>,
+) -> Result<Vec<ProviderSummary>, AppError> {
+    manager.providers()
+}
+
+#[tauri::command]
+pub fn select_ai_provider(
+    manager: State<'_, Arc<AiManager>>,
+    id: String,
+) -> Result<ProviderStatus, AppError> {
+    manager.select(&id)
+}
+
+#[tauri::command]
+pub async fn save_api_provider(
+    manager: State<'_, Arc<AiManager>>,
+    input: ApiProviderInput,
+) -> Result<ProviderStatus, AppError> {
+    let manager = Arc::clone(manager.inner());
+    tauri::async_runtime::spawn_blocking(move || manager.save_api(&input))
         .await
-        .map_err(|error| AppError::new("PROVIDER_ERROR", format!("Codex 连接任务失败：{error}")))?
+        .map_err(|error| {
+            AppError::new("PROVIDER_ERROR", format!("API 配置保存任务失败：{error}"))
+        })?
+}
+
+#[tauri::command]
+pub async fn test_api_provider(
+    manager: State<'_, Arc<AiManager>>,
+    input: ApiProviderInput,
+) -> Result<(), AppError> {
+    manager.test_api(input).await
+}
+
+#[tauri::command]
+pub async fn login_codex_provider(
+    manager: State<'_, Arc<AiManager>>,
+) -> Result<ProviderStatus, AppError> {
+    manager.login_codex().await
+}
+
+#[tauri::command]
+pub async fn disconnect_ai_provider(
+    manager: State<'_, Arc<AiManager>>,
+    id: String,
+) -> Result<(), AppError> {
+    manager.disconnect(&id).await
 }
 
 #[tauri::command]
 pub async fn organize_card(
-    provider: State<'_, Arc<CodexProvider>>,
+    manager: State<'_, Arc<AiManager>>,
     storage: State<'_, Storage>,
     window: Window,
     input: CardInput,
@@ -80,18 +128,17 @@ pub async fn organize_card(
     agent_turn: Option<AgentTurn>,
 ) -> Result<AiProposal, AppError> {
     let asset_paths = storage.resolve_asset_paths(&input.assets)?;
-    let provider = Arc::clone(provider.inner());
     let (agent_instruction, agent_history) = agent_turn
         .map(|turn| (Some(turn.instruction), Some(turn.history)))
         .unwrap_or((None, None));
-    tauri::async_runtime::spawn_blocking(move || {
-        provider.organize(
+    manager
+        .organize(
             input,
             base_revision,
             asset_paths,
             agent_instruction,
             agent_history,
-            |progress| {
+            move |progress| {
                 let _ = window.emit(
                     "ai-progress",
                     AiProgressPayload {
@@ -101,9 +148,7 @@ pub async fn organize_card(
                 );
             },
         )
-    })
-    .await
-    .map_err(|error| AppError::new("PROVIDER_ERROR", format!("Codex 整理任务失败：{error}")))?
+        .await
 }
 
 #[derive(Deserialize)]

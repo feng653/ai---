@@ -7,49 +7,34 @@ use std::process::{Command, ExitStatus, Stdio};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-
 const PROBE_TIMEOUT: Duration = Duration::from_secs(10);
 const RUN_TIMEOUT: Duration = Duration::from_secs(180);
 const MAX_DIAGNOSTIC_BYTES: usize = 32 * 1024;
 
-pub fn discover_codex() -> Option<PathBuf> {
-    if let Some(path) = std::env::var_os("ZHISHI_CODEX_PATH").map(PathBuf::from) {
-        if path.is_file() {
-            return Some(path);
-        }
-    }
-    let path = std::env::var_os("PATH")?;
-    for directory in std::env::split_paths(&path) {
-        #[cfg(windows)]
-        let candidate = directory.join("codex.exe");
-        #[cfg(not(windows))]
-        let candidate = directory.join("codex");
-        if candidate.is_file() {
-            return Some(candidate);
-        }
-    }
-    #[cfg(windows)]
-    for directory in std::env::split_paths(&path) {
-        for relative in [
-            "node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/bin/codex.exe",
-            "node_modules/@openai/codex/vendor/x86_64-pc-windows-msvc/bin/codex.exe",
-        ] {
-            let candidate = directory.join(relative);
-            if candidate.is_file() {
-                return Some(candidate);
-            }
-        }
-    }
-    None
+pub struct ExecutionPaths<'a> {
+    pub work_dir: &'a Path,
+    pub schema: &'a Path,
+    pub output: &'a Path,
+    pub codex_home: &'a Path,
 }
 
-pub fn probe(executable: &Path) -> Result<String, AppError> {
+pub fn prepare_codex_home(home: &Path) -> Result<(), AppError> {
+    std::fs::create_dir_all(home)?;
+    std::fs::write(
+        home.join("config.toml"),
+        "cli_auth_credentials_store = \"file\"\n",
+    )?;
+    Ok(())
+}
+pub fn probe(executable: &Path, home: &Path) -> Result<String, AppError> {
+    prepare_codex_home(home)?;
     let version = run_cli(
         executable,
         &[OsString::from("--version")],
         None,
         PROBE_TIMEOUT,
         |_| {},
+        home,
     )?;
     if !version.status.success() {
         return Err(AppError::new(
@@ -63,6 +48,7 @@ pub fn probe(executable: &Path) -> Result<String, AppError> {
         None,
         PROBE_TIMEOUT,
         |_| {},
+        home,
     )?;
     if !login.status.success() {
         return Err(AppError::new(
@@ -75,9 +61,7 @@ pub fn probe(executable: &Path) -> Result<String, AppError> {
 
 pub fn execute<F>(
     executable: &Path,
-    work_dir: &Path,
-    schema_path: &Path,
-    output_path: &Path,
+    paths: ExecutionPaths<'_>,
     images: &[PathBuf],
     prompt: &str,
     mut on_event: F,
@@ -99,25 +83,31 @@ where
         "-c".into(),
         "shell_environment_policy.inherit=none".into(),
         "--output-schema".into(),
-        schema_path.as_os_str().into(),
+        paths.schema.as_os_str().into(),
         "-o".into(),
-        output_path.as_os_str().into(),
+        paths.output.as_os_str().into(),
         "-C".into(),
-        work_dir.as_os_str().into(),
+        paths.work_dir.as_os_str().into(),
     ];
     for image in images {
         arguments.push("--image".into());
         arguments.push(image.as_os_str().into());
     }
     arguments.push("-".into());
-    let capture = run_cli(executable, &arguments, Some(prompt), RUN_TIMEOUT, |line| {
-        on_event(line)
-    })?;
+    prepare_codex_home(paths.codex_home)?;
+    let capture = run_cli(
+        executable,
+        &arguments,
+        Some(prompt),
+        RUN_TIMEOUT,
+        |line| on_event(line),
+        paths.codex_home,
+    )?;
     if !capture.status.success() {
         let details = diagnostic("Codex 整理失败", &capture.stderr, &capture.stdout);
         return Err(AppError::new(classify_error(&details), details));
     }
-    let metadata = std::fs::metadata(output_path)
+    let metadata = std::fs::metadata(paths.output)
         .map_err(|_| AppError::new("INVALID_AI_OUTPUT", "Codex 未生成结构化结果文件"))?;
     if metadata.len() > 1024 * 1024 {
         return Err(AppError::new(
@@ -125,22 +115,23 @@ where
             "Codex 结果超过 1 MiB 限制",
         ));
     }
-    std::fs::read_to_string(output_path)
+    std::fs::read_to_string(paths.output)
         .map_err(|error| AppError::new("INVALID_AI_OUTPUT", format!("Codex 结果读取失败：{error}")))
 }
 
-struct ProcessCapture {
-    status: ExitStatus,
-    stdout: Vec<String>,
-    stderr: String,
+pub(super) struct ProcessCapture {
+    pub(super) status: ExitStatus,
+    pub(super) stdout: Vec<String>,
+    pub(super) stderr: String,
 }
 
-fn run_cli<F>(
+pub(super) fn run_cli<F>(
     executable: &Path,
     arguments: &[OsString],
     stdin: Option<&str>,
     timeout: Duration,
     mut on_stdout: F,
+    codex_home: &Path,
 ) -> Result<ProcessCapture, AppError>
 where
     F: FnMut(&str),
@@ -148,6 +139,10 @@ where
     let mut command = Command::new(executable);
     command
         .args(arguments)
+        .env("CODEX_HOME", codex_home)
+        .env_remove("OPENAI_API_KEY")
+        .env_remove("CODEX_API_KEY")
+        .env_remove("CODEX_ACCESS_TOKEN")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -213,10 +208,7 @@ where
         if Instant::now() >= deadline {
             let _ = child.kill();
             let _ = child.wait();
-            return Err(AppError::new(
-                "PROVIDER_TIMEOUT",
-                "Codex 整理超过 180 秒，已终止",
-            ));
+            return Err(AppError::new("PROVIDER_TIMEOUT", "Codex 操作超时，已终止"));
         }
         thread::sleep(Duration::from_millis(40));
     };

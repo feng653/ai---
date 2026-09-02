@@ -8,6 +8,28 @@ export type AiProviderStatus = {
   message: string;
 };
 
+export type CustomAiProviderId = `custom:${string}`;
+export type AiProviderId = "codex" | "deepseek" | "compatible" | CustomAiProviderId;
+
+export type AiProviderSummary = {
+  id: AiProviderId;
+  name: string;
+  state: AiProviderState;
+  message: string;
+  active: boolean;
+  configured: boolean;
+  baseUrl?: string;
+  model?: string;
+};
+
+export type ApiProviderInput = {
+  id: Exclude<AiProviderId, "codex">;
+  name: string;
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+};
+
 export type ProposedField<T> = {
   value: T | null;
   uncertain: boolean;

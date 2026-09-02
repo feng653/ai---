@@ -4,10 +4,11 @@ mod domain;
 mod error;
 mod storage;
 
-use ai::CodexProvider;
+use ai::AiManager;
 use commands::{
-    connect_ai_provider, delete_asset, delete_card, get_ai_provider_status, get_card, import_asset,
-    list_cards, organize_card, read_asset, save_card,
+    connect_ai_provider, delete_asset, delete_card, disconnect_ai_provider, get_ai_provider_status,
+    get_card, import_asset, list_ai_providers, list_cards, login_codex_provider, organize_card,
+    read_asset, save_api_provider, save_card, select_ai_provider, test_api_provider,
 };
 use std::sync::Arc;
 use storage::Storage;
@@ -27,7 +28,9 @@ pub fn run() {
             let data_dir = app.path().app_data_dir()?;
             let storage = Storage::open(&data_dir).map_err(Box::<dyn std::error::Error>::from)?;
             app.manage(storage);
-            app.manage(Arc::new(CodexProvider::new()));
+            app.manage(Arc::new(
+                AiManager::open(&data_dir).map_err(Box::<dyn std::error::Error>::from)?,
+            ));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -40,6 +43,12 @@ pub fn run() {
             read_asset,
             get_ai_provider_status,
             connect_ai_provider,
+            list_ai_providers,
+            select_ai_provider,
+            save_api_provider,
+            test_api_provider,
+            login_codex_provider,
+            disconnect_ai_provider,
             organize_card
         ])
         .run(tauri::generate_context!())

@@ -83,7 +83,7 @@ export function AgentWindow() {
         } : undefined;
       let status = aiStatus.data;
       if (status?.state !== "connected") status = await connectAi.mutateAsync();
-      if (status.state !== "connected") throw new Error(status.message || "Codex 当前不可用");
+      if (status.state !== "connected") throw new Error(status.message || "当前 AI 服务不可用");
       setProgress({ stage: "preparing", message: "正在导入图片…" });
       for (const attachment of attachments) imported.push(await cardService.importAsset(attachment.file));
       const base = previous ? extendAgentInput(previous.input, imported) : prepareAgentInput(targetCard, imported);
@@ -169,7 +169,8 @@ export function AgentWindow() {
       {open && <section className="agent-window" role="dialog" aria-label="AI Agent">
         <header className="agent-window-header">
           <span className="agent-window-icon"><Bot size={18} /></span>
-          <div><strong>知拾 Agent</strong><small><i />{aiStatus.data?.state === "connected" ? "Codex 已连接" : "需要连接 Codex"}</small></div>
+          <div><strong>知拾 Agent</strong><small><i />{aiStatus.data?.state === "connected"
+            ? `${aiStatus.data.provider} 已连接` : "需要连接 AI 服务"}</small></div>
           <button type="button" title="新对话" aria-label="新对话" disabled={busy} onClick={() => void newConversation()}><MessageSquarePlus size={15} /></button>
           <button type="button" title="收起" aria-label="收起 AI Agent" onClick={() => setOpen(false)}><Minus size={17} /></button>
         </header>

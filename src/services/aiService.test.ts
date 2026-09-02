@@ -8,6 +8,16 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
 
 describe("TauriAiService", () => {
+  it("forwards provider configuration without renaming secret fields", async () => {
+    vi.mocked(invoke).mockResolvedValue({ state: "connected", provider: "deepseek" });
+    const service = new TauriAiService();
+    const input = { id: "deepseek" as const, name: "DeepSeek API", baseUrl: "https://api.deepseek.com", model: "deepseek-v4-flash", apiKey: "secret" };
+    await service.saveApiProvider(input);
+    expect(invoke).toHaveBeenCalledWith("save_api_provider", { input });
+    await service.testApiProvider(input);
+    expect(invoke).toHaveBeenCalledWith("test_api_provider", { input });
+  });
+
   it("filters progress events by request and forwards the real invocation", async () => {
     const unlisten = vi.fn();
     let handler: ((event: { payload: Record<string, string> }) => void) | undefined;
