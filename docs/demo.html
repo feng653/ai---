@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>知拾 · 个人错题卡片</title>
+  <link rel="stylesheet" href="demo-base.css">
+  <link rel="stylesheet" href="demo-components.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4.5h9.2A2.8 2.8 0 0 1 18 7.3V21l-6-3-6 3V4.5Z"/><path d="m9 10 2 2 4-4"/></svg>
+        </div>
+        <div><div class="brand-name">知拾</div><div class="brand-sub">个人错题卡片</div></div>
+      </div>
+
+      <div class="nav-label">错题库</div>
+      <nav class="nav">
+        <button class="nav-item active" data-filter="all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v16H6.5A2.5 2.5 0 0 1 4 17.5v-11Z"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 8h7"/></svg>
+          全部错题 <span class="nav-count" id="allCount">0</span>
+        </button>
+        <button class="nav-item" data-filter="draft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="M12 7v5l3 2"/></svg>
+          待完善 <span class="nav-count" id="draftCount">0</span>
+        </button>
+        <button class="nav-item" data-filter="done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11a8.5 8.5 0 1 1-4.2-7.3"/><path d="m9 11 2 2 9-9"/></svg>
+          已整理 <span class="nav-count" id="doneCount">0</span>
+        </button>
+      </nav>
+
+      <div class="knowledge-nav">
+        <div class="nav-label">常用知识点</div>
+        <div class="tag-nav" id="sidebarTags"></div>
+      </div>
+
+      <div class="side-bottom">
+        <div class="local-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>个人工具模式<br/>无需账号，打开即可使用</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="mobile-brand">
+          <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4.5h9.2A2.8 2.8 0 0 1 18 7.3V21l-6-3-6 3V4.5Z"/><path d="m9 10 2 2 4-4"/></svg></div>
+          知拾
+        </div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="searchInput" class="search" placeholder="搜索题目、错因或知识点…" />
+          <span class="shortcut">⌘ K</span>
+        </div>
+        <div class="top-actions">
+          <button class="ai-status" id="aiStatusBtn">
+            <span class="status-dot"></span><span class="label" id="aiStatusText">AI 未连接</span>
+          </button>
+          <button class="btn btn-primary" id="newCardBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="hide-mobile">新增错题</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">我的错题</h1>
+            <p class="page-desc">把错误整理清楚，比记住答案更重要。</p>
+          </div>
+          <div class="page-meta" id="pageMeta">共 0 张卡片</div>
+        </div>
+
+        <div class="filter-row" id="filterRow">
+          <button class="filter-chip active" data-filter="all">全部 <span id="chipAll">0</span></button>
+          <button class="filter-chip" data-filter="draft">待完善 <span id="chipDraft">0</span></button>
+          <button class="filter-chip" data-filter="done">已整理 <span id="chipDone">0</span></button>
+        </div>
+
+        <section class="cards" id="cardGrid"></section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 新增/编辑抽屉 -->
+  <div class="overlay" id="editorOverlay">
+    <section class="sheet" role="dialog" aria-modal="true" aria-label="错题编辑">
+      <header class="sheet-head">
+        <div>
+          <div class="sheet-title" id="editorTitle">新增错题</div>
+          <div class="sheet-sub" id="editorSub">先保存原始材料，也可以稍后再整理</div>
+        </div>
+        <button class="icon-btn" id="closeEditor" aria-label="关闭">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+
+      <div class="sheet-body">
+        <div class="section" id="sourceSection">
+          <div class="section-head">
+            <span class="section-index">1</span><span class="section-title">录入原始内容</span>
+            <button class="demo-fill" id="demoFillBtn">填入演示题目</button>
+          </div>
+          <div class="input-tabs">
+            <button class="input-tab active" data-input-tab="image">图片录入</button>
+            <button class="input-tab" data-input-tab="text">文本录入</button>
+          </div>
+          <div id="imageInputPanel">
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="fileInput" accept="image/*" hidden />
+              <div class="drop-copy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4M12 4v11M8 8l4-4 4 4"/></svg>
+                <strong>点击选择，或将题目截图拖到这里</strong>
+                <small>支持 PNG、JPG；原图会保留用于核对</small>
+              </div>
+              <img class="drop-preview" id="imagePreview" alt="题目预览" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="section-index">2</span><span class="section-title">题目与答案</span>
+            <span class="section-help">手动填写始终可用</span>
+          </div>
+          <div class="form-grid">
+            <label class="field full">
+              <span class="label">题目</span>
+              <textarea class="control" id="questionInput" placeholder="输入题目内容；只有图片时也可以先保存"></textarea>
+            </label>
+            <label class="field">
+              <span class="label">我的答案 <span class="optional">可选</span></span>
+              <textarea class="control" id="userAnswerInput" placeholder="输入你的作答或步骤"></textarea>
+            </label>
+            <label class="field">
+              <span class="label">正确答案 <span class="optional">可选</span></span>
+              <textarea class="control" id="correctAnswerInput" placeholder="可以手动填写或交给 AI"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="section-index">3</span><span class="section-title">AI 整理</span>
+            <span class="section-help" id="inlineAiState">当前未连接</span>
+          </div>
+          <div class="ai-box" id="aiBox">
+            <div class="ai-orb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3Z"/><path d="m18 3-.7 1.8-1.8.7 1.8.7L18 8l.7-1.8 1.8-.7-1.8-.7L18 3Z"/></svg>
+            </div>
+            <div class="ai-copy">
+              <strong id="aiBoxTitle">连接 Codex，自动完成整理</strong>
+              <span>识别题目、分析答案、诊断错因并推荐知识点。生成后由你确认。</span>
+            </div>
+            <button class="btn btn-primary" id="organizeBtn">AI 整理</button>
+          </div>
+          <div class="progress-box" id="progressBox">
+            <div class="progress-top"><span class="spinner"></span><span class="progress-title" id="progressTitle">正在读取题目…</span></div>
+            <div class="progress-line"><div class="progress-bar" id="progressBar"></div></div>
+            <div class="progress-steps"><span class="active">读取题目</span><span>分析答案</span><span>诊断错因</span><span>关联知识</span></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <span class="section-index">4</span><span class="section-title">诊断与知识点</span>
+            <span class="section-help">可随时修改</span>
+          </div>
+          <div class="result-note" id="resultNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.5 8.5 0 1 1-4.2-7.3"/><path d="m9 11 2 2 9-9"/></svg>
+            已生成整理建议，请检查后保存
+          </div>
+          <div class="form-grid">
+            <label class="field full">
+              <span class="label">正确解法 <span class="optional">可选</span></span>
+              <textarea class="control" id="solutionInput" placeholder="填写正确的解题思路和关键步骤"></textarea>
+            </label>
+            <label class="field full">
+              <span class="label">第一处错误</span>
+              <textarea class="control" id="errorLocationInput" placeholder="错误最早出现在哪一步？"></textarea>
+            </label>
+            <label class="field full">
+              <span class="label">错误原因</span>
+              <textarea class="control" id="errorReasonInput" placeholder="为什么会出现这个错误？"></textarea>
+            </label>
+            <label class="field">
+              <span class="label">错误类型</span>
+              <select class="control" id="errorTypeInput">
+                <option value="">请选择</option>
+                <option>概念不清</option><option>方法错误</option><option>公式或定理使用错误</option>
+                <option>审题错误</option><option>计算错误</option><option>推理或步骤错误</option><option>无法判断</option>
+              </select>
+            </label>
+            <div class="field full">
+              <span class="label">关联知识点</span>
+              <div class="knowledge-editor" id="knowledgeEditor">
+                <input class="tag-input" id="tagInput" placeholder="输入知识点，按 Enter 添加" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="sheet-footer">
+        <button class="btn btn-ghost" id="deleteInEditor" style="display:none">删除</button>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="saveDraftBtn">保存为待完善</button>
+        <button class="btn btn-primary" id="saveCardBtn">保存卡片</button>
+      </footer>
+    </section>
+  </div>
+
+  <!-- 卡片详情抽屉 -->
+  <div class="overlay" id="detailOverlay">
+    <section class="sheet" role="dialog" aria-modal="true" aria-label="错题详情">
+      <header class="sheet-head">
+        <div>
+          <div class="sheet-title">错题详情</div>
+          <div class="sheet-sub" id="detailMeta">已整理 · 最近修改</div>
+        </div>
+        <button class="icon-btn" id="closeDetail" aria-label="关闭">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="sheet-body" id="detailBody"></div>
+      <footer class="sheet-footer">
+        <button class="btn btn-danger" id="deleteDetailBtn">删除</button>
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="detailAiBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3Z"/></svg>
+          AI 重新整理
+        </button>
+        <button class="btn btn-primary" id="editDetailBtn">编辑卡片</button>
+      </footer>
+    </section>
+  </div>
+
+  <!-- Codex 连接弹窗 -->
+  <div class="modal-overlay" id="connectModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="连接 Codex">
+      <div class="modal-head">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3Z"/></svg>
+        </div>
+        <div><div class="modal-title" id="connectTitle">连接 Codex</div><div class="modal-sub" id="connectSub">连接是可选的。未连接时，你仍然可以手动使用全部基础功能。</div></div>
+        <button class="modal-close" id="closeConnect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div id="connectDefault">
+          <div class="cap-list">
+            <div class="cap"><span class="cap-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 12 4 4 8-8"/></svg></span>从图片中识别题目与作答</div>
+            <div class="cap"><span class="cap-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 12 4 4 8-8"/></svg></span>生成正确解法并定位第一处错误</div>
+            <div class="cap"><span class="cap-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 12 4 4 8-8"/></svg></span>推荐 1～3 个相关知识点</div>
+          </div>
+          <div class="privacy-note">Demo 说明：此处仅模拟 Codex 连接和 AI 处理流程，不会发起真实登录或上传数据。</div>
+        </div>
+        <div class="connect-success" id="connectSuccess">
+          <div class="success-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8.5 8.5 0 1 1-4.2-7.3"/><path d="m9 11 2 2 9-9"/></svg></div>
+          <h3>Codex 已连接</h3><p>现在可以使用 AI 整理与诊断能力</p>
+        </div>
+      </div>
+      <div class="modal-footer" id="connectFooter">
+        <button class="btn btn-ghost" id="manualContinueBtn">继续手动填写</button>
+        <button class="btn btn-primary" id="connectBtn">连接 Codex</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用确认弹窗 -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <div class="modal-icon" style="background:var(--red-soft);color:var(--red)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
+        </div>
+        <div><div class="modal-title">删除这张错题？</div><div class="modal-sub">删除后无法恢复，原始图片与整理内容都会一并移除。</div></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDelete">取消</button>
+        <button class="btn btn-danger" id="confirmDelete">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="demo-data.js"></script>
+  <script src="demo-render.js"></script>
+  <script src="demo-editor.js"></script>
+  <script src="demo-actions.js"></script>
+</body>
+</html>

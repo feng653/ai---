@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "question": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "userAnswer": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "correctAnswer": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "solution": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "errorLocation": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "errorReason": { "$ref": "#/$defs/stringSuggestionOrNull" },
+    "errorType": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "enum": [
+                "概念不清",
+                "方法错误",
+                "公式或定理使用错误",
+                "审题错误",
+                "计算错误",
+                "推理或步骤错误",
+                "无法判断"
+              ]
+            },
+            "uncertain": { "type": "boolean" },
+            "uncertainReason": { "type": ["string", "null"] },
+            "source": { "$ref": "#/$defs/source" }
+          },
+          "required": ["value", "uncertain", "uncertainReason", "source"],
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    },
+    "knowledgePoints": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "subject": { "type": "string" },
+                  "chapter": { "type": ["string", "null"] },
+                  "name": { "type": "string" }
+                },
+                "required": ["subject", "chapter", "name"],
+                "additionalProperties": false
+              }
+            },
+            "uncertain": { "type": "boolean" },
+            "uncertainReason": { "type": ["string", "null"] },
+            "source": { "$ref": "#/$defs/source" }
+          },
+          "required": ["value", "uncertain", "uncertainReason", "source"],
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "maxItems": 8
+    }
+  },
+  "required": [
+    "question",
+    "userAnswer",
+    "correctAnswer",
+    "solution",
+    "errorLocation",
+    "errorReason",
+    "errorType",
+    "knowledgePoints",
+    "warnings"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "string",
+      "enum": ["image", "user_text", "inference"]
+    },
+    "stringSuggestionOrNull": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "value": { "type": "string" },
+            "uncertain": { "type": "boolean" },
+            "uncertainReason": { "type": ["string", "null"] },
+            "source": { "$ref": "#/$defs/source" }
+          },
+          "required": ["value", "uncertain", "uncertainReason", "source"],
+          "additionalProperties": false
+        },
+        { "type": "null" }
+      ]
+    }
+  }
+}
