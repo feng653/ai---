@@ -20,10 +20,6 @@ export function AppShell() {
           <NavLink to="/cards/new"><CirclePlus size={18} />新增错题</NavLink>
           <NavLink to="/settings/ai"><Sparkles size={18} />AI 接入</NavLink>
         </nav>
-        <div className="local-note">
-          <span>本地优先</span>
-          <small>无需产品账号，手动功能离线可用</small>
-        </div>
       </aside>
 
       <main className="main-area">
