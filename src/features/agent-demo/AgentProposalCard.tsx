@@ -15,7 +15,9 @@ export function AgentProposalCard({ proposal, onApply, onReject }: Props) {
       <header>
         <span>{proposal.kind === "create" ? <FilePlus2 size={17} /> : <FileEdit size={17} />}</span>
         <div><strong>{proposal.kind === "create" ? "创建卡片提案" : "修改卡片提案"}</strong><small>确认后才会执行</small></div>
-        {completed && <em>{proposal.status === "applied" ? "已执行" : proposal.status === "rejected" ? "已拒绝" : "执行失败"}</em>}
+        {completed && <em>{proposal.status === "applied" ? "已执行"
+          : proposal.status === "rejected" ? "已拒绝"
+            : proposal.status === "superseded" ? "已被后续提案替代" : "执行失败"}</em>}
       </header>
       <div className="agent-proposal-fields">
         {proposal.changes.map((change) => <div key={change.label}>

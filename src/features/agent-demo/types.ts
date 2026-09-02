@@ -23,7 +23,7 @@ export type AgentProposal = {
   changes: AgentChange[];
   warnings: string[];
   newAssetIds: string[];
-  status: "pending" | "applying" | "applied" | "rejected" | "failed";
+  status: "pending" | "applying" | "applied" | "rejected" | "failed" | "superseded";
   error?: string;
 };
 

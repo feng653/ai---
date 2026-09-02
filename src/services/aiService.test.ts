@@ -26,7 +26,8 @@ describe("TauriAiService", () => {
     const service = new TauriAiService();
     const input = emptyCardInput();
 
-    await expect(service.organize(input, 2, progress, "修改答案")).resolves.toMatchObject({ runId: "run-1" });
+    await expect(service.organize(input, 2, progress, "再简短一点", ["先给出完整解法"]))
+      .resolves.toMatchObject({ runId: "run-1" });
 
     expect(progress).toHaveBeenCalledOnce();
     expect(progress).toHaveBeenCalledWith({ stage: "validating", message: "正在验证" });
@@ -35,7 +36,7 @@ describe("TauriAiService", () => {
       input,
       baseRevision: 2,
       requestId: expect.any(String),
-      agentInstruction: "修改答案",
+      agentTurn: { instruction: "再简短一点", history: ["先给出完整解法"] },
     });
   });
 });

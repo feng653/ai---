@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AiProposal } from "../../domain/ai";
 import type { Card, CardAsset } from "../../domain/card";
-import { buildAgentProposal, cardReferenceLabel, prepareAgentInput } from "./agentWorkflow";
+import { agentTarget, buildAgentProposal, cardReferenceLabel, prepareAgentInput } from "./agentWorkflow";
 
 const card: Card = {
   id: "card-1", subject: "数学", question: "求函数 $f(x)$ 的导数", userAnswer: "",
@@ -24,7 +24,7 @@ const ai: AiProposal = {
 describe("agent workflow", () => {
   it("builds a revision-checked update and skips uncertain fields", () => {
     const base = prepareAgentInput(card, [asset]);
-    const proposal = buildAgentProposal(ai, base, card, [asset]);
+    const proposal = buildAgentProposal(ai, base, agentTarget(card), [asset]);
 
     expect(proposal.kind).toBe("update");
     expect(proposal.targetId).toBe("card-1");

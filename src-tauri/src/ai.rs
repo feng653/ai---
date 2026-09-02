@@ -99,6 +99,7 @@ impl CodexProvider {
         base_revision: u64,
         asset_paths: Vec<PathBuf>,
         agent_instruction: Option<String>,
+        agent_history: Option<Vec<String>>,
         mut progress: F,
     ) -> Result<AiProposal, AppError>
     where
@@ -124,7 +125,12 @@ impl CodexProvider {
         let schema_path = directory.path().join("output.schema.json");
         let output_path = directory.path().join("proposal.json");
         std::fs::write(&schema_path, OUTPUT_SCHEMA)?;
-        let prompt = proposal::build_prompt(&input, images.len(), agent_instruction.as_deref())?;
+        let prompt = proposal::build_prompt(
+            &input,
+            images.len(),
+            agent_instruction.as_deref(),
+            agent_history.as_deref().unwrap_or(&[]),
+        )?;
         progress(AiProgress {
             stage: "analyzing",
             message: "Codex 正在分析题目与作答…".into(),

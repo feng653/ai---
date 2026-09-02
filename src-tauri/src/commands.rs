@@ -2,7 +2,7 @@ use crate::ai::{AiProgress, AiProposal, CodexProvider};
 use crate::domain::{Card, CardAsset, CardFilter, CardInput, ProviderStatus};
 use crate::error::AppError;
 use crate::storage::Storage;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{Emitter, State, Window};
 
@@ -77,23 +77,40 @@ pub async fn organize_card(
     input: CardInput,
     base_revision: u64,
     request_id: String,
-    agent_instruction: Option<String>,
+    agent_turn: Option<AgentTurn>,
 ) -> Result<AiProposal, AppError> {
     let asset_paths = storage.resolve_asset_paths(&input.assets)?;
     let provider = Arc::clone(provider.inner());
+    let (agent_instruction, agent_history) = agent_turn
+        .map(|turn| (Some(turn.instruction), Some(turn.history)))
+        .unwrap_or((None, None));
     tauri::async_runtime::spawn_blocking(move || {
-        provider.organize(input, base_revision, asset_paths, agent_instruction, |progress| {
-            let _ = window.emit(
-                "ai-progress",
-                AiProgressPayload {
-                    request_id: request_id.clone(),
-                    progress,
-                },
-            );
-        })
+        provider.organize(
+            input,
+            base_revision,
+            asset_paths,
+            agent_instruction,
+            agent_history,
+            |progress| {
+                let _ = window.emit(
+                    "ai-progress",
+                    AiProgressPayload {
+                        request_id: request_id.clone(),
+                        progress,
+                    },
+                );
+            },
+        )
     })
     .await
     .map_err(|error| AppError::new("PROVIDER_ERROR", format!("Codex 整理任务失败：{error}")))?
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentTurn {
+    instruction: String,
+    history: Vec<String>,
 }
 
 #[derive(Clone, Serialize)]

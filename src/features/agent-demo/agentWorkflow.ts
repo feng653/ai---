@@ -16,12 +16,18 @@ const LABELS: Record<ProposalKey, string> = {
 let sequence = 0;
 export const agentId = (prefix: string) => `${prefix}-${Date.now()}-${sequence++}`;
 
+export type AgentTarget = { id: string; label: string; revision: number };
+
 export function cardReferenceLabel(card: Card): string {
   const question = card.question.replace(/\s+/g, " ").trim();
   if (question) return question.length > 28 ? `${question.slice(0, 28)}…` : question;
   const point = card.knowledgePoints[0]?.name;
   return point ? `${point}（图片题）` : `图片错题 ${card.id.slice(0, 6)}`;
 }
+
+export const agentTarget = (card: Card): AgentTarget => ({
+  id: card.id, label: cardReferenceLabel(card), revision: card.revision,
+});
 
 function storedAsset(asset: CardAsset): CardAsset {
   const { previewUrl: _previewUrl, ...stored } = asset;
@@ -45,6 +51,13 @@ export function prepareAgentInput(target: Card | undefined, assets: CardAsset[])
   return { ...base, assets: [...base.assets, ...assets.map(storedAsset)] };
 }
 
+export function extendAgentInput(input: CardInput, assets: CardAsset[]): CardInput {
+  return {
+    ...structuredClone(input),
+    assets: [...input.assets.map(storedAsset), ...assets.map(storedAsset)],
+  };
+}
+
 function displayValue(key: ProposalKey, value: unknown): string {
   if (key !== "knowledgePoints") return String(value);
   return (value as Array<{ chapter?: string | null; name: string }>)
@@ -54,8 +67,9 @@ function displayValue(key: ProposalKey, value: unknown): string {
 export function buildAgentProposal(
   ai: AiProposal,
   base: CardInput,
-  target: Card | undefined,
+  target: AgentTarget | undefined,
   newAssets: CardAsset[],
+  inheritedAssetIds: string[] = [],
 ): AgentProposal {
   const accepted = (Object.keys(ai.fields) as ProposalKey[]).filter((key) => {
     const field = ai.fields[key];
@@ -74,18 +88,18 @@ export function buildAgentProposal(
     key: "assets", label: "新增图片", value: `${newAssets.length} 张`,
   });
   if (target) changes.unshift({
-    key: "target", label: "目标卡片", value: cardReferenceLabel(target),
+    key: "target", label: "目标卡片", value: target.label,
   });
   return {
     id: agentId("proposal"),
     kind: target ? "update" : "create",
     targetId: target?.id,
-    targetLabel: target && cardReferenceLabel(target),
+    targetLabel: target?.label,
     expectedRevision: target?.revision,
     input,
     changes,
     warnings: [...new Set([...ai.warnings, ...uncertainWarnings])],
-    newAssetIds: newAssets.map((asset) => asset.id),
+    newAssetIds: [...new Set([...inheritedAssetIds, ...newAssets.map((asset) => asset.id)])],
     status: "pending",
   };
 }
