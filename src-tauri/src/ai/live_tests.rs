@@ -3,7 +3,7 @@ use crate::domain::CardInput;
 
 #[test]
 #[ignore = "requires a logged-in Codex CLI and performs a real model call"]
-fn codex_live_text_proposal() {
+fn codex_live_agent_create_proposal() {
     let provider = CodexProvider::new();
     let status = provider
         .connect()
@@ -11,8 +11,8 @@ fn codex_live_text_proposal() {
     assert_eq!(status.state, "connected");
     let input = CardInput {
         subject: "数学".into(),
-        question: "解不等式 x² > 4".into(),
-        user_answer: "x > 2".into(),
+        question: String::new(),
+        user_answer: String::new(),
         correct_answer: String::new(),
         supplemental_note: String::new(),
         solution: String::new(),
@@ -23,15 +23,22 @@ fn codex_live_text_proposal() {
         assets: vec![],
     };
     let proposal = provider
-        .organize(input, 0, vec![], |_| {})
+        .organize(
+            input,
+            0,
+            vec![],
+            Some("创建一张卡片：解不等式 x² > 4".into()),
+            |_| {},
+        )
         .expect("real Codex run failed");
     let value = serde_json::to_value(proposal).unwrap();
-    assert_eq!(value["promptVersion"], "organize-card-v3-latex");
+    assert_eq!(value["promptVersion"], "agent-card-v4-latex");
+    assert!(value["fields"]["question"]["value"]
+        .as_str()
+        .is_some_and(|question| question.contains('4')));
     let answer = value["fields"]["correctAnswer"]["value"]
         .as_str()
         .expect("Codex must return a proposed correct answer");
     assert!(answer.contains("-2") && answer.contains('2') && answer.contains('$'));
-    assert!(value["fields"]["errorReason"]["value"]
-        .as_str()
-        .is_some_and(|reason| !reason.trim().is_empty()));
+    assert_eq!(value["fields"]["errorType"]["uncertain"], true);
 }

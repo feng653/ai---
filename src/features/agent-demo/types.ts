@@ -1,32 +1,36 @@
-export type DemoAttachment = {
+import type { CardInput } from "../../domain/card";
+
+export type AgentAttachment = {
   id: string;
   name: string;
   previewUrl: string;
+  file: File;
 };
 
-export type DemoCard = {
-  id: string;
-  title: string;
-  subject: string;
-  question: string;
-  correctAnswer: string;
-  errorReason: string;
-  status: "draft" | "organized";
+export type AgentChange = {
+  key: string;
+  label: string;
+  value: string;
 };
 
-export type DemoProposal = {
+export type AgentProposal = {
   id: string;
   kind: "create" | "update";
   targetId?: string;
-  patch: Partial<DemoCard>;
-  changes: Array<{ label: string; value: string }>;
-  status: "pending" | "applied" | "rejected";
+  targetLabel?: string;
+  expectedRevision?: number;
+  input: CardInput;
+  changes: AgentChange[];
+  warnings: string[];
+  newAssetIds: string[];
+  status: "pending" | "applying" | "applied" | "rejected" | "failed";
+  error?: string;
 };
 
-export type DemoMessage = {
+export type AgentMessage = {
   id: string;
   role: "user" | "agent";
   text: string;
-  attachments?: DemoAttachment[];
+  attachments?: AgentAttachment[];
   proposalId?: string;
 };

@@ -1,18 +1,19 @@
 import { ImagePlus, Send, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
-import { demoId } from "./demoAgent";
-import type { DemoAttachment, DemoCard } from "./types";
+import type { Card } from "../../domain/card";
+import { agentId, cardReferenceLabel } from "./agentWorkflow";
+import type { AgentAttachment } from "./types";
 
 type Props = {
   busy: boolean;
-  cards: DemoCard[];
-  onSend: (text: string, attachments: DemoAttachment[]) => void;
+  cards: Card[];
+  onSend: (text: string, attachments: AgentAttachment[], referencedCardIds: string[]) => void;
 };
 
-function readImage(file: File): Promise<DemoAttachment> {
+function readImage(file: File): Promise<AgentAttachment> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve({ id: demoId("image"), name: file.name, previewUrl: String(reader.result) });
+    reader.onload = () => resolve({ id: agentId("image"), name: file.name, previewUrl: String(reader.result), file });
     reader.onerror = () => reject(reader.error ?? new Error("图片读取失败"));
     reader.readAsDataURL(file);
   });
@@ -21,20 +22,23 @@ function readImage(file: File): Promise<DemoAttachment> {
 export function AgentComposer({ busy, cards, onSend }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
-  const [attachments, setAttachments] = useState<DemoAttachment[]>([]);
+  const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
+  const [referencedCards, setReferencedCards] = useState<Array<{ id: string; label: string }>>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [activeMention, setActiveMention] = useState(0);
   const mentionMatch = text.match(/@([^@\s]*)$/);
   const mentionQuery = mentionMatch?.[1].toLocaleLowerCase();
   const mentionCards = mentionMatch ? cards.filter((card) =>
-    !mentionQuery || card.title.toLocaleLowerCase().includes(mentionQuery)
+    !mentionQuery || cardReferenceLabel(card).toLocaleLowerCase().includes(mentionQuery)
       || card.question.toLocaleLowerCase().includes(mentionQuery)).slice(0, 5) : [];
 
-  const chooseMention = (card: DemoCard) => {
+  const chooseMention = (card: Card) => {
     if (!mentionMatch) return;
     const start = mentionMatch.index ?? text.length;
-    setText(`${text.slice(0, start)}@${card.title} `);
+    const label = cardReferenceLabel(card);
+    setText(`${text.slice(0, start)}@${label} `);
+    setReferencedCards((items) => [...items.filter((item) => item.id !== card.id), { id: card.id, label }]);
     setActiveMention(0);
   };
 
@@ -61,9 +65,11 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
 
   const submit = () => {
     if (busy || (!text.trim() && !attachments.length)) return;
-    onSend(text.trim(), attachments);
+    const references = referencedCards.filter((item) => text.includes(`@${item.label}`)).map((item) => item.id);
+    onSend(text.trim(), attachments, references);
     setText("");
     setAttachments([]);
+    setReferencedCards([]);
   };
 
   return (
@@ -110,7 +116,7 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
           aria-selected={index === activeMention}
           key={card.id}
           onMouseDown={(event) => { event.preventDefault(); chooseMention(card); }}
-        ><strong>@{card.title}</strong><span>{card.question}</span></button>)}
+        ><strong>@{cardReferenceLabel(card)}</strong><span>{card.question || "仅有图片的错题"}</span></button>)}
       </div>}
       {error && <small className="agent-input-error">{error}</small>}
       <footer>

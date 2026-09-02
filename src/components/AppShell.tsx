@@ -2,7 +2,7 @@ import { BookOpenCheck, CirclePlus, Search, Sparkles } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAiStatus, useConnectAi } from "../hooks/useAi";
 import { errorMessage } from "../services/errorMessage";
-import { AgentDemoWindow } from "../features/agent-demo/AgentDemoWindow";
+import { AgentWindow } from "../features/agent-demo/AgentWindow";
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export function AppShell() {
         </header>
         <Outlet />
       </main>
-      <AgentDemoWindow />
+      <AgentWindow />
     </div>
   );
 }

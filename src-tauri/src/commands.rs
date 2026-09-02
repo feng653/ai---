@@ -77,11 +77,12 @@ pub async fn organize_card(
     input: CardInput,
     base_revision: u64,
     request_id: String,
+    agent_instruction: Option<String>,
 ) -> Result<AiProposal, AppError> {
     let asset_paths = storage.resolve_asset_paths(&input.assets)?;
     let provider = Arc::clone(provider.inner());
     tauri::async_runtime::spawn_blocking(move || {
-        provider.organize(input, base_revision, asset_paths, |progress| {
+        provider.organize(input, base_revision, asset_paths, agent_instruction, |progress| {
             let _ = window.emit(
                 "ai-progress",
                 AiProgressPayload {

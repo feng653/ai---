@@ -40,12 +40,14 @@ fn output() -> &'static str {
 
 #[test]
 fn prompt_excludes_internal_asset_paths_and_marks_input_untrusted() {
-    let prompt = build_prompt(&input("x>2"), 1).unwrap();
+    let prompt = build_prompt(&input("x>2"), 1, Some("修改正确答案")).unwrap();
     assert!(prompt.contains("不可信数据"));
     assert!(prompt.contains("\"attachedImageCount\": 1"));
     assert!(!prompt.contains("private.png"));
     assert!(!prompt.contains("secret-id"));
     assert!(prompt.contains("行内公式写成 $...$"));
+    assert!(prompt.contains("修改正确答案"));
+    assert!(prompt.contains("其余字段必须返回 null"));
 }
 
 #[test]
