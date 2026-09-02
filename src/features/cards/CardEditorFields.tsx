@@ -1,5 +1,5 @@
 import { ImagePlus, X } from "lucide-react";
-import type { Dispatch, RefObject, SetStateAction } from "react";
+import { useState, type Dispatch, type DragEvent, type RefObject, type SetStateAction } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { AssetPreview } from "../../components/AssetPreview";
 import { ERROR_TYPES, type CardAsset, type CardInput, type KnowledgePoint } from "../../domain/card";
@@ -17,7 +17,7 @@ type Props = {
   setPointDraft: Dispatch<SetStateAction<string>>;
   setKnowledgePoints: Dispatch<SetStateAction<KnowledgePoint[]>>;
   addKnowledgePoint: () => void;
-  importImage: (file?: File) => Promise<void>;
+  selectImage: (file?: File) => void;
   removeAsset: (asset: CardAsset) => Promise<void>;
 };
 
@@ -25,8 +25,14 @@ export function CardEditorFields(props: Props) {
   const {
     form, assets, knowledgePoints, chapterDraft, pointDraft, fileInput,
     setChapterDraft, setPointDraft, setKnowledgePoints,
-    addKnowledgePoint, importImage, removeAsset,
+    addKnowledgePoint, selectImage, removeAsset,
   } = props;
+  const [draggingImage, setDraggingImage] = useState(false);
+  const acceptDrop = (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setDraggingImage(false);
+    selectImage(Array.from(event.dataTransfer.files).find((file) => file.type.startsWith("image/")));
+  };
   return (
     <>
       <section className="editor-section">
@@ -38,15 +44,25 @@ export function CardEditorFields(props: Props) {
               <button type="button" aria-label="删除图片" onClick={() => removeAsset(asset)}><X size={15} /></button>
             </div>
           ))}
-          <button className="upload-zone" type="button" onClick={() => fileInput.current?.click()}>
-            <ImagePlus size={25} /><strong>选择题目图片</strong><small>支持 PNG、JPG、WebP，最大 15MB</small>
+          <button
+            className={`upload-zone${draggingImage ? " dragging" : ""}`}
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            onDragEnter={(event) => { event.preventDefault(); setDraggingImage(true); }}
+            onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDraggingImage(false);
+            }}
+            onDrop={acceptDrop}
+          >
+            <ImagePlus size={25} /><strong>选择或拖入题目图片</strong><small>支持 PNG、JPG、WebP，最大 15MB</small>
           </button>
           <input
             ref={fileInput}
             type="file"
             accept="image/png,image/jpeg,image/webp"
             hidden
-            onChange={(event) => importImage(event.target.files?.[0])}
+            onChange={(event) => selectImage(event.target.files?.[0])}
           />
         </div>
         <label className="field full"><span>题目</span><textarea {...form.register("question")} placeholder="输入题目内容；只有图片时也可以先保存" rows={4} /></label>

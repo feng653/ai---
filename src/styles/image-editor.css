@@ -1,0 +1,44 @@
+.image-editor-backdrop {
+  position: fixed; inset: 0; z-index: 200; padding: 24px;
+  display: grid; place-items: center; background: rgba(17, 24, 20, .62); backdrop-filter: blur(5px);
+}
+.image-editor-dialog {
+  width: min(1050px, 100%); max-height: calc(100vh - 48px); overflow: hidden;
+  display: flex; flex-direction: column; border-radius: 18px; background: #fff; box-shadow: var(--shadow-lg);
+}
+.image-editor-dialog > header { padding: 18px 20px; display: flex; align-items: flex-start; border-bottom: 1px solid var(--line); }
+.image-editor-dialog h2 { margin: 0; font: 700 19px Georgia, "Songti SC", serif; }
+.image-editor-dialog header p { margin: 5px 0 0; color: var(--ink-3); font-size: 11px; }
+.image-editor-dialog header button {
+  width: 36px; height: 36px; margin-left: auto; border: 0; border-radius: 10px; display: grid; place-items: center; background: var(--surface-soft);
+}
+.image-editor-toolbar { padding: 10px 20px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--line); background: #fafbf9; }
+.image-editor-toolbar button {
+  min-height: 36px; padding: 0 11px; display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 11px;
+}
+.image-editor-toolbar span { margin-left: auto; display: flex; align-items: center; gap: 5px; color: var(--ink-3); font-size: 10px; }
+.image-editor-stage { min-height: 260px; padding: 18px; overflow: auto; display: grid; place-items: center; background: #252b27; }
+.image-editor-canvas-wrap { position: relative; max-width: 100%; overflow: hidden; line-height: 0; cursor: crosshair; touch-action: none; user-select: none; }
+.image-editor-canvas-wrap[hidden] { display: none; }
+.image-editor-canvas-wrap canvas { display: block; max-width: 100%; max-height: calc(100vh - 310px); width: auto; height: auto; }
+.crop-selection { position: absolute; border: 2px solid #fff; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .34), 0 0 0 1px rgba(0, 0, 0, .45); }
+.crop-selection i { width: 9px; height: 9px; position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.crop-selection i:nth-child(1) { left: -5px; top: -5px; }
+.crop-selection i:nth-child(2) { right: -5px; top: -5px; }
+.crop-selection i:nth-child(3) { right: -5px; bottom: -5px; }
+.crop-selection i:nth-child(4) { left: -5px; bottom: -5px; }
+.image-editor-loading { min-height: 260px; display: flex; align-items: center; gap: 9px; color: #fff; font-size: 12px; }
+.image-editor-error { margin: 10px 20px 0; padding: 9px 11px; border-radius: 9px; color: var(--red); background: var(--red-soft); font-size: 11px; }
+.image-editor-dialog > footer { padding: 13px 20px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); }
+.image-editor-dialog footer small { margin-right: auto; color: var(--ink-3); font-size: 9px; }
+
+@media (max-width: 640px) {
+  .image-editor-backdrop { padding: 0; }
+  .image-editor-dialog { max-height: 100vh; height: 100vh; border-radius: 0; }
+  .image-editor-toolbar { flex-wrap: wrap; }
+  .image-editor-toolbar span { width: 100%; margin-left: 0; }
+  .image-editor-stage { padding: 10px; }
+  .image-editor-canvas-wrap canvas { max-height: calc(100vh - 350px); }
+  .image-editor-dialog footer small { display: none; }
+}

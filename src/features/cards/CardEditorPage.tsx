@@ -11,6 +11,8 @@ import { cardService } from "../../services/cardService";
 import { errorMessage as getErrorMessage } from "../../services/errorMessage";
 import { AiReviewPanel } from "./AiReviewPanel";
 import { CardEditorFields, type CardFormValues } from "./CardEditorFields";
+import { ImageEditorDialog } from "../images/ImageEditorDialog";
+import { useImageImport } from "../images/useImageImport";
 
 const scalarKeys: (keyof CardFormValues)[] = [
   "subject", "question", "userAnswer", "correctAnswer", "supplementalNote",
@@ -48,11 +50,11 @@ export function CardEditorPage() {
   const [proposal, setProposal] = useState<AiProposal | null>(null);
   const [acceptedFields, setAcceptedFields] = useState<ProposalKey[]>([]);
   const [proposalBase, setProposalBase] = useState<CardInput | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
   const initialized = useRef(false);
   const draftKey = `zhishi.editor-draft.${id ?? "new"}`;
   const form = useForm<CardFormValues>({ defaultValues: formValues(emptyCardInput()) });
   const watched = form.watch();
+  const imageImport = useImageImport(setAssets, setErrorMessage);
 
   useEffect(() => {
     if (initialized.current || (id && cardQuery.isLoading)) return;
@@ -126,17 +128,6 @@ export function CardEditorPage() {
       subject: form.getValues("subject") || "未分类", chapter: chapterDraft.trim() || null, name,
     }]);
     setPointDraft("");
-  };
-
-  const importImage = async (file?: File) => {
-    if (!file) return;
-    setErrorMessage("");
-    try {
-      const asset = await cardService.importAsset(file);
-      setAssets((items) => [...items, asset]);
-    }
-    catch (error) { setErrorMessage(getErrorMessage(error, "图片导入失败")); }
-    finally { if (fileInput.current) fileInput.current.value = ""; }
   };
 
   const removeAsset = async (asset: CardAsset) => {
@@ -216,16 +207,23 @@ export function CardEditorPage() {
         <div className="editor-main">
           {errorMessage && <div className="inline-error" role="alert">{errorMessage}</div>}
           <CardEditorFields form={form} assets={assets} knowledgePoints={knowledgePoints}
-            chapterDraft={chapterDraft} pointDraft={pointDraft} fileInput={fileInput}
+            chapterDraft={chapterDraft} pointDraft={pointDraft} fileInput={imageImport.fileInput}
             setChapterDraft={setChapterDraft} setPointDraft={setPointDraft}
             setKnowledgePoints={setKnowledgePoints} addKnowledgePoint={addKnowledgePoint}
-            importImage={importImage} removeAsset={removeAsset} />
+            selectImage={imageImport.selectImage} removeAsset={removeAsset} />
         </div>
         <AiReviewPanel progress={progress} proposal={proposal} acceptedFields={acceptedFields}
           connected={aiStatus.data?.state === "connected"} connecting={connectAi.isPending}
           setProposal={setProposal} setAcceptedFields={setAcceptedFields}
           isFieldConflict={isFieldConflict} organize={organize} applyProposal={applyProposal} />
       </form>
+      {imageImport.pendingImage && (
+        <ImageEditorDialog
+          file={imageImport.pendingImage}
+          onCancel={imageImport.cancelImageEdit}
+          onConfirm={imageImport.importEditedImage}
+        />
+      )}
     </div>
   );
 }

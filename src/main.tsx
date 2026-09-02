@@ -5,6 +5,7 @@ import { HashRouter } from "react-router-dom";
 import App from "./App";
 import "katex/dist/katex.min.css";
 import "./styles/global.css";
+import "./styles/image-editor.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
