@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Frontend build and coverage
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Tauri / Rust build
+src-tauri/target/
+target/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local application data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+attachments/
+backups/
+
+# Logs
+*.log
+logs/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
