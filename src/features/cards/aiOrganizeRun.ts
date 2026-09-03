@@ -14,6 +14,7 @@ const idleRun: AiOrganizeRun = Object.freeze({ status: "idle" });
 export class AiOrganizeRunStore {
   private readonly runs = new Map<string, AiOrganizeRun>();
   private readonly listeners = new Map<string, Set<() => void>>();
+  private readonly operationKeys = new Map<string, string>();
 
   constructor(private readonly service: Pick<AiService, "organize"> = aiService) {}
 
@@ -35,36 +36,54 @@ export class AiOrganizeRunStore {
     if (this.get(key).status === "running") return;
     const operationId = crypto.randomUUID();
     const base = structuredClone(input);
+    this.operationKeys.set(operationId, key);
     this.set(key, {
       status: "running", operationId, input: base,
       progress: { stage: "preparing", message: "正在启动 AI 整理…" },
     });
-    void this.execute(key, operationId, base, baseRevision);
+    void this.execute(operationId, base, baseRevision);
   }
 
   dismiss(key: string): void {
     if (this.get(key).status === "running") return;
+    this.discard(key);
+  }
+
+  move(from: string, to: string): void {
+    const run = this.runs.get(from);
+    if (!run || from === to) return;
+    this.runs.delete(from);
+    this.runs.set(to, run);
+    if ("operationId" in run) this.operationKeys.set(run.operationId, to);
+    this.emit(from);
+    this.emit(to);
+  }
+
+  discard(key: string): void {
+    const run = this.runs.get(key);
+    if (run && "operationId" in run) this.operationKeys.delete(run.operationId);
     this.runs.delete(key);
     this.emit(key);
   }
 
   private async execute(
-    key: string,
     operationId: string,
     input: CardInput,
     baseRevision: number,
   ): Promise<void> {
     try {
       const proposal = await this.service.organize(input, baseRevision, (progress) => {
-        if (!this.isCurrent(key, operationId)) return;
-        this.set(key, { status: "running", operationId, input, progress });
+        const currentKey = this.currentKey(operationId);
+        if (currentKey) this.set(currentKey, { status: "running", operationId, input, progress });
       });
-      if (this.isCurrent(key, operationId)) {
-        this.set(key, { status: "succeeded", operationId, input, proposal });
+      const currentKey = this.currentKey(operationId);
+      if (currentKey) {
+        this.set(currentKey, { status: "succeeded", operationId, input, proposal });
       }
     } catch (error) {
-      if (this.isCurrent(key, operationId)) {
-        this.set(key, {
+      const currentKey = this.currentKey(operationId);
+      if (currentKey) {
+        this.set(currentKey, {
           status: "failed", operationId, input,
           message: errorMessage(error, "AI 整理失败，原始内容已保留"),
         });
@@ -72,9 +91,11 @@ export class AiOrganizeRunStore {
     }
   }
 
-  private isCurrent(key: string, operationId: string): boolean {
+  private currentKey(operationId: string): string | undefined {
+    const key = this.operationKeys.get(operationId);
+    if (!key) return undefined;
     const run = this.runs.get(key);
-    return Boolean(run && "operationId" in run && run.operationId === operationId);
+    return run && "operationId" in run && run.operationId === operationId ? key : undefined;
   }
 
   private set(key: string, run: AiOrganizeRun): void {

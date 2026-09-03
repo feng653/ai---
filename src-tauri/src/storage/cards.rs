@@ -93,9 +93,14 @@ impl Storage {
         input: CardInput,
         id: Option<String>,
         expected_revision: Option<u64>,
+        force_draft: bool,
     ) -> Result<Card, AppError> {
         validate_input(&input)?;
-        let status = calculate_status(&input);
+        let status = if force_draft {
+            crate::domain::CardStatus::Draft
+        } else {
+            calculate_status(&input)
+        };
         let now = Utc::now().to_rfc3339();
         let card_id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
         let mut connection = self.lock()?;

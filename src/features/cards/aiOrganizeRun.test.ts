@@ -52,4 +52,20 @@ describe("AiOrganizeRunStore", () => {
     store.dismiss("card:2");
     expect(store.get("card:2")).toEqual({ status: "idle" });
   });
+
+  it("moves an active new-card run to the saved draft", async () => {
+    let finish: ((value: typeof proposal) => void) | undefined;
+    const organize = vi.fn(() => new Promise<typeof proposal>((resolve) => { finish = resolve; }));
+    const store = new AiOrganizeRunStore({ organize });
+    store.start("card-editor:new", emptyCardInput(), 0);
+
+    store.move("card-editor:new", "card-editor:saved-1");
+    expect(store.get("card-editor:new")).toEqual({ status: "idle" });
+    expect(store.get("card-editor:saved-1")).toMatchObject({ status: "running" });
+    finish?.(proposal);
+
+    await vi.waitFor(() => expect(store.get("card-editor:saved-1")).toMatchObject({
+      status: "succeeded", proposal: { runId: "run-1" },
+    }));
+  });
 });

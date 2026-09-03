@@ -61,7 +61,7 @@ export class BrowserCardService implements CardService {
     return loadCards().find((card) => card.id === id) ?? null;
   }
 
-  async save({ id, input, expectedRevision }: SaveCardRequest): Promise<Card> {
+  async save({ id, input, expectedRevision, forceDraft }: SaveCardRequest): Promise<Card> {
     const cards = loadCards();
     const index = id ? cards.findIndex((card) => card.id === id) : -1;
     const existing = index >= 0 ? cards[index] : undefined;
@@ -74,7 +74,7 @@ export class BrowserCardService implements CardService {
       id: existing?.id ?? crypto.randomUUID(),
       kind: existing?.kind ?? "mistake",
       sourceRevisions: existing?.sourceRevisions ?? [],
-      status: calculateCardStatus(input),
+      status: forceDraft ? "draft" : calculateCardStatus(input),
       revision: (existing?.revision ?? 0) + 1,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,

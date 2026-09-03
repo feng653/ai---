@@ -12,7 +12,7 @@ beforeEach(() => mockedInvoke.mockReset());
 
 describe("TauriCardService IPC contract", () => {
   it("sends save arguments at the command top level", async () => {
-    const request = { id: "card-1", input: emptyCardInput(), expectedRevision: 2 };
+    const request = { id: "card-1", input: emptyCardInput(), expectedRevision: 2, forceDraft: true };
     mockedInvoke.mockResolvedValue({ id: "card-1" });
 
     await service.save(request);

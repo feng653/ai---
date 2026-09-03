@@ -67,7 +67,7 @@ fn create_is_deferred_until_the_single_use_approval_is_accepted() {
 fn update_refuses_a_stale_revision_before_requesting_approval() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();
-    let saved = storage.save_card(input("原题"), None, None).unwrap();
+    let saved = storage.save_card(input("原题"), None, None, false).unwrap();
     let mut request = call("cards.update");
     request.card_id = Some(saved.id);
     request.expected_revision = Some(0);

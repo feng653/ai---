@@ -39,7 +39,7 @@ export function CardDetailPage() {
       <section className="detail-heading">
         <div>
           {item.kind === "practice" && <span className="practice-kind">习题卡</span>}
-          <span className={`card-status ${item.status}`}>{item.status === "organized" ? "已整理" : "待完善"}</span>
+          <span className={`card-status ${item.status}`}>{item.status === "organized" ? "已整理" : "草稿"}</span>
           <span>{item.subject || "未分类"}</span>
         </div>
         <MathContent className="detail-question">{item.question || "仅保存了原始图片"}</MathContent>

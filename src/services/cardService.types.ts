@@ -4,6 +4,7 @@ export type SaveCardRequest = {
   id?: string;
   input: CardInput;
   expectedRevision?: number;
+  forceDraft?: boolean;
 };
 
 export type PracticeCardDraft = {

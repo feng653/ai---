@@ -11,28 +11,12 @@ import { errorMessage as getErrorMessage } from "../../services/errorMessage";
 import { AiReviewPanel } from "./AiReviewPanel";
 import { aiOrganizeRuns } from "./aiOrganizeRun";
 import { CardEditorFields, type CardFormValues } from "./CardEditorFields";
+import { comparableInput, formValues, scalarKeys, storableAssets } from "./cardEditorModel";
+import { NewCardLeaveDialog } from "./NewCardLeaveDialog";
 import { ImageEditorDialog } from "../images/ImageEditorDialog";
 import { useImageImport } from "../images/useImageImport";
 import { useAiOrganizeRun } from "./useAiOrganizeRun";
-
-const scalarKeys: (keyof CardFormValues)[] = [
-  "subject", "question", "userAnswer", "correctAnswer", "supplementalNote",
-  "solution", "errorLocation", "errorReason", "errorType",
-];
-
-function formValues(input: CardInput): CardFormValues {
-  return Object.fromEntries(scalarKeys.map((key) => [key, input[key]])) as CardFormValues;
-}
-
-function storableAssets(assets: CardAsset[]): CardAsset[] {
-  return assets.map((asset) => asset.previewUrl?.startsWith("blob:")
-    ? { ...asset, previewUrl: undefined }
-    : asset);
-}
-
-function comparableInput(input: CardInput): CardInput {
-  return { ...input, assets: storableAssets(input.assets) };
-}
+import { useNewCardLeave } from "./useNewCardLeave";
 
 export function CardEditorPage() {
   const { id } = useParams();
@@ -98,6 +82,11 @@ export function CardEditorPage() {
   const draftSnapshot = useMemo(() => JSON.stringify({ values: watched, knowledgePoints,
     assets: storableAssets(assets), baseRevision: cardQuery.data?.revision }),
   [assets, cardQuery.data?.revision, knowledgePoints, watched]);
+  const newCardLeave = useNewCardLeave({
+    input: currentInput, draftKey, aiRunKey,
+    saveCard: (request) => saveCard.mutateAsync(request),
+    onError: setErrorMessage, onLeave: () => navigate("/"),
+  });
 
   useEffect(() => {
     if (!initialized.current || !hasUnsavedChanges) return;
@@ -121,6 +110,7 @@ export function CardEditorPage() {
   }, [hasUnsavedChanges]);
 
   const closeEditor = () => {
+    if (!id) { newCardLeave.request(); return; }
     if (hasUnsavedChanges && !window.confirm("当前修改已自动保存为草稿。确定离开吗？")) return;
     localStorage.setItem(draftKey, JSON.stringify({
       values: form.getValues(), knowledgePoints, assets: storableAssets(assets),
@@ -157,6 +147,7 @@ export function CardEditorPage() {
       const savedIds = new Set(saved.assets.map((asset) => asset.id));
       await Promise.allSettled((cardQuery.data?.assets ?? [])
         .filter((asset) => !savedIds.has(asset.id)).map((asset) => cardService.deleteAsset(asset.id)));
+      if (!id) aiOrganizeRuns.move(aiRunKey, `card-editor:${saved.id}`);
       localStorage.removeItem(draftKey);
       navigate(`/cards/${saved.id}`);
     } catch (error) {
@@ -242,6 +233,9 @@ export function CardEditorPage() {
           onConfirm={imageImport.importEditedImage}
         />
       )}
+      <NewCardLeaveDialog open={newCardLeave.open} aiRunning={aiRun.status === "running"}
+        saving={newCardLeave.saving} canSave={newCardLeave.canSave}
+        onCancel={newCardLeave.cancel} onDiscard={newCardLeave.discard} onSave={newCardLeave.save} />
     </div>
   );
 }

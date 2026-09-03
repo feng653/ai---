@@ -38,7 +38,7 @@ fn execute_pending(
             value.assets = pending.assets.clone();
             (
                 "卡片已创建。".into(),
-                Some(storage.save_card(value, None, None)?),
+                Some(storage.save_card(value, None, None, false)?),
                 None,
             )
         }
@@ -51,8 +51,12 @@ fn execute_pending(
             let mut input = card_input(&card);
             apply_changes(&mut input, changes);
             input.assets.extend(pending.assets.clone());
-            let saved =
-                storage.save_card(input, Some(card_id.clone()), Some(*expected_revision))?;
+            let saved = storage.save_card(
+                input,
+                Some(card_id.clone()),
+                Some(*expected_revision),
+                false,
+            )?;
             (
                 format!("卡片已更新到 revision {}。", saved.revision),
                 Some(saved),

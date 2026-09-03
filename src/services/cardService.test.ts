@@ -42,6 +42,17 @@ describe("BrowserCardService", () => {
     await expect(service.get(saved.id)).resolves.toMatchObject({ question: "新题目", revision: 1 });
   });
 
+  it("forces a complete new card to remain a draft when leaving the editor", async () => {
+    const saved = await service.save({
+      forceDraft: true,
+      input: {
+        ...emptyCardInput(), question: "完整题目", solution: "完整解法",
+        knowledgePoints: [{ subject: "数学", chapter: "函数", name: "单调性" }],
+      },
+    });
+    expect(saved.status).toBe("draft");
+  });
+
   it("saves practice cards with source revisions and filters them separately", async () => {
     const source = (await service.list({ kind: "mistake" }))[0];
     const [saved] = await service.savePracticeCards([{

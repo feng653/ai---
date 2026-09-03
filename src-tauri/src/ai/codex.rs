@@ -1,4 +1,4 @@
-use super::codex_agent::stage_images;
+use super::codex_assets::stage_images;
 use super::codex_auth::{login, logout};
 use super::process::{execute, probe, ExecutionPaths};
 use super::proposal;

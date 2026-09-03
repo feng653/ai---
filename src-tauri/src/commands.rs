@@ -28,8 +28,9 @@ pub fn save_card(
     input: CardInput,
     id: Option<String>,
     expected_revision: Option<u64>,
+    force_draft: Option<bool>,
 ) -> Result<Card, AppError> {
-    storage.save_card(input, id, expected_revision)
+    storage.save_card(input, id, expected_revision, force_draft.unwrap_or(false))
 }
 
 #[tauri::command]

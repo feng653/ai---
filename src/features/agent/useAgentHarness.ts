@@ -3,7 +3,6 @@ import type {
   AgentMode, AgentReasoningEffort, AgentTimelineItem, AgentToolManifest,
 } from "../../domain/agent";
 import type { CardAsset } from "../../domain/card";
-import { useAiStatus, useConnectAi } from "../../hooks/useAi";
 import { useCards } from "../../hooks/useCards";
 import { agentService } from "../../services/agentService";
 import { cardService } from "../../services/cardService";
@@ -19,8 +18,6 @@ export function useAgentHarness() {
   const [activeRunId, setActiveRunId] = useState<string>();
   const cancelledRuns = useRef(new Set<string>());
   const cardsQuery = useCards();
-  const aiStatus = useAiStatus();
-  const connectAi = useConnectAi();
 
   useEffect(() => {
     void agentService.listTools().then(setTools).catch(() => setTools([]));
@@ -36,10 +33,6 @@ export function useAgentHarness() {
     const assets: CardAsset[] = [];
     const runId = crypto.randomUUID();
     try {
-      if (!agentService.preview && aiStatus.data?.state !== "connected") {
-        const status = await connectAi.mutateAsync();
-        if (status.state !== "connected") throw new Error(status.message || "当前 AI 服务不可用");
-      }
       for (const attachment of attachments) assets.push(await cardService.importAsset(attachment.file));
       dispatch({ type: "user", item: {
         id: `message-${crypto.randomUUID()}`,
@@ -96,6 +89,7 @@ export function useAgentHarness() {
     items, mode, setMode, reasoning, setReasoning, tools,
     cards: cardsQuery.data ?? [], cardsLoading: cardsQuery.isLoading,
     busy: Boolean(activeRunId), preview: agentService.preview,
-    provider: aiStatus.data?.provider, send, cancel, resolveApproval, newConversation,
+    provider: agentService.preview ? undefined : "项目内 API Runtime",
+    send, cancel, resolveApproval, newConversation,
   };
 }

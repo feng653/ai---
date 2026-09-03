@@ -11,7 +11,7 @@ type Props = {
   onCreate: () => void;
 };
 
-const statusLabel: Record<CardStatus, string> = { draft: "待完善", organized: "已整理" };
+const statusLabel: Record<CardStatus, string> = { draft: "草稿", organized: "已整理" };
 
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);

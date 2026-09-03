@@ -28,7 +28,7 @@ fn input() -> CardInput {
 fn persists_searches_and_checks_revisions() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();
-    let saved = storage.save_card(input(), None, None).unwrap();
+    let saved = storage.save_card(input(), None, None, false).unwrap();
     assert_eq!(saved.revision, 1);
     assert_eq!(storage.get_card(&saved.id).unwrap().question, "解 x² > 4");
     let matches = storage
@@ -39,16 +39,24 @@ fn persists_searches_and_checks_revisions() {
         .unwrap();
     assert_eq!(matches.len(), 1);
     let error = storage
-        .save_card(input(), Some(saved.id), Some(0))
+        .save_card(input(), Some(saved.id), Some(0), false)
         .unwrap_err();
     assert_eq!(error.code, "REVISION_CONFLICT");
+}
+
+#[test]
+fn leaving_the_new_editor_can_force_a_complete_card_to_remain_draft() {
+    let directory = tempfile::tempdir().unwrap();
+    let storage = Storage::open(directory.path()).unwrap();
+    let saved = storage.save_card(input(), None, None, true).unwrap();
+    assert_eq!(saved.status, crate::domain::CardStatus::Draft);
 }
 
 #[test]
 fn practice_cards_preserve_source_revisions_and_filter_by_kind() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();
-    let source = storage.save_card(input(), None, None).unwrap();
+    let source = storage.save_card(input(), None, None, false).unwrap();
     let mut practice = input();
     practice.question = "同知识点变式题".into();
     practice.user_answer.clear();
@@ -89,7 +97,7 @@ fn practice_cards_preserve_source_revisions_and_filter_by_kind() {
 fn practice_generation_refuses_a_stale_source_revision() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();
-    let source = storage.save_card(input(), None, None).unwrap();
+    let source = storage.save_card(input(), None, None, false).unwrap();
     let error = storage
         .save_practice_cards(vec![PracticeCardDraft {
             input: input(),
@@ -106,19 +114,19 @@ fn practice_generation_refuses_a_stale_source_revision() {
 fn filters_cards_at_each_knowledge_level() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();
-    storage.save_card(input(), None, None).unwrap();
+    storage.save_card(input(), None, None, false).unwrap();
     let mut physics = input();
     physics.subject = "物理".into();
     physics.question = "求物体加速度".into();
     physics.knowledge_points[0].subject = "物理".into();
     physics.knowledge_points[0].chapter = Some("力学".into());
     physics.knowledge_points[0].name = "牛顿第二定律".into();
-    storage.save_card(physics, None, None).unwrap();
+    storage.save_card(physics, None, None, false).unwrap();
     let mut uncategorized = input();
     uncategorized.question = "综合题".into();
     uncategorized.knowledge_points[0].chapter = None;
     uncategorized.knowledge_points[0].name = "综合应用".into();
-    storage.save_card(uncategorized, None, None).unwrap();
+    storage.save_card(uncategorized, None, None, false).unwrap();
 
     let count = |filter| storage.list_cards(filter).unwrap().len();
     assert_eq!(
@@ -178,7 +186,7 @@ fn imports_reads_and_deletes_an_image_with_its_card() {
     let mut card_input = input();
     card_input.question.clear();
     card_input.assets = vec![asset.clone()];
-    let card = storage.save_card(card_input, None, None).unwrap();
+    let card = storage.save_card(card_input, None, None, false).unwrap();
     storage.delete_card(&card.id).unwrap();
     assert_eq!(storage.read_asset(&asset.id).unwrap_err().code, "NOT_FOUND");
 }

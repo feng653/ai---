@@ -64,7 +64,7 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
     <div className="connection-heading"><ProviderMark kind="codex" initials="C" logo="/brands/codex.png" />
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已登录" : "尚未连接"}</span>
-        <h2 id="codex-title">连接 Codex</h2><p>使用浏览器完成登录，知拾不会读取或复用本机 Codex 凭据。</p></div></div>
+        <h2 id="codex-title">连接 Codex</h2><p>仅用于 AI 整理；独立 Agent 使用你配置的 API 服务，不调用 Codex CLI。</p></div></div>
     <div className="login-flow">
       <div><span>1</span><strong>打开登录页面</strong><small>由 Codex 启动官方授权页</small></div><i />
       <div><span>2</span><strong>完成账号授权</strong><small>登录信息仅在官方网页填写</small></div><i />

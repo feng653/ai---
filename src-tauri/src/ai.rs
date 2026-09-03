@@ -2,7 +2,7 @@ mod api_agent;
 mod api_client;
 mod api_learning;
 mod codex;
-mod codex_agent;
+mod codex_assets;
 mod codex_auth;
 mod codex_learning;
 mod deepseek;
