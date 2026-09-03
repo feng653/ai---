@@ -28,27 +28,28 @@ function ProposalValue({ field, value }: { field: ProposalKey; value: unknown })
 type Props = {
   progress: AiProgress | null;
   proposal: AiProposal | null;
+  runError: string | null;
   acceptedFields: ProposalKey[];
   connected: boolean;
   connecting: boolean;
-  setProposal: Dispatch<SetStateAction<AiProposal | null>>;
   setAcceptedFields: Dispatch<SetStateAction<ProposalKey[]>>;
   isFieldConflict: (key: ProposalKey) => boolean;
   organize: () => Promise<void>;
   applyProposal: () => void;
+  dismissRun: () => void;
 };
 
 export function AiReviewPanel(props: Props) {
-  const { progress, proposal, acceptedFields, connected, connecting,
-    setProposal, setAcceptedFields, isFieldConflict, organize, applyProposal } = props;
+  const { progress, proposal, runError, acceptedFields, connected, connecting,
+    setAcceptedFields, isFieldConflict, organize, applyProposal, dismissRun } = props;
   return (
     <aside className="ai-review-panel">
       <div className="ai-panel-heading"><span><Sparkles size={18} /></span><div><h2>AI 整理</h2><p>建议不会自动覆盖你的内容</p></div></div>
       {progress ? (
-        <div className="ai-progress"><LoaderCircle className="spin" size={22} /><strong>{progress.message}</strong><small>原始输入已保留，请不要关闭应用</small></div>
+        <div className="ai-progress" role="status" aria-live="polite" aria-atomic="true"><LoaderCircle className="spin" size={22} /><strong>{progress.message}</strong><small>可以离开本页，返回后仍可查看进度和结果</small></div>
       ) : proposal ? (
         <div className="proposal-review">
-          <div className="success-note">已生成整理建议，请逐项确认。</div>
+          <div className="success-note" role="status">已生成整理建议，请逐项确认。</div>
           {proposal.warnings.map((warning) => <p className="proposal-warning" key={warning}>{warning}</p>)}
           {(Object.keys(proposal.fields) as ProposalKey[]).map((key) => {
             const suggestion = proposal.fields[key];
@@ -71,8 +72,16 @@ export function AiReviewPanel(props: Props) {
             );
           })}
           <div className="proposal-actions">
-            <button type="button" className="button ghost" onClick={() => setProposal(null)}>拒绝全部</button>
+            <button type="button" className="button ghost" onClick={dismissRun}>拒绝全部</button>
             <button type="button" className="button primary" disabled={!acceptedFields.length} onClick={applyProposal}>接受所选</button>
+          </div>
+        </div>
+      ) : runError ? (
+        <div className="ai-idle">
+          <div className="inline-error" role="alert">上次 AI 整理未完成：{runError}</div>
+          <div className="proposal-actions">
+            <button type="button" className="button ghost" onClick={dismissRun}>忽略</button>
+            <button type="button" className="button primary" onClick={organize} disabled={connecting}>重新整理</button>
           </div>
         </div>
       ) : (

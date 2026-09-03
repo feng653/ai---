@@ -2,17 +2,18 @@ import { ArrowLeft, Cloud, LoaderCircle, RefreshCw, Save, Trash2 } from "lucide-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { applyAiProposal, getDefaultAcceptedFields, type AiProposal, type ProposalKey } from "../../domain/ai";
+import { applyAiProposal, type ProposalKey } from "../../domain/ai";
 import { emptyCardInput, validateCardInput, type CardAsset, type CardInput, type KnowledgePoint } from "../../domain/card";
 import { useAiStatus, useConnectAi } from "../../hooks/useAi";
 import { useCard, useCards, useDeleteCard, useSaveCard } from "../../hooks/useCards";
-import { aiService, type AiProgress } from "../../services/aiService";
 import { cardService } from "../../services/cardService";
 import { errorMessage as getErrorMessage } from "../../services/errorMessage";
 import { AiReviewPanel } from "./AiReviewPanel";
+import { aiOrganizeRuns } from "./aiOrganizeRun";
 import { CardEditorFields, type CardFormValues } from "./CardEditorFields";
 import { ImageEditorDialog } from "../images/ImageEditorDialog";
 import { useImageImport } from "../images/useImageImport";
+import { useAiOrganizeRun } from "./useAiOrganizeRun";
 
 const scalarKeys: (keyof CardFormValues)[] = [
   "subject", "question", "userAnswer", "correctAnswer", "supplementalNote",
@@ -49,12 +50,11 @@ export function CardEditorPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [conflictMessage, setConflictMessage] = useState("");
   const [draftStatus, setDraftStatus] = useState("尚未修改");
-  const [progress, setProgress] = useState<AiProgress | null>(null);
-  const [proposal, setProposal] = useState<AiProposal | null>(null);
-  const [acceptedFields, setAcceptedFields] = useState<ProposalKey[]>([]);
-  const [proposalBase, setProposalBase] = useState<CardInput | null>(null);
   const initialized = useRef(false);
   const draftKey = `zhishi.editor-draft.${id ?? "new"}`;
+  const aiRunKey = `card-editor:${id ?? "new"}`;
+  const { aiRun, progress, proposal, proposalBase,
+    acceptedFields, setAcceptedFields } = useAiOrganizeRun(aiRunKey);
   const form = useForm<CardFormValues>({ defaultValues: formValues(emptyCardInput()) });
   const watched = form.watch();
   const imageImport = useImageImport(setAssets, setErrorMessage);
@@ -185,13 +185,9 @@ export function CardEditorPage() {
       if (status?.state !== "connected") status = await connectAi.mutateAsync();
       if (status.state !== "connected") throw new Error(status.message || "AI 当前不可用");
       const base = structuredClone(currentInput);
-      setProposalBase(base);
-      setProposal(null);
-      const next = await aiService.organize(base, cardQuery.data?.revision ?? 0, setProgress);
-      setProposal(next);
-      setAcceptedFields(getDefaultAcceptedFields(base, next));
+      setAcceptedFields([]);
+      aiOrganizeRuns.start(aiRunKey, base, cardQuery.data?.revision ?? 0);
     } catch (error) { setErrorMessage(getErrorMessage(error, "AI 整理失败，原始内容已保留")); }
-    finally { setProgress(null); }
   };
 
   const applyProposal = () => {
@@ -199,7 +195,7 @@ export function CardEditorPage() {
     const next = applyAiProposal(currentInput, proposal, acceptedFields);
     for (const key of scalarKeys) form.setValue(key, next[key], { shouldDirty: true });
     setKnowledgePoints(next.knowledgePoints);
-    setProposal(null);
+    aiOrganizeRuns.dismiss(aiRunKey);
     setAcceptedFields([]);
   };
 
@@ -233,9 +229,11 @@ export function CardEditorPage() {
             selectImage={imageImport.selectImage} removeAsset={removeAsset} />
         </div>
         <AiReviewPanel progress={progress} proposal={proposal} acceptedFields={acceptedFields}
+          runError={aiRun.status === "failed" ? aiRun.message : null}
           connected={aiStatus.data?.state === "connected"} connecting={connectAi.isPending}
-          setProposal={setProposal} setAcceptedFields={setAcceptedFields}
-          isFieldConflict={isFieldConflict} organize={organize} applyProposal={applyProposal} />
+          setAcceptedFields={setAcceptedFields} isFieldConflict={isFieldConflict}
+          organize={organize} applyProposal={applyProposal}
+          dismissRun={() => aiOrganizeRuns.dismiss(aiRunKey)} />
       </form>
       {imageImport.pendingImage && (
         <ImageEditorDialog
