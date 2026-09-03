@@ -1,5 +1,5 @@
-import { BookOpen, Clock3, Filter, Image, Search, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { BookOpen, Clock3, Image, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MathContent } from "../../components/MathContent";
 import type { CardStatus } from "../../domain/card";
@@ -17,23 +17,13 @@ function formatUpdatedAt(value: string): string {
 
 export function CardsPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<CardStatus | "all">("all");
   const [knowledge, setKnowledge] = useState<KnowledgeSelection | null>(null);
   const allCards = useCards({});
   const cards = useCards({
-    query, status, knowledgeSubject: knowledge?.subject,
+    knowledgeSubject: knowledge?.subject,
     knowledgeChapter: knowledge?.chapter, knowledgePoint: knowledge?.point,
   });
-
-  const counts = useMemo(() => {
-    const list = allCards.data ?? [];
-    return {
-      all: list.length,
-      draft: list.filter((card) => card.status === "draft").length,
-      organized: list.filter((card) => card.status === "organized").length,
-    };
-  }, [allCards.data]);
+  const cardCount = allCards.data?.length ?? 0;
 
   return (
     <div className="page-content cards-page">
@@ -43,32 +33,7 @@ export function CardsPage() {
           <h1>我的错题</h1>
           <p>把错误整理清楚，比记住答案更重要。</p>
         </div>
-        <span>共 {counts.all} 张卡片</span>
-      </section>
-
-      <section className="search-panel" aria-label="搜索和筛选">
-        <label className="search-input">
-          <Search size={18} />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索题目、答案、解法、错因或知识点…"
-          />
-          <kbd>Ctrl K</kbd>
-        </label>
-        <div className="filter-group">
-          <Filter size={15} />
-          {(["all", "draft", "organized"] as const).map((value) => (
-            <button
-              key={value}
-              className={`filter-chip ${status === value ? "active" : ""}`}
-              onClick={() => setStatus(value)}
-            >
-              {value === "all" ? "全部" : statusLabel[value]}
-              <span>{counts[value]}</span>
-            </button>
-          ))}
-        </div>
+        <span>共 {cardCount} 张卡片</span>
       </section>
 
       <section className="cards-library-layout">
@@ -106,7 +71,7 @@ export function CardsPage() {
           ) : (
             <div className="empty-state">
               <span className="empty-icon"><BookOpen size={27} /></span>
-              <h3>{query || knowledge || status !== "all" ? "没有找到匹配的错题" : "还没有错题"}</h3>
+              <h3>{knowledge ? "没有找到匹配的错题" : "还没有错题"}</h3>
               <p>可以清除筛选，或上传题目图片新增错题。</p>
               <button className="button primary" onClick={() => navigate("/cards/new")}><Sparkles size={16} />新增错题</button>
             </div>
