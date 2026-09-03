@@ -111,6 +111,7 @@ pub enum RunStatus {
     WaitingApproval,
     Cancelled,
     LimitReached,
+    Failed,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -150,7 +151,11 @@ pub struct ToolManifestView {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case", rename_all_fields = "camelCase")]
+#[serde(
+    tag = "type",
+    rename_all = "snake_case",
+    rename_all_fields = "camelCase"
+)]
 pub enum AgentEvent {
     Status {
         label: String,
@@ -170,6 +175,10 @@ pub enum AgentEvent {
     },
     ApprovalRequired {
         approval: ApprovalView,
+    },
+    ApprovalResolved {
+        approval_id: String,
+        approved: bool,
     },
     Message {
         text: String,
@@ -204,5 +213,13 @@ mod tests {
         assert_eq!(value["type"], "tool_started");
         assert_eq!(value["callId"], "call-1");
         assert!(value.get("call_id").is_none());
+
+        let approval = serde_json::to_value(AgentEvent::ApprovalResolved {
+            approval_id: "approval-1".into(),
+            approved: true,
+        })
+        .expect("serialize approval event");
+        assert_eq!(approval["type"], "approval_resolved");
+        assert_eq!(approval["approvalId"], "approval-1");
     }
 }

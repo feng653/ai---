@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import type {
   AiProposal, AiProviderId, AiProviderStatus, AiProviderSummary, ApiProviderInput,
   GeneratedKnowledgeCard, KnowledgeCardGenerationRequest,
+  KnowledgeCardRecord, KnowledgeCardSaveInput,
 } from "../domain/ai";
 import type { CardInput } from "../domain/card";
 
@@ -24,6 +25,9 @@ export interface AiService {
     request: KnowledgeCardGenerationRequest,
     onProgress?: (progress: AiProgress) => void,
   ): Promise<GeneratedKnowledgeCard>;
+  listKnowledgeCards(): Promise<KnowledgeCardRecord[]>;
+  saveKnowledgeCard(input: KnowledgeCardSaveInput): Promise<KnowledgeCardRecord>;
+  deleteKnowledgeCard(key: string): Promise<void>;
   loginCodex(): Promise<AiProviderStatus>;
   disconnectProvider(id: AiProviderId): Promise<void>;
   organize(
@@ -71,6 +75,12 @@ export class BrowserUnavailableAiService implements AiService {
     _request: KnowledgeCardGenerationRequest,
     _onProgress?: (progress: AiProgress) => void,
   ): Promise<GeneratedKnowledgeCard> { throw desktopOnly(); }
+  async listKnowledgeCards(): Promise<KnowledgeCardRecord[]> { return []; }
+  async saveKnowledgeCard(input: KnowledgeCardSaveInput): Promise<KnowledgeCardRecord> {
+    const now = new Date().toISOString();
+    return { ...input, createdAt: now, updatedAt: now };
+  }
+  async deleteKnowledgeCard(): Promise<void> {}
 
   async organize(): Promise<AiProposal> {
     throw new Error(browserStatus.message);
@@ -124,6 +134,18 @@ export class TauriAiService implements AiService {
     } finally {
       unlisten();
     }
+  }
+
+  listKnowledgeCards(): Promise<KnowledgeCardRecord[]> {
+    return invoke("list_knowledge_cards");
+  }
+
+  saveKnowledgeCard(input: KnowledgeCardSaveInput): Promise<KnowledgeCardRecord> {
+    return invoke("save_knowledge_card", { input });
+  }
+
+  deleteKnowledgeCard(key: string): Promise<void> {
+    return invoke("delete_knowledge_card", { key });
   }
 
   async organize(

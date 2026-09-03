@@ -43,7 +43,7 @@
           "maxItems": 3,
           "items": { "$ref": "#/$defs/knowledgePoint" }
         },
-        "assets": { "type": "array", "maxItems": 0 }
+        "assets": { "type": "array", "maxItems": 0, "items": { "type": "string" } }
       },
       "required": ["subject", "question", "userAnswer", "correctAnswer", "supplementalNote", "solution", "errorLocation", "errorReason", "errorType", "knowledgePoints", "assets"],
       "additionalProperties": false

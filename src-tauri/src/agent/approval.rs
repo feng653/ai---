@@ -1,31 +1,55 @@
 use super::protocol::{ApprovalResult, CardChanges};
-use super::state::{AgentRuntimeState, PendingAction, PendingApproval};
+use super::state::{AgentRuntimeState, PendingAction, PendingApproval, RunContinuation};
 use crate::domain::{Card, CardAsset, CardInput};
 use crate::error::AppError;
 use crate::storage::Storage;
 
-pub fn resolve_approval(
+#[derive(Debug)]
+pub(super) struct ApprovalResolution {
+    pub result: ApprovalResult,
+    pub call_id: String,
+    pub tool_name: String,
+    pub continuation: Option<RunContinuation>,
+}
+
+pub(super) fn execute_approval(
     storage: &Storage,
     state: &AgentRuntimeState,
     approval_id: &str,
     approved: bool,
-) -> Result<ApprovalResult, AppError> {
+) -> Result<ApprovalResolution, AppError> {
     let pending = state.take(approval_id)?;
     if !approved {
         cleanup_assets(storage, &pending.assets);
-        return Ok(ApprovalResult {
-            run_id: pending.run_id,
-            approved: false,
-            message: "已拒绝操作，没有修改数据。".into(),
-            card: None,
-            deleted_card_id: None,
+        return Ok(ApprovalResolution {
+            result: ApprovalResult {
+                run_id: pending.run_id,
+                approved: false,
+                message: "已拒绝操作，没有修改数据。".into(),
+                card: None,
+                deleted_card_id: None,
+            },
+            call_id: pending.view.call_id,
+            tool_name: pending.view.tool_name,
+            continuation: None,
         });
     }
     let result = execute_pending(storage, &pending);
     if result.is_err() {
         cleanup_assets(storage, &pending.assets);
     }
-    result
+    let mut continuation = pending.continuation;
+    if matches!(pending.action, PendingAction::Delete { .. }) {
+        if let Some(next) = continuation.as_mut() {
+            next.request.assets.clear();
+        }
+    }
+    Ok(ApprovalResolution {
+        result: result?,
+        call_id: pending.view.call_id,
+        tool_name: pending.view.tool_name,
+        continuation,
+    })
 }
 
 fn execute_pending(

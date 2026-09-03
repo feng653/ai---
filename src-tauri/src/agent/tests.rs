@@ -1,7 +1,12 @@
-use super::protocol::{CardChanges, ModelToolCall};
-use super::state::{AgentRuntimeState, PendingApproval};
+use super::approval::execute_approval;
+use super::protocol::{
+    CardChanges, InteractionMode, ModelAction, ModelStep, ModelToolCall, ReasoningEffort,
+    StartTurnRequest,
+};
+use super::runtime_support::repair_referenced_card_call;
+use super::state::{AgentRuntimeState, PendingApproval, RunContinuation};
+use super::tool_manifests;
 use super::tools::{execute, ToolOutcome};
-use super::{resolve_approval, tool_manifests};
 use crate::domain::CardInput;
 use crate::storage::Storage;
 
@@ -50,13 +55,30 @@ fn create_is_deferred_until_the_single_use_approval_is_accepted() {
             view: view.clone(),
             action: *action,
             assets: Vec::new(),
+            continuation: Some(RunContinuation {
+                request: StartTurnRequest {
+                    run_id: "run-1".into(),
+                    message: "拆成三张".into(),
+                    history: Vec::new(),
+                    references: vec!["card-1".into()],
+                    assets: Vec::new(),
+                    mode: InteractionMode::Auto,
+                    reasoning_effort: ReasoningEffort::Medium,
+                },
+                observations: vec!["cards.get => original".into()],
+                next_step: 2,
+                owns_assets: true,
+            }),
         })
         .unwrap();
 
-    let result = resolve_approval(&storage, &runtime, &view.approval_id, true).unwrap();
-    assert_eq!(result.card.unwrap().question, "证明函数单调性");
+    let result = execute_approval(&storage, &runtime, &view.approval_id, true).unwrap();
+    let continuation = result.continuation.unwrap();
+    assert_eq!(continuation.next_step, 2);
+    assert_eq!(continuation.observations, ["cards.get => original"]);
+    assert_eq!(result.result.card.unwrap().question, "证明函数单调性");
     assert_eq!(
-        resolve_approval(&storage, &runtime, &view.approval_id, true)
+        execute_approval(&storage, &runtime, &view.approval_id, true)
             .unwrap_err()
             .code,
         "APPROVAL_NOT_FOUND"
@@ -93,4 +115,32 @@ fn public_manifest_marks_only_writes_as_approval_required() {
         .iter()
         .filter(|tool| !tool.side_effect)
         .all(|tool| !tool.approval_required));
+}
+
+#[test]
+fn fills_single_explicit_reference_for_cards_get() {
+    let mut step = ModelStep {
+        action: ModelAction::Tool,
+        message: None,
+        decision_summary: "读取引用卡片".into(),
+        tool_call: Some(ModelToolCall {
+            name: "cards.get".into(),
+            query: None,
+            card_id: None,
+            expected_revision: None,
+            input: None,
+            changes: None,
+        }),
+    };
+    let request = StartTurnRequest {
+        run_id: "run-1".into(),
+        message: "拆成三张".into(),
+        history: Vec::new(),
+        references: vec!["card-1".into()],
+        assets: Vec::new(),
+        mode: InteractionMode::Auto,
+        reasoning_effort: ReasoningEffort::Medium,
+    };
+    repair_referenced_card_call(&mut step, &request);
+    assert_eq!(step.tool_call.unwrap().card_id.as_deref(), Some("card-1"));
 }

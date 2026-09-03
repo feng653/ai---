@@ -54,6 +54,21 @@ export type GeneratedKnowledgeCard = {
   warnings: string[];
 };
 
+export type KnowledgeCardStatus = "draft" | "saved";
+
+export type KnowledgeCardRecord = {
+  key: string;
+  subject: string;
+  chapter?: string | null;
+  name: string;
+  status: KnowledgeCardStatus;
+  content: GeneratedKnowledgeCard;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type KnowledgeCardSaveInput = Omit<KnowledgeCardRecord, "createdAt" | "updatedAt">;
+
 export type ProposedField<T> = {
   value: T | null;
   uncertain: boolean;

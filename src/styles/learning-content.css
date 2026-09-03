@@ -29,6 +29,17 @@
 .knowledge-generation-status { color: var(--brand); background: var(--brand-soft); }
 .knowledge-generation-error { color: var(--red); background: var(--red-soft); }
 .knowledge-generation-warning { color: var(--amber); background: var(--amber-soft); }
+.knowledge-draft-bar { margin-top: 10px; padding: 10px 12px; border: 1px solid #e5c983; border-radius: 10px; display: flex; align-items: center; gap: 12px; background: var(--amber-soft); }
+.knowledge-draft-bar.saved { border-color: #bcd8c6; background: var(--brand-soft); }
+.knowledge-draft-bar > div { min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--amber); }
+.knowledge-draft-bar.saved > div { color: var(--brand); }
+.knowledge-draft-bar span { min-width: 0; display: grid; gap: 2px; }
+.knowledge-draft-bar strong { color: var(--ink-1); font-size: 10px; }
+.knowledge-draft-bar small { color: var(--ink-3); font-size: 8px; line-height: 1.45; }
+.knowledge-draft-bar nav { margin-left: auto; display: flex; gap: 8px; }
+.knowledge-draft-bar button { min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); background: #fff; font-size: 9px; white-space: nowrap; }
+.knowledge-draft-bar button.primary { color: #fff; border-color: var(--brand); background: var(--brand); font-weight: 700; }
+.knowledge-draft-bar button:disabled { cursor: not-allowed; opacity: .55; }
 .knowledge-evidence { margin: 13px 0; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
 .knowledge-evidence span { padding: 10px 11px; color: var(--ink-3); font-size: 8px; }
 .knowledge-evidence span + span { border-left: 1px solid var(--line); }
@@ -69,4 +80,4 @@
 .learning-empty { min-height: 280px; display: grid; place-content: center; gap: 6px; color: var(--ink-3); text-align: center; font-size: 10px; }
 .learning-empty strong { color: var(--ink-2); font-size: 13px; }
 @media (max-width: 1100px) { .knowledge-card-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .learning-tabs > span { display: none; } .learning-view-heading { flex-wrap: wrap; } .review-count { margin-left: auto; } }
+@media (max-width: 720px) { .learning-tabs > span { display: none; } .learning-view-heading, .knowledge-draft-bar { align-items: stretch; flex-wrap: wrap; } .knowledge-draft-bar nav { width: 100%; margin-left: 0; } .knowledge-draft-bar nav button { flex: 1; justify-content: center; } .review-count { margin-left: auto; } }

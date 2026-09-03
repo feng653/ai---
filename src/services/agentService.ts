@@ -14,7 +14,11 @@ export interface AgentService {
     onEvent: (payload: AgentEventPayload) => void,
   ): Promise<AgentRunResult>;
   cancel(runId: string): Promise<void>;
-  resolveApproval(approvalId: string, approved: boolean): Promise<AgentApprovalResult>;
+  resolveApproval(
+    approvalId: string,
+    approved: boolean,
+    onEvent: (payload: AgentEventPayload) => void,
+  ): Promise<AgentApprovalResult>;
 }
 
 export class TauriAgentService implements AgentService {
@@ -43,8 +47,22 @@ export class TauriAgentService implements AgentService {
     return invoke("agent_cancel_run", { runId });
   }
 
-  resolveApproval(approvalId: string, approved: boolean): Promise<AgentApprovalResult> {
-    return invoke("agent_resolve_approval", { request: { approvalId, approved } });
+  async resolveApproval(
+    approvalId: string,
+    approved: boolean,
+    onEvent: (payload: AgentEventPayload) => void,
+  ): Promise<AgentApprovalResult> {
+    const requestId = crypto.randomUUID();
+    const unlisten = await listen<AgentEventPayload>("agent-event", ({ payload }) => {
+      if (payload.requestId === requestId) onEvent(payload);
+    });
+    try {
+      return await invoke("agent_resolve_approval", {
+        requestId, request: { approvalId, approved },
+      });
+    } finally {
+      unlisten();
+    }
   }
 }
 

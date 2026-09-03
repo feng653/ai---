@@ -4,6 +4,7 @@ use super::manager_state::RunningGuard;
 use super::settings::CODEX_ID;
 use crate::error::AppError;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 impl AiManager {
     pub async fn agent_step(
@@ -15,7 +16,15 @@ impl AiManager {
         let _guard = RunningGuard::acquire(&self.running)?;
         let active = self.settings.active()?;
         if active == CODEX_ID {
-            return Err(agent_api_required());
+            let codex = Arc::clone(&self.codex);
+            let effort = reasoning_effort.to_owned();
+            return tauri::async_runtime::spawn_blocking(move || {
+                codex.agent_step(prompt, &effort, asset_paths)
+            })
+            .await
+            .map_err(|error| {
+                AppError::new("PROVIDER_ERROR", format!("Codex Agent 任务失败：{error}"))
+            })?;
         }
         let config = self
             .settings
@@ -31,24 +40,5 @@ impl AiManager {
             &asset_paths,
         )
         .await
-    }
-}
-
-fn agent_api_required() -> AppError {
-    AppError::new(
-        "AUTH_REQUIRED",
-        "知拾 Agent 由项目内运行时执行，不调用 Codex CLI。请在“AI 接入”中配置并选中一个 API 服务。",
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn codex_account_is_not_used_as_the_agent_runtime() {
-        let error = agent_api_required();
-        assert_eq!(error.code, "AUTH_REQUIRED");
-        assert!(error.message.contains("不调用 Codex CLI"));
     }
 }

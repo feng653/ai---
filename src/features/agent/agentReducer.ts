@@ -1,6 +1,4 @@
-import type {
-  AgentApprovalResult, AgentEvent, AgentRunActivity, AgentTimelineItem,
-} from "../../domain/agent";
+import type { AgentEvent, AgentRunActivity, AgentTimelineItem } from "../../domain/agent";
 
 export const welcomeItem = (): AgentTimelineItem => ({
   id: "welcome",
@@ -12,7 +10,6 @@ export const welcomeItem = (): AgentTimelineItem => ({
 export type TimelineAction =
   | { type: "user"; item: AgentTimelineItem }
   | { type: "event"; runId: string; event: AgentEvent }
-  | { type: "approval"; result: AgentApprovalResult }
   | { type: "error"; text: string }
   | { type: "cancelled"; runId: string }
   | { type: "reset" };
@@ -67,6 +64,15 @@ function applyEvent(items: AgentTimelineItem[], runId: string, event: AgentEvent
         ...event.approval, status: "pending",
       } };
     }
+    if (event.type === "approval_resolved") {
+      if (run.approval?.approvalId !== event.approvalId) return run;
+      return {
+        ...run,
+        label: event.approved ? "写操作已完成，继续任务" : "写操作已拒绝",
+        status: event.approved ? "running" : "completed",
+        approval: { ...run.approval, status: event.approved ? "approved" : "rejected" },
+      };
+    }
     if (event.type === "run_completed") return { ...run, status: event.status, label: statusLabel(event.status) };
     return run;
   });
@@ -76,6 +82,7 @@ function statusLabel(status: AgentRunActivity["status"]) {
   if (status === "completed") return "Agent run 已完成";
   if (status === "cancelled") return "运行已停止";
   if (status === "limit_reached") return "已达到步骤上限";
+  if (status === "failed") return "运行失败";
   if (status === "waiting_approval") return "等待批准";
   return "运行中";
 }
@@ -90,16 +97,5 @@ export function agentReducer(items: AgentTimelineItem[], action: TimelineAction)
   if (action.type === "error") return [...items, {
     id: `message-${crypto.randomUUID()}`, kind: "message", role: "agent", text: action.text,
   }];
-  const next = updateRun(items, action.result.runId, (run) => ({
-    ...run,
-    label: action.result.approved ? "写操作已完成" : "写操作已拒绝",
-    status: "completed",
-    approval: run.approval ? {
-      ...run.approval, status: action.result.approved ? "approved" : "rejected",
-    } : undefined,
-  }));
-  return [...next, {
-    id: `message-${crypto.randomUUID()}`, kind: "message", role: "agent",
-    text: action.result.message,
-  }];
+  return items;
 }

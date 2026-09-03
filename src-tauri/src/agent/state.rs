@@ -1,4 +1,4 @@
-use super::protocol::{ApprovalView, CardChanges};
+use super::protocol::{ApprovalView, CardChanges, StartTurnRequest};
 use crate::domain::{CardAsset, CardInput};
 use crate::error::AppError;
 use std::collections::{HashMap, HashSet};
@@ -26,6 +26,15 @@ pub struct PendingApproval {
     pub view: ApprovalView,
     pub action: PendingAction,
     pub assets: Vec<CardAsset>,
+    pub continuation: Option<RunContinuation>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RunContinuation {
+    pub request: StartTurnRequest,
+    pub observations: Vec<String>,
+    pub next_step: usize,
+    pub owns_assets: bool,
 }
 
 #[derive(Default)]

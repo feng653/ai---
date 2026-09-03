@@ -18,15 +18,6 @@ fn discover_codex() -> Option<PathBuf> {
         }
     }
     let path = std::env::var_os("PATH")?;
-    for directory in std::env::split_paths(&path) {
-        #[cfg(windows)]
-        let candidate = directory.join("codex.exe");
-        #[cfg(not(windows))]
-        let candidate = directory.join("codex");
-        if candidate.is_file() {
-            return Some(candidate);
-        }
-    }
     #[cfg(windows)]
     for directory in std::env::split_paths(&path) {
         for relative in [
@@ -37,6 +28,15 @@ fn discover_codex() -> Option<PathBuf> {
             if candidate.is_file() {
                 return Some(candidate);
             }
+        }
+    }
+    for directory in std::env::split_paths(&path) {
+        #[cfg(windows)]
+        let candidate = directory.join("codex.exe");
+        #[cfg(not(windows))]
+        let candidate = directory.join("codex");
+        if candidate.is_file() {
+            return Some(candidate);
         }
     }
     None
@@ -95,12 +95,24 @@ impl CodexProvider {
     }
 
     pub fn login(&self) -> Result<ProviderStatus, AppError> {
+        let _run = self.run_lock.try_lock().map_err(|_| {
+            AppError::new(
+                "RUN_IN_PROGRESS",
+                "已有 Codex 操作正在运行，请等待完成后重试",
+            )
+        })?;
         let executable = self.executable()?;
         login(executable, &self.home)?;
         self.connect()
     }
 
     pub fn disconnect(&self) -> Result<(), AppError> {
+        let _run = self.run_lock.try_lock().map_err(|_| {
+            AppError::new(
+                "RUN_IN_PROGRESS",
+                "已有 Codex 操作正在运行，请等待完成后重试",
+            )
+        })?;
         if let Some(executable) = self.executable.as_deref() {
             logout(executable, &self.home)?;
         } else {

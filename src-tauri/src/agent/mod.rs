@@ -1,13 +1,16 @@
 mod approval;
+mod continuation;
 mod model;
+mod model_normalize;
 mod protocol;
 mod runtime;
+mod runtime_support;
 mod state;
 #[cfg(test)]
 mod tests;
 mod tools;
 
-pub use approval::resolve_approval;
+pub use continuation::resolve_approval;
 pub use protocol::{
     AgentEventPayload, AgentRunResult, ApprovalResult, ResolveApprovalRequest, StartTurnRequest,
     ToolManifestView,

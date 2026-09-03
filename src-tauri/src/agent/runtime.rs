@@ -1,9 +1,12 @@
-use super::approval::cleanup_assets;
 use super::model::{build_prompt, parse_step};
 use super::protocol::{
     AgentEvent, AgentEventPayload, AgentRunResult, ModelAction, RunStatus, StartTurnRequest,
 };
-use super::state::{AgentRuntimeState, PendingApproval};
+use super::runtime_support::{
+    cleanup_owned_assets, finish_cancelled, repair_referenced_card_call, summarize_call,
+    summarize_result, validate_request,
+};
+use super::state::{AgentRuntimeState, PendingApproval, RunContinuation};
 use super::tools::{self, ToolOutcome};
 use crate::ai::AiManager;
 use crate::error::AppError;
@@ -11,7 +14,7 @@ use crate::storage::Storage;
 use std::sync::Arc;
 use uuid::Uuid;
 
-struct EventEmitter<F> {
+pub(super) struct EventEmitter<F> {
     request_id: String,
     run_id: String,
     sequence: u64,
@@ -19,7 +22,16 @@ struct EventEmitter<F> {
 }
 
 impl<F: FnMut(AgentEventPayload)> EventEmitter<F> {
-    fn emit(&mut self, event: AgentEvent) {
+    pub(super) fn new(request_id: String, run_id: String, sink: F) -> Self {
+        Self {
+            request_id,
+            run_id,
+            sequence: 0,
+            sink,
+        }
+    }
+
+    pub(super) fn emit(&mut self, event: AgentEvent) {
         self.sequence += 1;
         (self.sink)(AgentEventPayload {
             request_id: self.request_id.clone(),
@@ -43,17 +55,42 @@ where
 {
     validate_request(&request)?;
     state.prepare_run(&request.run_id)?;
+    let mut events = EventEmitter::new(request_id, request.run_id.clone(), sink);
+    run_steps(
+        manager,
+        storage,
+        state,
+        RunContinuation {
+            request,
+            observations: Vec::new(),
+            next_step: 0,
+            owns_assets: true,
+        },
+        &mut events,
+    )
+    .await
+}
+
+pub(super) async fn run_steps<F>(
+    manager: &Arc<AiManager>,
+    storage: &Storage,
+    state: &AgentRuntimeState,
+    continuation: RunContinuation,
+    events: &mut EventEmitter<F>,
+) -> Result<AgentRunResult, AppError>
+where
+    F: FnMut(AgentEventPayload),
+{
+    let RunContinuation {
+        request,
+        mut observations,
+        next_step,
+        owns_assets,
+    } = continuation;
     let asset_paths = storage.resolve_asset_paths(&request.assets)?;
-    let mut events = EventEmitter {
-        request_id,
-        run_id: request.run_id.clone(),
-        sequence: 0,
-        sink,
-    };
-    let mut observations = Vec::new();
-    for step_index in 0..request.reasoning_effort.max_steps() {
+    for step_index in next_step..request.reasoning_effort.max_steps() {
         if state.is_cancelled(&request.run_id)? {
-            return finish_cancelled(storage, state, &request, &mut events);
+            return finish_cancelled(storage, state, &request, owns_assets, events);
         }
         events.emit(AgentEvent::Status {
             label: if step_index == 0 {
@@ -70,14 +107,15 @@ where
                 asset_paths.clone(),
             )
             .await
-            .inspect_err(|_| cleanup_assets(storage, &request.assets))?;
+            .inspect_err(|_| cleanup_owned_assets(storage, &request.assets, owns_assets))?;
         if state.is_cancelled(&request.run_id)? {
-            return finish_cancelled(storage, state, &request, &mut events);
+            return finish_cancelled(storage, state, &request, owns_assets, events);
         }
-        let model_step = parse_step(
+        let mut model_step = parse_step(
             &json,
             request.mode == super::protocol::InteractionMode::Auto,
         )?;
+        repair_referenced_card_call(&mut model_step, &request);
         events.emit(AgentEvent::DecisionSummary {
             text: model_step.decision_summary,
         });
@@ -89,7 +127,7 @@ where
             events.emit(AgentEvent::RunCompleted {
                 status: RunStatus::Completed,
             });
-            cleanup_assets(storage, &request.assets);
+            cleanup_owned_assets(storage, &request.assets, owns_assets);
             state.finish_run(&request.run_id)?;
             return Ok(AgentRunResult {
                 run_id: request.run_id,
@@ -124,7 +162,17 @@ where
                     run_id: request.run_id.clone(),
                     view: view.clone(),
                     action: *action,
-                    assets: request.assets,
+                    assets: if owns_assets {
+                        request.assets.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    continuation: Some(RunContinuation {
+                        request: request.clone(),
+                        observations,
+                        next_step: step_index + 1,
+                        owns_assets,
+                    }),
                 })?;
                 state.finish_run(&request.run_id)?;
                 return Ok(AgentRunResult {
@@ -147,7 +195,7 @@ where
             }
         }
     }
-    cleanup_assets(storage, &request.assets);
+    cleanup_owned_assets(storage, &request.assets, owns_assets);
     events.emit(AgentEvent::RunCompleted {
         status: RunStatus::LimitReached,
     });
@@ -158,55 +206,4 @@ where
         message: "Agent 已达到本轮步骤上限，请缩小任务或继续下一轮。".into(),
         approval: None,
     })
-}
-
-fn validate_request(request: &StartTurnRequest) -> Result<(), AppError> {
-    if request.message.trim().is_empty() {
-        return Err(AppError::validation("消息不能为空"));
-    }
-    if request.message.len() > 20_000 {
-        return Err(AppError::validation("消息不能超过 20000 字符"));
-    }
-    if request.history.len() > 50 {
-        return Err(AppError::validation("会话历史过长"));
-    }
-    if request.references.len() > 8 {
-        return Err(AppError::validation("引用卡片不能超过 8 张"));
-    }
-    Ok(())
-}
-
-fn finish_cancelled<F: FnMut(AgentEventPayload)>(
-    storage: &Storage,
-    state: &AgentRuntimeState,
-    request: &StartTurnRequest,
-    events: &mut EventEmitter<F>,
-) -> Result<AgentRunResult, AppError> {
-    cleanup_assets(storage, &request.assets);
-    events.emit(AgentEvent::RunCompleted {
-        status: RunStatus::Cancelled,
-    });
-    state.finish_run(&request.run_id)?;
-    Ok(AgentRunResult {
-        run_id: request.run_id.clone(),
-        status: RunStatus::Cancelled,
-        message: "运行已停止。".into(),
-        approval: None,
-    })
-}
-
-fn summarize_call(call: &super::protocol::ModelToolCall) -> String {
-    call.query
-        .clone()
-        .or_else(|| call.card_id.clone())
-        .unwrap_or_else(|| "结构化参数".into())
-}
-
-fn summarize_result(result: &str) -> String {
-    let count = result.chars().count();
-    if count <= 100 {
-        result.into()
-    } else {
-        format!("工具返回 {count} 个字符，已交给 Agent")
-    }
 }

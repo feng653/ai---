@@ -1,6 +1,11 @@
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 
+mod knowledge;
+pub use knowledge::{
+    GeneratedKnowledgeCard, KnowledgeCardRecord, KnowledgeCardSaveInput, KnowledgeCardStatus,
+};
+
 pub const ERROR_TYPES: [&str; 7] = [
     "概念不清",
     "方法错误",

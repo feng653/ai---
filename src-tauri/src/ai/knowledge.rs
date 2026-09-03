@@ -1,4 +1,4 @@
-use crate::domain::KnowledgePoint;
+use crate::domain::{GeneratedKnowledgeCard, KnowledgePoint, SourceRevision};
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -42,24 +42,6 @@ struct ModelOutput {
     mistake_reminder: String,
     #[serde(default)]
     warnings: Vec<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GeneratedKnowledgeCard {
-    run_id: String,
-    prompt_version: &'static str,
-    core_method: String,
-    mistake_reminder: String,
-    source_revisions: Vec<SourceRevision>,
-    warnings: Vec<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SourceRevision {
-    card_id: String,
-    revision: u64,
 }
 
 pub fn build_prompt(request: &KnowledgeCardRequest) -> Result<String, AppError> {
@@ -108,7 +90,7 @@ pub fn parse_output(
     })?;
     Ok(GeneratedKnowledgeCard {
         run_id: Uuid::new_v4().to_string(),
-        prompt_version: KNOWLEDGE_PROMPT_VERSION,
+        prompt_version: KNOWLEDGE_PROMPT_VERSION.into(),
         core_method: compact(output.core_method, 400, "核心方法")?,
         mistake_reminder: compact(output.mistake_reminder, 240, "易错提醒")?,
         source_revisions: request

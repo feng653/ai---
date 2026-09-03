@@ -1,8 +1,11 @@
 use crate::ai::{
-    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, GeneratedKnowledgeCard,
-    KnowledgeCardRequest, ProviderSummary,
+    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, KnowledgeCardRequest,
+    ProviderSummary,
 };
-use crate::domain::{Card, CardAsset, CardFilter, CardInput, PracticeCardDraft, ProviderStatus};
+use crate::domain::{
+    Card, CardAsset, CardFilter, CardInput, GeneratedKnowledgeCard, KnowledgeCardRecord,
+    KnowledgeCardSaveInput, PracticeCardDraft, ProviderStatus,
+};
 use crate::error::AppError;
 use crate::storage::Storage;
 use serde::{Deserialize, Serialize};
@@ -39,6 +42,26 @@ pub fn save_practice_cards(
     drafts: Vec<PracticeCardDraft>,
 ) -> Result<Vec<Card>, AppError> {
     storage.save_practice_cards(drafts)
+}
+
+#[tauri::command]
+pub fn list_knowledge_cards(
+    storage: State<'_, Storage>,
+) -> Result<Vec<KnowledgeCardRecord>, AppError> {
+    storage.list_knowledge_cards()
+}
+
+#[tauri::command]
+pub fn save_knowledge_card(
+    storage: State<'_, Storage>,
+    input: KnowledgeCardSaveInput,
+) -> Result<KnowledgeCardRecord, AppError> {
+    storage.save_knowledge_card(input)
+}
+
+#[tauri::command]
+pub fn delete_knowledge_card(storage: State<'_, Storage>, key: String) -> Result<(), AppError> {
+    storage.delete_knowledge_card(&key)
 }
 
 #[tauri::command]

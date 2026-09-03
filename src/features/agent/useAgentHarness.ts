@@ -68,12 +68,19 @@ export function useAgentHarness() {
   }
 
   async function resolveApproval(approvalId: string, approved: boolean) {
+    if (activeRunId) return;
+    const run = items.find((item) => item.kind === "run" && item.approval?.approvalId === approvalId);
+    if (!run || run.kind !== "run") return;
+    setActiveRunId(run.runId);
     try {
-      const result = await agentService.resolveApproval(approvalId, approved);
-      dispatch({ type: "approval", result });
+      await agentService.resolveApproval(approvalId, approved, (payload) => {
+        dispatch({ type: "event", runId: payload.runId, event: payload.event });
+      });
       await cardsQuery.refetch();
     } catch (reason) {
       dispatch({ type: "error", text: errorMessage(reason, "批准操作处理失败") });
+    } finally {
+      setActiveRunId(undefined);
     }
   }
 
@@ -81,7 +88,7 @@ export function useAgentHarness() {
     if (activeRunId) await cancel();
     const pending = items.flatMap((item) => item.kind === "run" && item.approval?.status === "pending"
       ? [item.approval.approvalId] : []);
-    await Promise.allSettled(pending.map((id) => agentService.resolveApproval(id, false)));
+    await Promise.allSettled(pending.map((id) => agentService.resolveApproval(id, false, () => {})));
     dispatch({ type: "reset" });
   }
 

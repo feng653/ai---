@@ -1,16 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiService } from "../services/aiService";
 
 const statusKey = ["ai-provider-status"] as const;
 const providersKey = ["ai-providers"] as const;
+const loginCodexKey = ["login-codex"] as const;
 
 export function useAiProviders() {
   return useQuery({ queryKey: providersKey, queryFn: () => aiService.listProviders(), retry: false });
 }
 
-function useProviderMutation<T>(mutationFn: (input: T) => Promise<unknown>) {
+function useProviderMutation<T>(
+  mutationFn: (input: T) => Promise<unknown>,
+  mutationKey?: readonly unknown[],
+) {
   const client = useQueryClient();
   return useMutation({
+    mutationKey,
     mutationFn,
     onSuccess: async () => {
       await Promise.all([
@@ -38,7 +43,9 @@ export function useTestApiProvider() {
 }
 
 export function useLoginCodex() {
-  return useProviderMutation(() => aiService.loginCodex());
+  const login = useProviderMutation(() => aiService.loginCodex(), loginCodexKey);
+  const pendingLogins = useIsMutating({ mutationKey: loginCodexKey });
+  return { ...login, isPending: login.isPending || pendingLogins > 0 };
 }
 
 export function useDisconnectAiProvider() {

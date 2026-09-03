@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import type { GeneratedKnowledgeCard } from "../../domain/ai";
-import type { Card } from "../../domain/card";
+import type { GeneratedKnowledgeCard, KnowledgeCardStatus } from "../../domain/ai";
+import { UNCATEGORIZED_CHAPTER_FILTER, type Card } from "../../domain/card";
+import {
+  useDeleteKnowledgeCard, useKnowledgeCards, useSaveKnowledgeCard,
+} from "../../hooks/useKnowledgeCards";
 import type { PracticeCardDraft } from "../../services/cardService";
 import { KnowledgeCardView } from "./KnowledgeCardView";
 import type { KnowledgeSelection } from "./knowledgeTree";
@@ -28,10 +31,26 @@ export function KnowledgeContextView(props: Props) {
     onSelectionChange, onOpenCard, onCreateCard, onSavePractice,
   } = props;
   const [view, setView] = useState<View>("cards");
-  const [generatedCards, setGeneratedCards] = useState<Record<string, GeneratedKnowledgeCard>>({});
+  const persisted = useKnowledgeCards();
+  const saveKnowledgeCard = useSaveKnowledgeCard();
+  const deleteKnowledgeCard = useDeleteKnowledgeCard();
   const knowledgeCards = useMemo(() => buildKnowledgeCards(allCards, selection), [allCards, selection]);
   const detail = useMemo(() => buildKnowledgeCard(allCards, selection), [allCards, selection]);
   const reviewReady = knowledgeCards.length > 0;
+  const records = useMemo(() => Object.fromEntries(
+    (persisted.data ?? []).map((record) => [record.key, record]),
+  ), [persisted.data]);
+
+  const persist = (
+    card: NonNullable<typeof detail>, content: GeneratedKnowledgeCard, status: KnowledgeCardStatus,
+  ) => saveKnowledgeCard.mutateAsync({
+    key: card.selection.key,
+    subject: card.selection.subject,
+    chapter: card.selection.chapter === UNCATEGORIZED_CHAPTER_FILTER ? null : card.selection.chapter,
+    name: card.selection.point!,
+    status,
+    content,
+  });
 
   useEffect(() => {
     if (view === "review" && !reviewReady) setView("knowledge");
@@ -50,8 +69,8 @@ export function KnowledgeContextView(props: Props) {
     {view === "cards" && <RelatedCardsView cards={cards} loading={loading} error={error}
       filtered={Boolean(selection)} onOpen={onOpenCard} onCreate={onCreateCard} />}
     {view === "knowledge" && <KnowledgeCardView cards={knowledgeCards} detail={detail}
-      generatedCards={generatedCards}
-      onGenerated={(key, generated) => setGeneratedCards((current) => ({ ...current, [key]: generated }))}
+      records={records} persistenceBusy={saveKnowledgeCard.isPending || deleteKnowledgeCard.isPending}
+      onPersist={persist} onDiscard={(key) => deleteKnowledgeCard.mutateAsync(key)}
       onSelect={onSelectionChange} onOpenSource={onOpenCard} />}
     {view === "review" && <ReviewView allCards={allCards} initialSelection={selection}
       savedCards={savedPracticeCards} onOpenSource={onOpenCard} onSave={onSavePractice} />}

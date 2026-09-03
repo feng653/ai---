@@ -1,6 +1,9 @@
 mod assets;
 mod card_records;
 mod cards;
+#[cfg(test)]
+mod knowledge_card_tests;
+mod knowledge_cards;
 mod practice;
 #[cfg(test)]
 mod tests;
@@ -14,6 +17,7 @@ use std::sync::{Mutex, MutexGuard};
 
 const MIGRATION_1: &str = include_str!("../migrations/001_initial.sql");
 const MIGRATION_2: &str = include_str!("../migrations/002_practice_cards.sql");
+const MIGRATION_3: &str = include_str!("../migrations/003_knowledge_cards.sql");
 
 pub struct Storage {
     pub(super) connection: Mutex<Connection>,
@@ -55,6 +59,19 @@ impl Storage {
             }
             let transaction = connection.transaction()?;
             transaction.execute_batch(MIGRATION_2)?;
+            transaction.commit()?;
+        }
+        let version: i64 = connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
+        if version < 3 {
+            if existed && fs::metadata(&database_path)?.len() > 0 {
+                let backup = data_dir.join(format!(
+                    "zhishi.sqlite3.before-v3-{}.bak",
+                    Utc::now().format("%Y%m%d%H%M%S")
+                ));
+                fs::copy(&database_path, backup)?;
+            }
+            let transaction = connection.transaction()?;
+            transaction.execute_batch(MIGRATION_3)?;
             transaction.commit()?;
         }
         Ok(Self {

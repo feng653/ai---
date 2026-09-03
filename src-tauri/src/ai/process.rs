@@ -169,6 +169,12 @@ where
     let mut child = command.spawn().map_err(|error| {
         AppError::new("PROVIDER_NOT_FOUND", format!("无法启动 Codex CLI：{error}"))
     })?;
+    #[cfg(windows)]
+    let _child_lifetime =
+        super::process_windows::assign_kill_on_close(&child).inspect_err(|_| {
+            let _ = child.kill();
+            let _ = child.wait();
+        })?;
     if let Some(value) = stdin {
         let mut pipe = child
             .stdin

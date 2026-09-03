@@ -1,7 +1,8 @@
 use super::codex::CodexProvider;
-use super::knowledge::{self, GeneratedKnowledgeCard, KnowledgeCardRequest};
+use super::knowledge::{self, KnowledgeCardRequest};
 use super::process::{execute, ExecutionPaths};
 use super::AiProgress;
+use crate::domain::GeneratedKnowledgeCard;
 use crate::error::AppError;
 
 impl CodexProvider {

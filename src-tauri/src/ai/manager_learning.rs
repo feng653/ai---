@@ -1,9 +1,10 @@
 use super::api_learning;
-use super::knowledge::{self, GeneratedKnowledgeCard, KnowledgeCardRequest};
+use super::knowledge::{self, KnowledgeCardRequest};
 use super::manager::AiManager;
 use super::manager_state::RunningGuard;
 use super::settings::CODEX_ID;
 use super::AiProgress;
+use crate::domain::GeneratedKnowledgeCard;
 use crate::error::AppError;
 use std::sync::Arc;
 

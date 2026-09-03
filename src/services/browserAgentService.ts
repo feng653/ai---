@@ -73,27 +73,47 @@ export class BrowserAgentService implements AgentService {
 
   async cancel(runId: string) { this.cancelled.add(runId); }
 
-  async resolveApproval(approvalId: string, approved: boolean): Promise<AgentApprovalResult> {
+  async resolveApproval(
+    approvalId: string,
+    approved: boolean,
+    onEvent: (payload: AgentEventPayload) => void,
+  ): Promise<AgentApprovalResult> {
     const pending = this.pending.get(approvalId);
     if (!pending) throw new Error("批准请求不存在或已处理");
     this.pending.delete(approvalId);
-    if (!approved) return { runId: pending.request.runId, approved, message: "已拒绝操作，没有修改数据。" };
+    let sequence = 0;
+    const emit = (event: AgentEvent) => onEvent({
+      requestId: "browser-approval", runId: pending.request.runId, sequence: ++sequence, event,
+    });
+    const finish = (result: AgentApprovalResult) => {
+      emit({ type: "approval_resolved", approvalId, approved });
+      emit({
+        type: "tool_completed", callId: pending.approval.callId,
+        name: pending.approval.toolName, summary: result.message,
+      });
+      emit({ type: "message", text: result.message });
+      emit({ type: "run_completed", status: "completed" });
+      return result;
+    };
+    if (!approved) return finish({
+      runId: pending.request.runId, approved, message: "已拒绝操作，没有修改数据。",
+    });
     if (pending.action === "delete") {
       await cardService.delete(pending.card!.id);
-      return { runId: pending.request.runId, approved, message: "卡片已删除。", deletedCardId: pending.card!.id };
+      return finish({ runId: pending.request.runId, approved, message: "卡片已删除。", deletedCardId: pending.card!.id });
     }
     if (pending.action === "update") {
       const card = pending.card!;
       const saved = await cardService.save({ id: card.id, expectedRevision: card.revision, input: {
         ...card, solution: "先明确研究区间，再结合关键条件分步骤推导并检查边界。",
       } });
-      return { runId: pending.request.runId, approved, message: `卡片已更新到 revision ${saved.revision}。`, card: saved };
+      return finish({ runId: pending.request.runId, approved, message: `卡片已更新到 revision ${saved.revision}。`, card: saved });
     }
     const input = emptyCardInput();
     input.question = pending.request.message.replace(/^.*?[:：]/, "").trim() || pending.request.message;
     input.assets = pending.request.assets;
     const saved = await cardService.save({ input });
-    return { runId: pending.request.runId, approved, message: "卡片已创建。", card: saved };
+    return finish({ runId: pending.request.runId, approved, message: "卡片已创建。", card: saved });
   }
 
   private async requestApproval(

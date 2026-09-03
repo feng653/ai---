@@ -22,7 +22,7 @@ pub async fn agent_step(
     let body = json!({
         "model": config.model,
         "messages": [
-            {"role": "system", "content": "你是知拾 Agent 决策模型，只输出符合要求的 JSON。"},
+            {"role": "system", "content": chat_system_prompt()},
             {"role": "user", "content": chat_content(prompt, images)?}
         ],
         "response_format": {"type": "json_object"},
@@ -31,6 +31,14 @@ pub async fn agent_step(
     });
     let text = post_json(client, config, api_key, "chat/completions", &body).await?;
     extract_content(&text)
+}
+
+fn chat_system_prompt() -> String {
+    format!(
+        "你是知拾 Agent 决策模型，只输出一个符合下列 JSON Schema 的 JSON 对象。\
+         所有 required 字段都必须出现；不适用的可空字段必须写 null；字段名必须严格使用 camelCase，\
+         禁止改成 snake_case，禁止使用 function/arguments 包装。\n{AGENT_STEP_SCHEMA}"
+    )
 }
 
 async fn openai_step(
@@ -126,5 +134,13 @@ mod tests {
             extract_responses_text(body).unwrap(),
             r#"{"action":"final"}"#
         );
+    }
+
+    #[test]
+    fn compatible_api_prompt_requires_complete_camel_case_json() {
+        let prompt = chat_system_prompt();
+        assert!(prompt.contains("cardId"));
+        assert!(prompt.contains("所有 required 字段都必须出现"));
+        assert!(prompt.contains("字段名必须严格使用 camelCase"));
     }
 }

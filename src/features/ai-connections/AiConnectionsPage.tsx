@@ -64,7 +64,7 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
     <div className="connection-heading"><ProviderMark kind="codex" initials="C" logo="/brands/codex.png" />
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已登录" : "尚未连接"}</span>
-        <h2 id="codex-title">连接 Codex</h2><p>仅用于 AI 整理；独立 Agent 使用你配置的 API 服务，不调用 Codex CLI。</p></div></div>
+        <h2 id="codex-title">连接 Codex</h2><p>用于 AI 整理和知拾 Agent；模型会通过隔离的 Codex App Server 运行。</p></div></div>
     <div className="login-flow">
       <div><span>1</span><strong>打开登录页面</strong><small>由 Codex 启动官方授权页</small></div><i />
       <div><span>2</span><strong>完成账号授权</strong><small>登录信息仅在官方网页填写</small></div><i />
@@ -74,7 +74,7 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
       <p>不读取本机 Codex 配置和登录缓存；退出时只清理知拾专用登录。</p></div></div>
     {notice && <div className="connection-notice" role="status">{notice}</div>}
     <div className="connection-actions">
-      {summary?.configured && <button type="button" className="button danger" disabled={disconnect.isPending} onClick={remove}>退出登录</button>}
+      {summary?.configured && <button type="button" className="button danger" disabled={disconnect.isPending || login.isPending} onClick={remove}>退出登录</button>}
       {summary?.configured && !summary.active && <button type="button" className="button" disabled={select.isPending}
         onClick={() => select.mutate("codex")}>设为当前</button>}
       <button type="button" className="button primary connect-button" disabled={login.isPending} onClick={runLogin}>

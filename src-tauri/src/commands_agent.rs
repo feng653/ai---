@@ -48,17 +48,26 @@ pub fn agent_cancel_run(
 }
 
 #[tauri::command]
-pub fn agent_resolve_approval(
+pub async fn agent_resolve_approval(
+    manager: State<'_, Arc<AiManager>>,
     storage: State<'_, Storage>,
     runtime: State<'_, AgentRuntimeState>,
+    window: Window,
+    request_id: String,
     request: ResolveApprovalRequest,
 ) -> Result<ApprovalResult, AppError> {
     agent::resolve_approval(
+        manager.inner(),
         storage.inner(),
         runtime.inner(),
+        request_id,
         &request.approval_id,
         request.approved,
+        move |payload: AgentEventPayload| {
+            let _ = window.emit("agent-event", payload);
+        },
     )
+    .await
 }
 
 #[tauri::command]

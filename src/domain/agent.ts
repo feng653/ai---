@@ -2,7 +2,7 @@ import type { Card, CardAsset } from "./card";
 
 export type AgentMode = "auto" | "chat_only";
 export type AgentReasoningEffort = "low" | "medium" | "high";
-export type AgentRunStatus = "completed" | "waiting_approval" | "cancelled" | "limit_reached";
+export type AgentRunStatus = "completed" | "waiting_approval" | "cancelled" | "limit_reached" | "failed";
 
 export type AgentStartTurnRequest = {
   runId: string;
@@ -50,6 +50,7 @@ export type AgentEvent =
   | { type: "tool_started"; callId: string; name: string; summary: string }
   | { type: "tool_completed"; callId: string; name: string; summary: string }
   | { type: "approval_required"; approval: AgentApproval }
+  | { type: "approval_resolved"; approvalId: string; approved: boolean }
   | { type: "message"; text: string }
   | { type: "run_completed"; status: AgentRunStatus };
 

@@ -46,7 +46,10 @@ pub fn build_prompt(
 }
 
 pub fn parse_step(json: &str, tools_enabled: bool) -> Result<ModelStep, AppError> {
-    let step: ModelStep = serde_json::from_str(json).map_err(|error| {
+    let value = super::model_normalize::normalized_value(json).map_err(|error| {
+        AppError::new("INVALID_AI_OUTPUT", format!("Agent 结果格式无效：{error}"))
+    })?;
+    let step: ModelStep = serde_json::from_value(value).map_err(|error| {
         AppError::new("INVALID_AI_OUTPUT", format!("Agent 结果格式无效：{error}"))
     })?;
     if step.decision_summary.trim().is_empty() {
@@ -93,5 +96,24 @@ mod tests {
             parse_step(json, false).unwrap().message.as_deref(),
             Some("你好")
         );
+    }
+
+    #[test]
+    fn accepts_compatible_api_function_arguments_and_snake_case() {
+        let json = r#"{"action":"tool","decision_summary":"读取卡片","tool_call":{"function":{"name":"cards.get","arguments":"{\"card_id\":\"card-1\"}"}}}"#;
+        let step = parse_step(json, true).unwrap();
+        let call = step.tool_call.unwrap();
+        assert_eq!(call.name, "cards.get");
+        assert_eq!(call.card_id.as_deref(), Some("card-1"));
+    }
+
+    #[test]
+    fn completes_create_input_and_drops_incomplete_knowledge_points() {
+        let json = r#"{"action":"tool","decisionSummary":"创建卡片","toolCall":{"name":"cards.create","input":{"question":"题目","knowledge_points":[{"subject":"数学"}]}}}"#;
+        let step = parse_step(json, true).unwrap();
+        let input = step.tool_call.unwrap().input.unwrap();
+        assert_eq!(input.question, "题目");
+        assert!(input.knowledge_points.is_empty());
+        assert!(input.assets.is_empty());
     }
 }

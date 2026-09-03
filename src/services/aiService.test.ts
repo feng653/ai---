@@ -105,6 +105,24 @@ describe("TauriAiService", () => {
     expect(progress).toHaveBeenCalledWith({ stage: "analyzing", message: "正在提炼" });
     expect(unlisten).toHaveBeenCalledOnce();
   });
+
+  it("persists and removes knowledge card drafts through dedicated commands", async () => {
+    vi.mocked(invoke).mockResolvedValue([]);
+    const service = new TauriAiService();
+    await service.listKnowledgeCards();
+    expect(invoke).toHaveBeenCalledWith("list_knowledge_cards");
+    const input = {
+      key: "数学/函数/单调性", subject: "数学", chapter: "函数", name: "单调性", status: "draft" as const,
+      content: {
+        runId: "run-1", promptVersion: "knowledge-v1", coreMethod: "方法", mistakeReminder: "提醒",
+        sourceRevisions: [{ cardId: "card-1", revision: 2 }], warnings: [],
+      },
+    };
+    await service.saveKnowledgeCard(input);
+    expect(invoke).toHaveBeenCalledWith("save_knowledge_card", { input });
+    await service.deleteKnowledgeCard(input.key);
+    expect(invoke).toHaveBeenCalledWith("delete_knowledge_card", { key: input.key });
+  });
 });
 
 describe("BrowserUnavailableAiService", () => {
