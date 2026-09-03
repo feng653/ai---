@@ -1,4 +1,4 @@
-import { BookOpenCheck, CirclePlus, PanelLeftClose, PanelLeftOpen, Search, Sparkles } from "lucide-react";
+import { BookOpenCheck, CirclePlus, PanelLeftClose, Search, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AgentWindow } from "../features/agent-demo/AgentWindow";
@@ -20,28 +20,44 @@ export function AppShell() {
     });
   }
 
+  function handleBrandClick() {
+    if (isSidebarCollapsed) {
+      toggleSidebar();
+      return;
+    }
+    navigate("/");
+  }
+
   return (
     <div className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="sidebar">
-        <button className="brand" onClick={() => navigate("/")} title={isSidebarCollapsed ? "知拾首页" : undefined}>
-          <span className="brand-mark"><BookOpenCheck size={21} /></span>
-          <span className="brand-copy"><strong>知拾</strong><small>个人错题卡片</small></span>
-        </button>
+        <div className="sidebar-header">
+          <button
+            className="brand"
+            onClick={handleBrandClick}
+            aria-label={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}
+            title={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}
+          >
+            <span className="brand-mark"><BookOpenCheck size={21} /></span>
+            <span className="brand-copy"><strong>知拾</strong><small>个人错题卡片</small></span>
+          </button>
+          {!isSidebarCollapsed && (
+            <button
+              className="sidebar-toggle"
+              onClick={toggleSidebar}
+              aria-label="收起侧边栏"
+              title="收起侧边栏"
+            >
+              <PanelLeftClose size={18} />
+            </button>
+          )}
+        </div>
         <p className="nav-label">错题库</p>
         <nav className="side-nav">
           <NavLink to="/" end title="我的错题"><BookOpenCheck size={18} /><span>我的错题</span></NavLink>
           <NavLink to="/cards/new" title="新增错题"><CirclePlus size={18} /><span>新增错题</span></NavLink>
           <NavLink to="/settings/ai" title="AI 接入"><Sparkles size={18} /><span>AI 接入</span></NavLink>
         </nav>
-        <button
-          className="sidebar-toggle"
-          onClick={toggleSidebar}
-          aria-label={isSidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
-          title={isSidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
-        >
-          {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          <span>{isSidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}</span>
-        </button>
       </aside>
 
       <main className="main-area">

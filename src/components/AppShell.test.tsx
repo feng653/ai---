@@ -25,18 +25,24 @@ describe("AppShell", () => {
 
   it("collapses, expands, and remembers the sidebar state", () => {
     const firstRender = renderShell();
-    fireEvent.click(screen.getByRole("button", { name: "收起侧边栏" }));
+    const collapseButton = screen.getByRole("button", { name: "收起侧边栏" });
+    expect(collapseButton.parentElement).toHaveClass("sidebar-header");
+    fireEvent.click(collapseButton);
 
     expect(document.querySelector(".app-shell")).toHaveClass("sidebar-collapsed");
     expect(window.localStorage.getItem("zhishi:sidebar-collapsed")).toBe("true");
     expect(screen.getByRole("link", { name: "我的错题" })).toHaveAttribute("title", "我的错题");
+    expect(screen.queryByRole("button", { name: "收起侧边栏" })).not.toBeInTheDocument();
 
     firstRender.unmount();
     renderShell();
-    expect(screen.getByRole("button", { name: "展开侧边栏" })).toBeInTheDocument();
+    const brandButton = screen.getByRole("button", { name: "展开侧边栏" });
+    expect(brandButton).toHaveClass("brand");
+    expect(screen.queryByRole("button", { name: "收起侧边栏" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "展开侧边栏" }));
+    fireEvent.click(brandButton);
     expect(document.querySelector(".app-shell")).not.toHaveClass("sidebar-collapsed");
     expect(window.localStorage.getItem("zhishi:sidebar-collapsed")).toBe("false");
+    expect(screen.getByRole("button", { name: "收起侧边栏" })).toBeInTheDocument();
   });
 });

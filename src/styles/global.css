@@ -35,7 +35,8 @@ a { color: inherit; text-decoration: none; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 230px minmax(0, 1fr); transition: grid-template-columns .2s ease; }
 .app-shell.sidebar-collapsed { grid-template-columns: 72px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 25px 18px 20px; overflow: hidden; background: #eff2ec; border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 20; transition: padding .2s ease; }
-.brand { border: 0; background: transparent; display: flex; align-items: center; gap: 11px; padding: 0 8px 27px; text-align: left; }
+.sidebar-header { padding-bottom: 27px; display: flex; align-items: flex-start; gap: 8px; }
+.brand { min-width: 0; flex: 1; border: 0; background: transparent; display: flex; align-items: center; gap: 11px; padding: 0 8px; text-align: left; }
 .brand-mark { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--brand); color: #fff; box-shadow: 0 7px 18px rgba(40, 98, 70, .22); flex: none; }
 .brand strong { display: block; font-family: Georgia, "Songti SC", serif; font-size: 21px; letter-spacing: .08em; }
 .brand small { display: block; margin-top: 1px; color: var(--ink-3); font-size: 10px; letter-spacing: .08em; }
@@ -44,12 +45,13 @@ a { color: inherit; text-decoration: none; }
 .side-nav a { height: 42px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; color: var(--ink-2); font-size: 14px; }
 .side-nav a:hover { background: rgba(255, 255, 255, .65); }
 .side-nav a.active { background: #fff; color: var(--brand); font-weight: 650; box-shadow: var(--shadow-sm); }
-.sidebar-toggle { width: 100%; height: 40px; margin-top: auto; padding: 0 11px; border: 1px solid transparent; border-radius: 10px; background: transparent; display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 12px; white-space: nowrap; }
+.sidebar-toggle { width: 36px; height: 36px; flex: none; padding: 0; border: 1px solid transparent; border-radius: 10px; background: transparent; display: grid; place-items: center; color: var(--ink-3); }
 .sidebar-toggle:hover { color: var(--brand); background: rgba(255, 255, 255, .65); }
 .sidebar-collapsed .sidebar { padding-inline: 12px; }
-.sidebar-collapsed .brand { justify-content: center; padding-inline: 0; }
-.sidebar-collapsed .brand-copy, .sidebar-collapsed .nav-label, .sidebar-collapsed .side-nav a span, .sidebar-collapsed .sidebar-toggle span { display: none; }
-.sidebar-collapsed .side-nav a, .sidebar-collapsed .sidebar-toggle { justify-content: center; padding-inline: 0; }
+.sidebar-collapsed .sidebar-header { justify-content: center; }
+.sidebar-collapsed .brand { flex: none; justify-content: center; padding-inline: 0; }
+.sidebar-collapsed .brand-copy, .sidebar-collapsed .nav-label, .sidebar-collapsed .side-nav a span { display: none; }
+.sidebar-collapsed .side-nav a { justify-content: center; padding-inline: 0; }
 .main-area { min-width: 0; }
 .topbar { height: 76px; padding: 0 36px; position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(220,225,218,.75); background: rgba(245,246,242,.91); backdrop-filter: blur(12px); }
 .breadcrumb { display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 12px; }
