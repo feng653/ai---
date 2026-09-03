@@ -1,0 +1,78 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: #17211b;
+  background: #f5f6f2;
+  font-synthesis: none;
+  --bg: #f5f6f2;
+  --surface: #fff;
+  --surface-soft: #f9faf7;
+  --ink: #17211b;
+  --ink-2: #465149;
+  --ink-3: #7a837c;
+  --line: #e3e7e1;
+  --line-strong: #d3d9d1;
+  --brand: #286246;
+  --brand-dark: #21553c;
+  --brand-soft: #e9f3ed;
+  --amber: #a96120;
+  --amber-soft: #fff2df;
+  --red: #b44a43;
+  --red-soft: #fcebea;
+  --shadow-sm: 0 1px 2px rgba(26, 41, 31, .05), 0 5px 16px rgba(26, 41, 31, .04);
+  --shadow-lg: 0 22px 70px rgba(19, 34, 25, .2);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { min-width: 320px; background: var(--bg); -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 224px minmax(0, 1fr); }
+.sidebar { height: 100vh; padding: 25px 18px 20px; position: sticky; top: 0; display: flex; flex-direction: column; background: #eff2ec; border-right: 1px solid var(--line); }
+.brand { padding: 0 8px 28px; display: flex; align-items: center; gap: 11px; }
+.brand-mark { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 11px; color: #fff; background: var(--brand); box-shadow: 0 7px 18px rgba(40, 98, 70, .22); }
+.brand strong { display: block; font: 700 21px Georgia, "Songti SC", serif; letter-spacing: .08em; }
+.brand small { margin-top: 2px; display: block; color: var(--ink-3); font-size: 10px; }
+.nav-label { margin: 0; padding: 5px 12px 8px; color: var(--ink-3); font-size: 10px; letter-spacing: .12em; }
+.side-nav { display: grid; gap: 4px; }
+.side-nav button { height: 42px; padding: 0 12px; border: 0; border-radius: 10px; display: flex; align-items: center; gap: 10px; color: var(--ink-2); background: transparent; font-size: 13px; text-align: left; }
+.side-nav button.active { color: var(--brand); background: #fff; box-shadow: var(--shadow-sm); font-weight: 700; }
+.side-nav button em { margin-left: auto; color: var(--ink-3); font-size: 10px; font-style: normal; }
+.side-nav button:not(.active):hover { background: rgba(255,255,255,.65); }
+.local-note { margin-top: auto; padding: 13px; display: flex; align-items: center; gap: 9px; border: 1px solid #dbe4dc; border-radius: 11px; color: var(--brand); background: rgba(255,255,255,.54); font-size: 11px; }
+.local-note svg { width: 18px; }
+.local-note small { color: var(--ink-3); }
+.main-area { min-width: 0; }
+.topbar { height: 76px; padding: 0 36px; position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid rgba(220,225,218,.75); background: rgba(245,246,242,.92); backdrop-filter: blur(12px); }
+.breadcrumb { display: flex; align-items: center; gap: 7px; color: var(--ink-3); font-size: 12px; }
+.breadcrumb svg { width: 16px; }
+.search-box { width: min(340px, 34vw); height: 39px; margin-left: auto; padding: 0 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.72); }
+.search-box svg { width: 16px; color: var(--ink-3); }
+.search-box input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 12px; }
+.provider-pill { min-height: 38px; padding: 0 11px; display: flex; align-items: center; gap: 6px; border: 1px solid #cfe1d5; border-radius: 10px; color: var(--brand); background: #f7fbf8; font-size: 11px; }
+.provider-pill i { width: 7px; height: 7px; border-radius: 50%; background: #38a169; box-shadow: 0 0 0 4px #def0e4; }
+.provider-pill svg, .primary svg { width: 16px; }
+.primary { min-height: 41px; padding: 0 14px; border: 1px solid var(--brand); border-radius: 11px; display: inline-flex; align-items: center; gap: 7px; color: #fff; background: var(--brand); font-size: 12px; font-weight: 700; box-shadow: 0 5px 14px rgba(40,98,70,.16); }
+.static-control, .filter-row button, .question-card { pointer-events: none; }
+.page-content { max-width: 1380px; padding: 34px 36px 64px; margin: 0 auto; }
+.page-heading { margin-bottom: 24px; display: flex; align-items: flex-end; }
+.page-heading p { margin: 0; color: var(--brand); font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+.page-heading h1 { margin: 4px 0 7px; font: 700 31px Georgia, "Songti SC", serif; }
+.page-heading span { color: var(--ink-3); font-size: 13px; }
+.page-heading small { margin-left: auto; color: var(--ink-3); }
+.filter-row { margin-bottom: 18px; display: flex; gap: 7px; }
+.filter-row button { min-height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; color: var(--ink-3); background: #fff; font-size: 11px; }
+.filter-row button.active { color: var(--brand); border-color: #c7dccc; background: var(--brand-soft); }
+.filter-row b { margin-left: 3px; font-size: 9px; }
+.card-grid { padding-right: 410px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.question-card { min-height: 208px; padding: 18px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.question-card header { display: flex; align-items: center; color: var(--ink-3); font-size: 10px; font-weight: 700; }
+.question-card header em { margin-left: auto; padding: 4px 7px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: 9px; font-style: normal; }
+.question-card.muted header em { color: var(--amber); background: var(--amber-soft); }
+.question-card h2 { margin: 17px 0 10px; font: 650 15px/1.65 Georgia, "Songti SC", serif; }
+.question-card p { margin: 0; color: var(--ink-2); font-size: 11px; line-height: 1.6; }
+.question-card footer { margin-top: auto; padding-top: 14px; display: flex; gap: 5px; }
+.question-card footer b { padding: 5px 7px; border-radius: 6px; color: var(--brand); background: var(--brand-soft); font-size: 9px; }

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>知拾 · AI Agent Harness Demo</title>
+  <link rel="stylesheet" href="./base.css" />
+  <link rel="stylesheet" href="./agent.css" />
+  <link rel="stylesheet" href="./responsive.css" />
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M6 4.5h9.2A2.8 2.8 0 0 1 18 7.3V21l-6-3-6 3V4.5Z"/><path d="m9 10 2 2 4-4"/></symbol>
+    <symbol id="i-cards" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v16H6.5A2.5 2.5 0 0 1 4 17.5v-11Z"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 8h7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3-2.2 5.8L4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2L12 3Z"/><path d="m18 3-.7 1.8-1.8.7 1.8.7L18 8l.7-1.8 1.8-.7-1.8-.7L18 3Z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/><path d="M8 9h8M8 13h5"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5-5L12 3.6 9.6 6 7.3 3.7a4 4 0 0 0 5 5L4 17l3 3 7.7-8.3a4 4 0 0 0 5-5L17.4 9 15 6.6l2.3-2.3Z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M18 4a9 9 0 0 0-14 8m2 8a9 9 0 0 0 14-8"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark"><svg><use href="#i-book"/></svg></span><span><strong>知拾</strong><small>个人错题卡片</small></span></div>
+      <p class="nav-label">错题库</p>
+      <nav class="side-nav" aria-label="应用导航（外观演示）">
+        <button class="active"><svg><use href="#i-cards"/></svg><span>我的错题</span><em>12</em></button>
+        <button><svg><use href="#i-plus"/></svg><span>新增错题</span></button>
+        <button><svg><use href="#i-spark"/></svg><span>AI 接入</span></button>
+      </nav>
+      <div class="local-note"><svg><use href="#i-shield"/></svg><span>本地优先<br><small>数据由你掌控</small></span></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <span class="breadcrumb"><svg><use href="#i-cards"/></svg>错题库</span>
+        <label class="search-box"><svg><use href="#i-search"/></svg><input aria-label="搜索（外观演示）" placeholder="搜索题目、错因或知识点…" disabled /></label>
+        <span class="provider-pill"><i></i><svg><use href="#i-spark"/></svg>Codex 已连接</span>
+        <button class="primary static-control"><svg><use href="#i-plus"/></svg>新增错题</button>
+      </header>
+
+      <div class="page-content">
+        <div class="page-heading"><div><p>MY MISTAKES</p><h1>我的错题</h1><span>把每一次失误，变成下一次得分。</span></div><small>12 张卡片</small></div>
+        <div class="filter-row"><button class="active">全部 <b>12</b></button><button>待完善 <b>3</b></button><button>已整理 <b>9</b></button></div>
+        <section class="card-grid" aria-label="错题卡片外观演示">
+          <article class="question-card"><header><span>数学 · 函数</span><em>已整理</em></header><h2>已知函数 f(x)=x²−2ax+1，求其在区间上的单调性。</h2><p>忽略了定义域端点对单调区间的影响。</p><footer><b>函数单调性</b><b>二次函数</b></footer></article>
+          <article class="question-card"><header><span>数学 · 不等式</span><em>已整理</em></header><h2>解不等式 (x−1)(x+3) ≤ 0，并写出解集。</h2><p>数轴符号判断时遗漏了等号成立的端点。</p><footer><b>一元二次不等式</b></footer></article>
+          <article class="question-card muted"><header><span>物理 · 力学</span><em>待完善</em></header><h2>斜面上的物体受到的摩擦力方向如何判断？</h2><p>需要补充受力分析与相对运动趋势。</p><footer><b>摩擦力</b><b>受力分析</b></footer></article>
+          <article class="question-card"><header><span>数学 · 数列</span><em>已整理</em></header><h2>等比数列前 n 项和公式的条件与推导。</h2><p>公比 q=1 时仍然套用了分式公式。</p><footer><b>等比数列</b></footer></article>
+          <article class="question-card"><header><span>英语 · 语法</span><em>已整理</em></header><h2>Distinguish “used to do” from “be used to doing”.</h2><p>混淆过去习惯与习惯于某事的结构。</p><footer><b>固定搭配</b></footer></article>
+          <article class="question-card muted"><header><span>化学 · 氧化还原</span><em>待完善</em></header><h2>配平酸性条件下高锰酸钾与亚铁离子的反应。</h2><p>电子守恒步骤尚未整理。</p><footer><b>氧化还原</b></footer></article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <button class="agent-reopen" id="agentReopen" type="button" hidden><svg><use href="#i-spark"/></svg><span>打开 Agent</span></button>
+  <section class="agent-panel" id="agentPanel" aria-label="AI Agent Harness 功能演示">
+    <header class="agent-header">
+      <span class="agent-logo"><svg><use href="#i-spark"/></svg></span>
+      <div><strong>知拾 Agent</strong><small><i></i>Harness Demo · 工具已就绪</small></div>
+      <button id="newConversation" type="button" title="新对话"><svg><use href="#i-refresh"/></svg></button>
+      <button id="minimizeAgent" type="button" title="收起"><svg><use href="#i-minus"/></svg></button>
+    </header>
+
+    <div class="agent-controls">
+      <div class="mode-switch" role="group" aria-label="交互模式"><button class="active" data-mode="auto">自动</button><button data-mode="chat">仅聊天</button></div>
+      <label>推理强度<select id="reasoningEffort"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option></select></label>
+      <span class="safety-label"><svg><use href="#i-shield"/></svg>写操作需批准</span>
+    </div>
+
+    <details class="tool-drawer">
+      <summary><svg><use href="#i-tool"/></svg><span>本轮可用工具</span><b>5</b></summary>
+      <div><code>cards.search</code><code>cards.get</code><code>cards.update</code><code>cards.delete</code><code>knowledge.search</code></div>
+    </details>
+
+    <div class="timeline" id="timeline" aria-live="polite"></div>
+
+    <div class="quick-actions" id="quickActions" aria-label="演示任务"></div>
+    <form class="composer" id="composer">
+      <textarea id="promptInput" rows="2" placeholder="聊天，或让 Agent 查找、总结、修改卡片…"></textarea>
+      <footer><span><kbd>Enter</kbd> 发送 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行</span><button class="send-button" id="sendButton" type="submit"><svg><use href="#i-send"/></svg><b>发送</b></button></footer>
+    </form>
+    <p class="demo-note">交互由本地脚本模拟，不会调用模型或修改真实数据。</p>
+  </section>
+
+  <script src="./data.js"></script>
+  <script src="./harness.js"></script>
+  <script src="./runtime.js"></script>
+  <script src="./render.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
