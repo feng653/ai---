@@ -4,5 +4,6 @@
 - `error-card-library/index.html`：错题卡片新增、整理、筛选和详情交互演示。
 - `knowledge-tree/index.html`：知识树、知识卡片和可配置数量复习题演示。
 - `tree-sidebar-layout/index.html`：统一视觉风格的学习空间草图，包含柔和知识树、知识卡片、练习题和仅展示 AI 供应商的设置页。
+- `knowledge-workspace-redesign/index.html`：基于 UI 重设计清单的完整工作台 Demo，含折页项目图标、知识树与卡片详情变形、编辑/裁剪/AI 审阅、供应商及自定义 API 设置和 Agent 小窗全流程动画；同目录 `功能还原对照表.md` 记录逐项映射。
 
 每个 demo 的 HTML、CSS、JavaScript、测试和专用资源只放在自己的目录中。新增 demo 时，请新建语义明确的独立目录，并使用 `index.html` 作为入口。

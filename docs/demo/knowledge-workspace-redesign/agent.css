@@ -1,0 +1,70 @@
+.agent-launcher { position: fixed; z-index: 55; right: 22px; bottom: 22px; min-width: 132px; height: 48px; padding: 0 15px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 16px; color: #fff; background: var(--forest); box-shadow: 0 13px 34px rgba(18,58,37,.25); font-size: 11px; font-weight: 760; transition: transform var(--motion) var(--ease-spring), border-radius var(--motion), opacity var(--fast); }
+.agent-launcher:hover { transform: translateY(-3px); }
+.agent-launcher:active { transform: translateY(0) scale(.97); }
+.agent-launcher svg { width: 18px; }
+.agent-launcher i { position: absolute; top: 9px; right: 9px; width: 7px; height: 7px; border: 2px solid var(--forest); border-radius: 50%; background: #79cb8d; }
+.agent-launcher.open { opacity: 0; pointer-events: none; transform: translateY(8px) scale(.85); }
+.agent-window { position: fixed; z-index: 90; right: 22px; bottom: 20px; width: min(410px, calc(100vw - 32px)); height: min(680px, calc(100vh - 38px)); border: 1px solid rgba(195,207,198,.95); border-radius: 22px; background: rgba(255,255,252,.97); box-shadow: var(--shadow-lg); backdrop-filter: blur(24px); overflow: hidden; transform-origin: calc(100% - 38px) calc(100% - 30px); }
+.agent-window.open { animation: agent-open 360ms var(--ease-spring) both; }
+.agent-window.closing { animation: agent-close 190ms var(--ease) both; }
+.agent-shell { height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.agent-header { padding: 14px 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+.agent-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: var(--forest); }
+.agent-avatar svg { width: 18px; }
+.agent-title { min-width: 0; margin-right: auto; display: grid; }
+.agent-title strong { font-size: 11px; }
+.agent-title small { margin-top: 3px; color: var(--ink-3); font-size: 8px; }
+.runtime-badge { padding: 5px 7px; border-radius: 7px; color: var(--blue); background: var(--blue-soft); font-size: 7px; font-weight: 800; }
+.agent-header .icon-button { width: 34px; height: 34px; border-radius: 9px; }
+.agent-header .icon-button svg { width: 15px; }
+.agent-controls { padding: 9px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+.agent-controls .segmented { flex: 1; }
+.agent-controls .segmented button { flex: 1; min-height: 30px; font-size: 8px; }
+.agent-settings-button { width: 34px; height: 34px; }
+.agent-settings { max-height: 0; padding: 0 14px; border-bottom: 1px solid transparent; opacity: 0; overflow: hidden; transition: max-height var(--slow) var(--ease), padding var(--motion), opacity var(--fast), border-color var(--fast); }
+.agent-settings.open { max-height: 210px; padding-block: 12px; border-color: var(--line); opacity: 1; }
+.setting-label { display: flex; align-items: center; justify-content: space-between; color: var(--ink-3); font-size: 8px; }
+.thinking-options { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.thinking-options button { min-height: 31px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-3); background: #fff; font-size: 8px; }
+.thinking-options button.active { color: var(--forest); border-color: #9db2a1; background: var(--forest-soft); }
+.permission-list { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+.permission-tag { min-height: 27px; padding: 0 8px; display: inline-flex; align-items: center; gap: 5px; border-radius: 7px; color: var(--ink-2); background: var(--surface-3); font-size: 7px; font-weight: 700; animation: tag-in var(--motion) var(--ease-spring) both; }
+.permission-tag svg { width: 12px; height: 12px; color: var(--forest-2); }
+.agent-timeline { min-height: 0; padding: 16px 14px 18px; display: flex; flex-direction: column; gap: 10px; overflow: auto; scroll-behavior: smooth; }
+.agent-welcome { margin: auto 10px; display: grid; justify-items: center; text-align: center; }
+.agent-welcome .agent-avatar { width: 48px; height: 48px; border-radius: 15px; }
+.agent-welcome h3 { margin: 13px 0 5px; font: 620 18px "Iowan Old Style", "Songti SC", serif; }
+.agent-welcome p { max-width: 270px; margin-bottom: 14px; color: var(--ink-3); font-size: 9px; line-height: 1.6; }
+.quick-prompts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.quick-prompts button { min-height: 46px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink-2); background: #fff; font-size: 8px; line-height: 1.4; }
+.quick-prompts button:hover { border-color: #a6b8aa; background: var(--forest-soft); transform: translateY(-1px); }
+.message { max-width: 88%; padding: 10px 12px; border-radius: 12px; font-size: 9px; line-height: 1.65; animation: message-in var(--motion) var(--ease) both; }
+.message.user { align-self: flex-end; color: #fff; background: var(--forest); border-bottom-right-radius: 4px; }
+.message.agent { align-self: flex-start; color: var(--ink-2); background: var(--surface-3); border-bottom-left-radius: 4px; }
+.run-card, .approval-card { padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: #fff; animation: rise-in var(--motion) var(--ease) both; }
+.run-card { display: grid; grid-template-columns: 22px 1fr; align-items: center; gap: 8px; color: var(--ink-3); font-size: 8px; }
+.run-card i { width: 18px; height: 18px; border: 3px solid var(--forest-soft); border-top-color: var(--forest); border-radius: 50%; animation: spin 800ms linear infinite; }
+.run-card.done i { display: grid; place-items: center; border: 0; border-radius: 6px; background: var(--forest); animation: none; }
+.run-card.done i::after { content: ""; width: 6px; height: 3px; border: solid #fff; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+.approval-card { border-color: #d6bc8f; background: #fffbf3; }
+.approval-head { display: flex; align-items: center; gap: 8px; }
+.approval-head svg { width: 16px; color: var(--amber); }
+.approval-head strong { font-size: 9px; }
+.approval-card p { margin: 8px 0; color: var(--ink-2); font-size: 8px; line-height: 1.55; }
+.impact-list { padding: 8px; display: grid; gap: 4px; border-radius: 8px; background: rgba(255,255,255,.72); color: var(--ink-3); font-size: 7px; }
+.approval-actions { margin-top: 9px; display: flex; gap: 6px; }
+.approval-actions .button { min-height: 34px; flex: 1; padding: 0 8px; font-size: 8px; }
+.agent-composer { padding: 10px 12px 12px; border-top: 1px solid var(--line); background: rgba(250,251,247,.9); }
+.attachment-row { margin-bottom: 7px; display: flex; gap: 6px; }
+.attachment { position: relative; width: 48px; height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--forest-soft); animation: tag-in var(--motion) var(--ease-spring); }
+.attachment button { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; padding: 0; display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; color: #fff; background: var(--rose); font-size: 11px; }
+.mention-menu { margin-bottom: 7px; padding: 6px; display: grid; gap: 3px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: var(--shadow-sm); }
+.mention-menu button { min-height: 34px; padding: 0 8px; border: 0; border-radius: 7px; text-align: left; background: transparent; font-size: 8px; }
+.mention-menu button.active { color: var(--forest); background: var(--forest-soft); }
+.composer-box { min-height: 76px; padding: 9px; display: grid; grid-template-columns: 32px 1fr 38px; align-items: end; gap: 7px; border: 1px solid var(--line-strong); border-radius: 13px; background: #fff; transition: border-color var(--fast), box-shadow var(--fast); }
+.composer-box:focus-within { border-color: #93aa98; box-shadow: 0 0 0 4px rgba(42,89,58,.07); }
+.composer-box textarea { min-height: 46px; max-height: 110px; padding: 6px 0; border: 0; outline: 0; resize: none; color: var(--ink); background: transparent; font-size: 9px; line-height: 1.5; }
+.composer-box .icon-button { width: 32px; height: 32px; border: 0; border-radius: 8px; background: var(--surface-3); }
+.composer-box .send-button { width: 38px; height: 38px; color: #fff; background: var(--forest); }
+.composer-box .send-button svg { width: 16px; }
+.stop-run { width: 100%; min-height: 34px; margin-top: 7px; color: var(--rose); border-color: #e6cac5; background: #fff8f6; }
