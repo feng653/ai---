@@ -1,10 +1,14 @@
 mod api_client;
+mod api_learning;
 mod codex;
 mod codex_auth;
+mod codex_learning;
 mod deepseek;
+mod knowledge;
 #[cfg(test)]
 mod live_tests;
 mod manager;
+mod manager_learning;
 mod manager_organize;
 mod manager_state;
 mod process;
@@ -17,6 +21,7 @@ mod proposal;
 mod proposal_tests;
 mod settings;
 
+pub use knowledge::{GeneratedKnowledgeCard, KnowledgeCardRequest};
 pub use manager::AiManager;
 pub use manager_state::ProviderSummary;
 pub use proposal::AiProposal;

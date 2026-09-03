@@ -14,7 +14,7 @@ export function normalizeMathMarkdown(value: string): string {
 
 export function MathContent({ children, className }: { children: string; className?: string }) {
   return (
-    <div className={className}>
+    <div className={["math-content", className].filter(Boolean).join(" ")}>
       <ReactMarkdown skipHtml remarkPlugins={[remarkMath]} rehypePlugins={[rehypeSanitize, rehypeKatex]}>
         {normalizeMathMarkdown(children)}
       </ReactMarkdown>

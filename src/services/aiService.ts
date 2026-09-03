@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type {
   AiProposal, AiProviderId, AiProviderStatus, AiProviderSummary, ApiProviderInput,
+  GeneratedKnowledgeCard, KnowledgeCardGenerationRequest,
 } from "../domain/ai";
 import type { CardInput } from "../domain/card";
 
@@ -19,6 +20,10 @@ export interface AiService {
   selectProvider(id: AiProviderId): Promise<AiProviderStatus>;
   saveApiProvider(input: ApiProviderInput): Promise<AiProviderStatus>;
   testApiProvider(input: ApiProviderInput): Promise<void>;
+  generateKnowledgeCard(
+    request: KnowledgeCardGenerationRequest,
+    onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedKnowledgeCard>;
   loginCodex(): Promise<AiProviderStatus>;
   disconnectProvider(id: AiProviderId): Promise<void>;
   organize(
@@ -62,6 +67,10 @@ export class BrowserUnavailableAiService implements AiService {
   async testApiProvider(): Promise<void> { throw desktopOnly(); }
   async loginCodex(): Promise<AiProviderStatus> { throw desktopOnly(); }
   async disconnectProvider(): Promise<void> { throw desktopOnly(); }
+  async generateKnowledgeCard(
+    _request: KnowledgeCardGenerationRequest,
+    _onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedKnowledgeCard> { throw desktopOnly(); }
 
   async organize(): Promise<AiProposal> {
     throw new Error(browserStatus.message);
@@ -99,6 +108,22 @@ export class TauriAiService implements AiService {
 
   disconnectProvider(id: AiProviderId): Promise<void> {
     return invoke("disconnect_ai_provider", { id });
+  }
+
+  async generateKnowledgeCard(
+    request: KnowledgeCardGenerationRequest,
+    onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedKnowledgeCard> {
+    const requestId = crypto.randomUUID();
+    const unlisten = await listen<AiProgressEvent>("ai-progress", (event) => {
+      if (event.payload.requestId !== requestId) return;
+      onProgress?.({ stage: event.payload.stage, message: event.payload.message });
+    });
+    try {
+      return await invoke("generate_knowledge_card", { request, requestId });
+    } finally {
+      unlisten();
+    }
   }
 
   async organize(

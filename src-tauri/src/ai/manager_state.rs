@@ -22,7 +22,7 @@ impl<'a> RunningGuard<'a> {
         value
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .map(|_| Self(value))
-            .map_err(|_| AppError::new("RUN_IN_PROGRESS", "已有 AI 整理任务正在运行"))
+            .map_err(|_| AppError::new("RUN_IN_PROGRESS", "已有 AI 任务正在运行"))
     }
 }
 

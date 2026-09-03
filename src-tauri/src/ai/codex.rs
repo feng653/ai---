@@ -44,9 +44,9 @@ fn discover_codex() -> Option<PathBuf> {
 
 pub struct CodexProvider {
     executable: Option<PathBuf>,
-    home: PathBuf,
+    pub(super) home: PathBuf,
     status: Mutex<ProviderStatus>,
-    run_lock: Mutex<()>,
+    pub(super) run_lock: Mutex<()>,
 }
 
 impl CodexProvider {
@@ -193,7 +193,7 @@ impl CodexProvider {
         }
     }
 
-    fn executable(&self) -> Result<&Path, AppError> {
+    pub(super) fn executable(&self) -> Result<&Path, AppError> {
         self.executable.as_deref().ok_or_else(|| {
             AppError::new("PROVIDER_NOT_FOUND", "未找到 Codex CLI，无法启动网页登录")
         })
@@ -205,7 +205,7 @@ impl CodexProvider {
             .map_err(|_| AppError::new("PROVIDER_ERROR", "Codex 状态锁已损坏"))
     }
 
-    fn record_failure(&self, error: &AppError) -> Result<(), AppError> {
+    pub(super) fn record_failure(&self, error: &AppError) -> Result<(), AppError> {
         let state = if error.code == "PROVIDER_NOT_FOUND" {
             "unavailable"
         } else {

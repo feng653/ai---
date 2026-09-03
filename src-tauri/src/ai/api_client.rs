@@ -184,7 +184,7 @@ pub(super) fn image_mime(path: &Path) -> Result<&'static str, AppError> {
     }
 }
 
-fn extract_content(body: &str) -> Result<String, AppError> {
+pub(super) fn extract_content(body: &str) -> Result<String, AppError> {
     let response: ChatResponse = serde_json::from_str(body).map_err(|error| {
         AppError::new("INVALID_AI_OUTPUT", format!("API 响应格式无效：{error}"))
     })?;

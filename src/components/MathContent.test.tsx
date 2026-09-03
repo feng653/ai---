@@ -9,6 +9,7 @@ describe("MathContent", () => {
     );
     expect(container.querySelectorAll(".katex").length).toBeGreaterThanOrEqual(2);
     expect(container.querySelector(".katex-display")).not.toBeNull();
+    expect(container.firstElementChild).toHaveClass("math-content");
     expect(container.textContent).toContain("x2>4");
   });
 

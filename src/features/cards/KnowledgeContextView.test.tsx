@@ -1,10 +1,11 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Card } from "../../domain/card";
 import type { KnowledgeSelection } from "./knowledgeTree";
 import { KnowledgeContextView } from "./KnowledgeContextView";
+import { aiService } from "../../services/aiService";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 const selection: KnowledgeSelection = {
   key: "物理/电学/串联电路", label: "串联电路", subject: "物理", chapter: "电学", point: "串联电路",
@@ -33,6 +34,26 @@ describe("KnowledgeContextView", () => {
     expect(screen.queryByText(/汇总 1 张/)).not.toBeInTheDocument();
   });
 
+  it("generates concise scoped content from the current source cards", async () => {
+    vi.spyOn(aiService, "getStatus").mockResolvedValue({ state: "connected", provider: "codex", message: "ok" });
+    const generate = vi.spyOn(aiService, "generateKnowledgeCard").mockResolvedValue({
+      runId: "run-1", promptVersion: "knowledge-v1",
+      coreMethod: "串联电路的总电阻等于各分电阻之和。",
+      mistakeReminder: "不要误用并联电阻公式。",
+      sourceRevisions: [{ cardId: "series", revision: 1 }], warnings: [],
+    });
+    renderView();
+    fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
+    fireEvent.click(screen.getByRole("button", { name: "AI 生成" }));
+
+    await waitFor(() => expect(screen.getByText("串联电路的总电阻等于各分电阻之和。")).toBeInTheDocument());
+    expect(screen.getByText("不要误用并联电阻公式。")).toBeInTheDocument();
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({
+      topic: { subject: "物理", chapter: "电学", name: "串联电路" },
+      sourceCards: [expect.objectContaining({ id: "series", revision: 1 })],
+    }), expect.any(Function));
+  });
+
   it("lets the user choose how many review questions are generated", () => {
     const container = renderView();
     fireEvent.click(screen.getByRole("tab", { name: /复习题/ }));
@@ -45,7 +66,9 @@ describe("KnowledgeContextView", () => {
   });
 
   it("disables review outside a concrete knowledge point", () => {
-    renderView({ ...selection, key: "物理/电学", label: "电学", point: undefined });
+    const container = renderView({ ...selection, key: "物理/电学", label: "电学", point: undefined });
     expect(screen.getByRole("tab", { name: /复习题/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
+    expect(container.querySelector(".knowledge-card-preview")).toHaveClass("math-content");
   });
 });

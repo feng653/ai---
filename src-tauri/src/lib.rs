@@ -6,9 +6,10 @@ mod storage;
 
 use ai::AiManager;
 use commands::{
-    connect_ai_provider, delete_asset, delete_card, disconnect_ai_provider, get_ai_provider_status,
-    get_card, import_asset, list_ai_providers, list_cards, login_codex_provider, organize_card,
-    read_asset, save_api_provider, save_card, select_ai_provider, test_api_provider,
+    connect_ai_provider, delete_asset, delete_card, disconnect_ai_provider,
+    generate_knowledge_card, get_ai_provider_status, get_card, import_asset, list_ai_providers,
+    list_cards, login_codex_provider, organize_card, read_asset, save_api_provider, save_card,
+    select_ai_provider, test_api_provider,
 };
 use std::sync::Arc;
 use storage::Storage;
@@ -49,7 +50,8 @@ pub fn run() {
             test_api_provider,
             login_codex_provider,
             disconnect_ai_provider,
-            organize_card
+            organize_card,
+            generate_knowledge_card
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

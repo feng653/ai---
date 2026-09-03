@@ -30,6 +30,30 @@ export type ApiProviderInput = {
   apiKey: string;
 };
 
+export type KnowledgeCardGenerationRequest = {
+  topic: { subject: string; chapter?: string | null; name: string };
+  sourceCards: Array<{
+    id: string;
+    revision: number;
+    question: string;
+    userAnswer: string;
+    correctAnswer: string;
+    solution: string;
+    errorLocation: string;
+    errorReason: string;
+    knowledgePoints: KnowledgePoint[];
+  }>;
+};
+
+export type GeneratedKnowledgeCard = {
+  runId: string;
+  promptVersion: string;
+  coreMethod: string;
+  mistakeReminder: string;
+  sourceRevisions: Array<{ cardId: string; revision: number }>;
+  warnings: string[];
+};
+
 export type ProposedField<T> = {
   value: T | null;
   uncertain: boolean;

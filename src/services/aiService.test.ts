@@ -70,6 +70,41 @@ describe("TauriAiService", () => {
       agentTurn: expect.objectContaining({ webSearch: true }),
     }));
   });
+
+  it("generates a scoped knowledge card and filters its progress events", async () => {
+    const unlisten = vi.fn();
+    let handler: ((event: { payload: Record<string, string> }) => void) | undefined;
+    vi.mocked(listen).mockImplementation(async (_event, callback) => {
+      handler = callback as typeof handler;
+      return unlisten;
+    });
+    vi.mocked(invoke).mockImplementation(async (command, args) => {
+      expect(command).toBe("generate_knowledge_card");
+      const requestId = (args as { requestId: string }).requestId;
+      handler?.({ payload: { requestId, stage: "analyzing", message: "正在提炼" } });
+      return {
+        runId: "run-knowledge", promptVersion: "knowledge-v1",
+        coreMethod: "只写当前知识点。", mistakeReminder: "核对实际错误。",
+        sourceRevisions: [{ cardId: "card-1", revision: 2 }], warnings: [],
+      };
+    });
+    const request = {
+      topic: { subject: "数学", chapter: "函数", name: "单调性" },
+      sourceCards: [{
+        id: "card-1", revision: 2, question: "题目", userAnswer: "答案", correctAnswer: "正解",
+        solution: "方法", errorLocation: "步骤", errorReason: "错因",
+        knowledgePoints: [{ subject: "数学", chapter: "函数", name: "单调性" }],
+      }],
+    };
+    const progress = vi.fn();
+    await expect(new TauriAiService().generateKnowledgeCard(request, progress))
+      .resolves.toMatchObject({ runId: "run-knowledge" });
+    expect(invoke).toHaveBeenCalledWith("generate_knowledge_card", {
+      request, requestId: expect.any(String),
+    });
+    expect(progress).toHaveBeenCalledWith({ stage: "analyzing", message: "正在提炼" });
+    expect(unlisten).toHaveBeenCalledOnce();
+  });
 });
 
 describe("BrowserUnavailableAiService", () => {
@@ -77,5 +112,6 @@ describe("BrowserUnavailableAiService", () => {
     const service = new BrowserUnavailableAiService();
     await expect(service.connect()).resolves.toMatchObject({ state: "unavailable" });
     await expect(service.organize()).rejects.toThrow("桌面应用");
+    await expect(service.generateKnowledgeCard({} as never)).rejects.toThrow("桌面应用");
   });
 });

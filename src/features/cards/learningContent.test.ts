@@ -21,6 +21,7 @@ describe("learning content", () => {
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({ coverage: "初始卡片", sources: [seriesCard] });
     expect(cards[0].coreMethods).toContain("串联电路的总电阻等于各分电阻之和。");
+    expect(cards[0].preview).toBe("串联电路的总电阻等于各分电阻之和。");
     expect(cards[0].mistakes[0].content).toBe("混淆了串联与并联电阻的计算方法。");
     expect(cards[0]).not.toHaveProperty("summary");
   });

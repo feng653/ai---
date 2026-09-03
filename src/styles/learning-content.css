@@ -5,11 +5,14 @@
 .learning-tabs button small { margin-left: 3px; color: var(--ink-3); font-size: 8px; }
 .learning-tabs > span { margin: 0 0 11px auto; color: var(--ink-3); font-size: 8px; }
 .knowledge-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.knowledge-card-grid > article { min-height: 190px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; display: flex; flex-direction: column; background: #fff; box-shadow: var(--shadow-sm); }
+.knowledge-card-grid > article { min-width: 0; min-height: 190px; padding: 15px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; display: flex; flex-direction: column; background: #fff; box-shadow: var(--shadow-sm); }
 .knowledge-card-grid article > header { display: flex; align-items: center; color: var(--ink-3); font-size: 9px; }
 .knowledge-card-grid header em { margin-left: auto; padding: 3px 6px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: 8px; font-style: normal; }
 .knowledge-card-grid h3 { margin: 12px 0 7px; font: 650 15px Georgia, "Songti SC", serif; }
 .knowledge-card-grid article > .math-content { margin: 0; color: var(--ink-2); font-size: 10px; line-height: 1.7; }
+.knowledge-card-preview { max-height: 3.4em; overflow: hidden; overflow-wrap: anywhere; }
+.knowledge-card-preview > p { margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.knowledge-card-preview .katex-display { max-width: 100%; margin: 0; overflow: hidden; text-align: left; }
 .knowledge-card-grid article > div:not(.math-content) { margin-top: 11px; display: flex; gap: 7px; }
 .knowledge-card-grid article > div:not(.math-content) span { padding: 5px 7px; border-radius: 7px; color: var(--ink-2); background: var(--surface-soft); font-size: 8px; }
 .knowledge-card-grid article > div b { color: var(--brand); }
@@ -21,6 +24,11 @@
 .learning-view-heading small { color: var(--brand); font-size: 8px; }
 .learning-view-heading h3 { margin: 0; font: 700 17px Georgia, "Songti SC", serif; }
 .learning-view-heading > button { margin-left: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); background: #fff; font-size: 8px; }
+.learning-view-heading > .knowledge-generate-button { min-height: 34px; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: #fff; border-color: var(--brand); background: var(--brand); font-size: 9px; font-weight: 700; }
+.knowledge-generation-status, .knowledge-generation-error, .knowledge-generation-warning { margin: 9px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 9px; }
+.knowledge-generation-status { color: var(--brand); background: var(--brand-soft); }
+.knowledge-generation-error { color: var(--red); background: var(--red-soft); }
+.knowledge-generation-warning { color: var(--amber); background: var(--amber-soft); }
 .knowledge-evidence { margin: 13px 0; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); }
 .knowledge-evidence span { padding: 10px 11px; color: var(--ink-3); font-size: 8px; }
 .knowledge-evidence span + span { border-left: 1px solid var(--line); }

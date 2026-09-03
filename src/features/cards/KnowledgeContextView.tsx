@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { GeneratedKnowledgeCard } from "../../domain/ai";
 import type { Card } from "../../domain/card";
 import { KnowledgeCardView } from "./KnowledgeCardView";
 import { type KnowledgeSelection, selectionPath } from "./knowledgeTree";
@@ -21,6 +22,7 @@ type Props = {
 export function KnowledgeContextView(props: Props) {
   const { allCards, cards, selection, loading, error, onSelectionChange, onOpenCard, onCreateCard } = props;
   const [view, setView] = useState<View>("cards");
+  const [generatedCards, setGeneratedCards] = useState<Record<string, GeneratedKnowledgeCard>>({});
   const knowledgeCards = useMemo(() => buildKnowledgeCards(allCards, selection), [allCards, selection]);
   const detail = useMemo(() => buildKnowledgeCard(allCards, selection), [allCards, selection]);
   const reviewReady = Boolean(selection?.point && cards.length);
@@ -44,6 +46,8 @@ export function KnowledgeContextView(props: Props) {
     {view === "cards" && <RelatedCardsView cards={cards} loading={loading} error={error}
       filtered={Boolean(selection)} onOpen={onOpenCard} onCreate={onCreateCard} />}
     {view === "knowledge" && <KnowledgeCardView cards={knowledgeCards} detail={detail}
+      generatedCards={generatedCards}
+      onGenerated={(key, generated) => setGeneratedCards((current) => ({ ...current, [key]: generated }))}
       onSelect={onSelectionChange} onOpenSource={onOpenCard} />}
     {view === "review" && selection && <ReviewView cards={cards} selection={selection} onOpenSource={onOpenCard} />}
   </div>;

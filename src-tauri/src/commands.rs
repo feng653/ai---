@@ -1,5 +1,6 @@
 use crate::ai::{
-    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, ProviderSummary,
+    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, GeneratedKnowledgeCard,
+    KnowledgeCardRequest, ProviderSummary,
 };
 use crate::domain::{Card, CardAsset, CardFilter, CardInput, ProviderStatus};
 use crate::error::AppError;
@@ -138,6 +139,26 @@ pub async fn organize_card(
     });
     manager
         .organize(input, base_revision, asset_paths, agent, move |progress| {
+            let _ = window.emit(
+                "ai-progress",
+                AiProgressPayload {
+                    request_id: request_id.clone(),
+                    progress,
+                },
+            );
+        })
+        .await
+}
+
+#[tauri::command]
+pub async fn generate_knowledge_card(
+    manager: State<'_, Arc<AiManager>>,
+    window: Window,
+    request: KnowledgeCardRequest,
+    request_id: String,
+) -> Result<GeneratedKnowledgeCard, AppError> {
+    manager
+        .generate_knowledge_card(request, move |progress| {
             let _ = window.emit(
                 "ai-progress",
                 AiProgressPayload {
