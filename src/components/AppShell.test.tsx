@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./AppShell";
 
-vi.mock("../features/agent-demo/AgentWindow", () => ({ AgentWindow: () => null }));
+vi.mock("../features/agent/AgentWorkspace", () => ({ AgentWorkspace: () => null }));
 
 function renderShell() {
   return render(

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "action": { "type": "string", "enum": ["final", "tool"] },
+    "message": { "type": ["string", "null"], "maxLength": 8000 },
+    "decisionSummary": { "type": "string", "maxLength": 500 },
+    "toolCall": {
+      "anyOf": [
+        { "$ref": "#/$defs/toolCall" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "required": ["action", "message", "decisionSummary", "toolCall"],
+  "additionalProperties": false,
+  "$defs": {
+    "knowledgePoint": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "subject": { "type": "string" },
+        "chapter": { "type": ["string", "null"] },
+        "name": { "type": "string" }
+      },
+      "required": ["id", "subject", "chapter", "name"],
+      "additionalProperties": false
+    },
+    "cardInput": {
+      "type": "object",
+      "properties": {
+        "subject": { "type": "string" },
+        "question": { "type": "string" },
+        "userAnswer": { "type": "string" },
+        "correctAnswer": { "type": "string" },
+        "supplementalNote": { "type": "string" },
+        "solution": { "type": "string" },
+        "errorLocation": { "type": "string" },
+        "errorReason": { "type": "string" },
+        "errorType": { "type": "string" },
+        "knowledgePoints": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/knowledgePoint" }
+        },
+        "assets": { "type": "array", "maxItems": 0 }
+      },
+      "required": ["subject", "question", "userAnswer", "correctAnswer", "supplementalNote", "solution", "errorLocation", "errorReason", "errorType", "knowledgePoints", "assets"],
+      "additionalProperties": false
+    },
+    "cardChanges": {
+      "type": "object",
+      "properties": {
+        "subject": { "type": ["string", "null"] },
+        "question": { "type": ["string", "null"] },
+        "userAnswer": { "type": ["string", "null"] },
+        "correctAnswer": { "type": ["string", "null"] },
+        "supplementalNote": { "type": ["string", "null"] },
+        "solution": { "type": ["string", "null"] },
+        "errorLocation": { "type": ["string", "null"] },
+        "errorReason": { "type": ["string", "null"] },
+        "errorType": { "type": ["string", "null"] },
+        "knowledgePoints": {
+          "anyOf": [
+            { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/knowledgePoint" } },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["subject", "question", "userAnswer", "correctAnswer", "supplementalNote", "solution", "errorLocation", "errorReason", "errorType", "knowledgePoints"],
+      "additionalProperties": false
+    },
+    "toolCall": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "enum": ["cards.search", "cards.get", "cards.create", "cards.update", "cards.delete", "knowledge.search"] },
+        "query": { "type": ["string", "null"] },
+        "cardId": { "type": ["string", "null"] },
+        "expectedRevision": { "type": ["integer", "null"], "minimum": 1 },
+        "input": { "anyOf": [{ "$ref": "#/$defs/cardInput" }, { "type": "null" }] },
+        "changes": { "anyOf": [{ "$ref": "#/$defs/cardChanges" }, { "type": "null" }] }
+      },
+      "required": ["name", "query", "cardId", "expectedRevision", "input", "changes"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,6 +1,8 @@
+mod api_agent;
 mod api_client;
 mod api_learning;
 mod codex;
+mod codex_agent;
 mod codex_auth;
 mod codex_learning;
 mod deepseek;
@@ -8,6 +10,7 @@ mod knowledge;
 #[cfg(test)]
 mod live_tests;
 mod manager;
+mod manager_agent;
 mod manager_learning;
 mod manager_organize;
 mod manager_state;

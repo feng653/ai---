@@ -151,6 +151,38 @@ impl Storage {
         }
         Ok(())
     }
+
+    pub fn delete_card_if_revision(
+        &self,
+        id: &str,
+        expected_revision: u64,
+    ) -> Result<(), AppError> {
+        let mut connection = self.lock()?;
+        let transaction = connection.transaction()?;
+        let paths = select_asset_paths(&transaction, id)?;
+        let changed = transaction.execute(
+            "DELETE FROM cards WHERE id = ?1 AND revision = ?2",
+            params![id, expected_revision],
+        )?;
+        if changed == 0 {
+            let exists: bool = transaction.query_row(
+                "SELECT EXISTS(SELECT 1 FROM cards WHERE id = ?1)",
+                [id],
+                |row| row.get(0),
+            )?;
+            return Err(if exists {
+                AppError::new("REVISION_CONFLICT", "卡片版本已变化，请重新读取")
+            } else {
+                AppError::new("NOT_FOUND", "卡片不存在")
+            });
+        }
+        transaction.commit()?;
+        drop(connection);
+        for path in paths {
+            let _ = remove_relative_file(&self.assets_dir, &path);
+        }
+        Ok(())
+    }
 }
 
 fn escape_like(value: &str) -> String {

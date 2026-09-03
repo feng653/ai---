@@ -1,7 +1,7 @@
 import { BookOpenCheck, CirclePlus, PanelLeftClose, Search, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { AgentWindow } from "../features/agent-demo/AgentWindow";
+import { AgentWorkspace } from "../features/agent/AgentWorkspace";
 
 const SIDEBAR_STORAGE_KEY = "zhishi:sidebar-collapsed";
 
@@ -85,7 +85,7 @@ export function AppShell() {
         </header>
         <Outlet />
       </main>
-      <AgentWindow />
+      <AgentWorkspace />
     </div>
   );
 }

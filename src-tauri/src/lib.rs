@@ -1,15 +1,21 @@
+mod agent;
 mod ai;
 mod commands;
+mod commands_agent;
 mod domain;
 mod error;
 mod storage;
 
+use agent::AgentRuntimeState;
 use ai::AiManager;
 use commands::{
     connect_ai_provider, delete_asset, delete_card, disconnect_ai_provider,
     generate_knowledge_card, get_ai_provider_status, get_card, import_asset, list_ai_providers,
     list_cards, login_codex_provider, organize_card, read_asset, save_api_provider, save_card,
     select_ai_provider, test_api_provider,
+};
+use commands_agent::{
+    agent_cancel_run, agent_list_tools, agent_resolve_approval, agent_start_turn,
 };
 use std::sync::Arc;
 use storage::Storage;
@@ -29,6 +35,7 @@ pub fn run() {
             let data_dir = app.path().app_data_dir()?;
             let storage = Storage::open(&data_dir).map_err(Box::<dyn std::error::Error>::from)?;
             app.manage(storage);
+            app.manage(AgentRuntimeState::default());
             app.manage(Arc::new(
                 AiManager::open(&data_dir).map_err(Box::<dyn std::error::Error>::from)?,
             ));
@@ -51,7 +58,11 @@ pub fn run() {
             login_codex_provider,
             disconnect_ai_provider,
             organize_card,
-            generate_knowledge_card
+            generate_knowledge_card,
+            agent_start_turn,
+            agent_cancel_run,
+            agent_resolve_approval,
+            agent_list_tools
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,3 +1,4 @@
+use super::codex_agent::stage_images;
 use super::codex_auth::{login, logout};
 use super::process::{execute, probe, ExecutionPaths};
 use super::proposal;
@@ -6,7 +7,6 @@ use crate::domain::{CardInput, ProviderStatus};
 use crate::error::AppError;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
-use tempfile::TempDir;
 use uuid::Uuid;
 
 const OUTPUT_SCHEMA: &str = include_str!("../../resources/organize-card.schema.json");
@@ -223,25 +223,4 @@ fn status(state: &str, message: &str) -> ProviderStatus {
         executable: None,
         message: message.into(),
     }
-}
-
-fn stage_images(directory: &TempDir, sources: &[PathBuf]) -> Result<Vec<PathBuf>, AppError> {
-    sources
-        .iter()
-        .enumerate()
-        .map(|(index, source)| {
-            let extension = source
-                .extension()
-                .and_then(|value| value.to_str())
-                .filter(|value| value.chars().all(|item| item.is_ascii_alphanumeric()))
-                .unwrap_or("img");
-            let target = directory
-                .path()
-                .join(format!("input-{}.{}", index + 1, extension));
-            std::fs::copy(source, &target).map_err(|error| {
-                AppError::new("FILE_ERROR", format!("AI 图片暂存失败：{error}"))
-            })?;
-            Ok(target)
-        })
-        .collect()
 }
