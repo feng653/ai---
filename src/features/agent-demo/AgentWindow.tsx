@@ -10,8 +10,8 @@ import { AgentComposer } from "./AgentComposer";
 import { AgentMessage } from "./AgentMessage";
 import { CardReferenceList } from "./CardReferenceList";
 import {
-  agentId, agentTarget, buildAgentProposal, cardReferenceLabel, extendAgentInput, prepareAgentInput,
-  type AgentTarget,
+  agentCardProposals, agentId, agentTarget, buildAgentProposal, cardReferenceLabel,
+  extendAgentInput, prepareAgentInput, type AgentTarget,
 } from "./agentWorkflow";
 import type { AgentAttachment, AgentMessage as Message, AgentProposal } from "./types";
 
@@ -50,8 +50,8 @@ export function AgentWindow() {
     return () => window.removeEventListener("keydown", close);
   }, []);
 
-  const addAgentMessage = (text: string, proposalId?: string, sources?: Message["sources"]) => setMessages((items) => [
-    ...items, { id: agentId("message"), role: "agent", text, proposalId, sources },
+  const addAgentMessage = (text: string, proposalIds?: string[], sources?: Message["sources"]) => setMessages((items) => [
+    ...items, { id: agentId("message"), role: "agent", text, proposalIds, sources },
   ]);
 
   const removeAssets = async (ids: string[]) => {
@@ -69,6 +69,7 @@ export function AgentWindow() {
       return;
     }
     const imported: CardAsset[] = [];
+    const ownedAssets: CardAsset[] = [];
     try {
       if (referencedIds.length > 1) throw new Error("一次只能修改一张引用卡片");
       const explicit = referencedIds[0] ? cards.find((card) => card.id === referencedIds[0]) : undefined;
@@ -85,33 +86,54 @@ export function AgentWindow() {
       if (status?.state !== "connected") status = await connectAi.mutateAsync();
       if (status.state !== "connected") throw new Error(status.message || "当前 AI 服务不可用");
       setProgress({ stage: "preparing", message: "正在导入图片…" });
-      for (const attachment of attachments) imported.push(await cardService.importAsset(attachment.file));
+      for (const attachment of attachments) {
+        const asset = await cardService.importAsset(attachment.file);
+        imported.push(asset);
+        ownedAssets.push(asset);
+      }
       const base = previous ? extendAgentInput(previous.input, imported) : prepareAgentInput(targetCard, imported);
       const request = text || "根据附图创建并整理一张数学错题卡片";
       const ai = await aiService.organize(
         base, target?.revision ?? 0, setProgress, request, history, Boolean(target), webSearch,
       );
       if (ai.action === "reply") {
-        await removeAssets(imported.map((asset) => asset.id));
+        await removeAssets(ownedAssets.map((asset) => asset.id));
         addAgentMessage(ai.message, undefined, ai.sources);
         return;
       }
+      const cardResults = agentCardProposals(ai);
+      const assetGroups = [imported];
+      for (let index = 1; index < cardResults.length; index += 1) {
+        const group: CardAsset[] = [];
+        for (const attachment of attachments) {
+          const asset = await cardService.importAsset(attachment.file);
+          group.push(asset);
+          ownedAssets.push(asset);
+        }
+        assetGroups.push(group);
+      }
       const chosenTarget = ai.action === "update_card" ? target : undefined;
-      const continueCreate = ai.action === "create_card" && previous?.kind === "create";
-      const proposalBase = chosenTarget || continueCreate
-        ? base : prepareAgentInput(undefined, imported);
-      const inheritedAssets = chosenTarget || continueCreate ? previous?.newAssetIds : [];
-      const proposal = buildAgentProposal(ai, proposalBase, chosenTarget, imported, inheritedAssets);
+      const continueCreate = cardResults.length === 1 && ai.action === "create_card" && previous?.kind === "create";
+      const nextProposals = cardResults.map((result, index) => {
+        const newAssets = assetGroups[index];
+        const proposalBase = chosenTarget || continueCreate
+          ? base : prepareAgentInput(undefined, newAssets);
+        const inheritedAssets = chosenTarget || continueCreate ? previous?.newAssetIds : [];
+        return buildAgentProposal(result, proposalBase, chosenTarget, newAssets, inheritedAssets);
+      });
       setProposals((items) => [
         ...items.map((item) => item.id === previous?.id ? { ...item, status: "superseded" as const } : item),
-        proposal,
+        ...nextProposals,
       ]);
-      setContext({ proposalId: proposal.id, label: chosenTarget?.label ?? "新卡片提案" });
+      const proposalIds = nextProposals.map((proposal) => proposal.id);
+      setContext(nextProposals.length === 1
+        ? { proposalId: proposalIds[0], label: chosenTarget?.label ?? "新卡片提案" }
+        : null);
       addAgentMessage(ai.message || (chosenTarget
-        ? `已生成“${proposal.targetLabel}”的修改提案，请核对后确认。`
-        : "已生成新卡片提案，请核对后确认。"), proposal.id, ai.sources);
+        ? `已生成“${nextProposals[0].targetLabel}”的修改提案，请核对后确认。`
+        : `已生成 ${nextProposals.length} 张新卡片提案，请逐张核对后确认。`), proposalIds, ai.sources);
     } catch (reason) {
-      await removeAssets(imported.map((asset) => asset.id));
+      await removeAssets(ownedAssets.map((asset) => asset.id));
       const message = errorMessage(reason, "Agent 执行失败");
       setError(message);
       addAgentMessage(message);
@@ -191,7 +213,8 @@ export function AgentWindow() {
         <CardReferenceList cards={cards} loading={cardsQuery.isLoading} />
         <div className="agent-conversation">
           {messages.map((message) => <AgentMessage key={message.id} message={message}
-            proposal={proposals.find((item) => item.id === message.proposalId)} onApply={apply} onReject={reject} />)}
+            proposals={proposals.filter((item) => message.proposalIds?.includes(item.id))}
+            onApply={apply} onReject={reject} />)}
           {progress && <div className="agent-thinking"><Sparkles size={15} /><span /><span /><span />{progress.message}</div>}
           {error && <div className="agent-window-error">{error}</div>}
           <div ref={endRef} />

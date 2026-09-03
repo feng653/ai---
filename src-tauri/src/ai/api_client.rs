@@ -107,7 +107,7 @@ pub async fn organize(
             {"role": "user", "content": content}
         ],
         "response_format": {"type": "json_object"},
-        "max_tokens": 4096,
+        "max_tokens": if agent_mode { 8192 } else { 4096 },
         "stream": false
     });
     let text = post_json(client, config, api_key, "chat/completions", &body).await?;

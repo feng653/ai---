@@ -57,6 +57,37 @@ describe("AgentWindow", () => {
     expect(save.mock.calls[0][0].input.question).toBe("解方程 $x=1$");
   });
 
+  it("shows and saves one proposal for each generated exercise", async () => {
+    vi.mocked(aiService.organize).mockResolvedValue({
+      action: "create_card", message: "已生成三道示例题", sources: [],
+      runId: "run-many", baseRevision: 0, promptVersion: "v6", warnings: [], fields: {},
+      cards: ["例题一", "例题二", "例题三"].map((question) => ({
+        warnings: [], fields: {
+          question: { value: question, uncertain: false, source: "inference" as const },
+        },
+      })),
+    });
+    save.mockImplementation(async ({ input }) => ({
+      ...input, id: `card-${input.question}`, status: "organized", revision: 1,
+      createdAt: "2026-09-03T00:00:00Z", updatedAt: "2026-09-03T00:00:00Z",
+    }));
+    render(<AgentWindow />);
+    fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
+    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+      target: { value: "生成三道示例题" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    const confirmations = await screen.findAllByRole("button", { name: "确认执行" });
+    expect(confirmations).toHaveLength(3);
+    expect(save).not.toHaveBeenCalled();
+    confirmations.forEach((button) => fireEvent.click(button));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(3));
+    expect(save.mock.calls.map(([request]) => request.input.question)).toEqual([
+      "例题一", "例题二", "例题三",
+    ]);
+  });
+
   it("shows a direct answer with web sources without creating a proposal", async () => {
     vi.mocked(aiService.organize).mockResolvedValue({
       action: "reply", message: "这是直接回答。", sources: [{ title: "官方资料", url: "https://example.com/docs" }],

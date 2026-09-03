@@ -39,15 +39,15 @@ fn codex_live_agent_create_proposal() {
         )
         .expect("real Codex run failed");
     let value = serde_json::to_value(proposal).unwrap();
-    assert_eq!(value["promptVersion"], "agent-choice-v5-search");
-    assert!(value["fields"]["question"]["value"]
+    assert_eq!(value["promptVersion"], "agent-choice-v6-multi-card");
+    assert!(value["cards"][0]["fields"]["question"]["value"]
         .as_str()
         .is_some_and(|question| question.contains('4')));
-    let answer = value["fields"]["correctAnswer"]["value"]
+    let answer = value["cards"][0]["fields"]["correctAnswer"]["value"]
         .as_str()
         .expect("Codex must return a proposed correct answer");
     assert!(answer.contains("-2") && answer.contains('2') && answer.contains('$'));
-    assert_eq!(value["fields"]["errorType"]["uncertain"], true);
+    assert_eq!(value["cards"][0]["fields"]["errorType"]["uncertain"], true);
 }
 
 #[test]

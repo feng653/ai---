@@ -61,6 +61,8 @@ fn agent_prompt_exposes_all_actions_and_target_boundary() {
     assert!(prompt.contains("update_card"));
     assert!(prompt.contains("targetProvided=false"));
     assert!(prompt.contains("webSearchEnabled=true"));
+    assert!(prompt.contains("用户要求多道题时必须按数量逐题返回"));
+    assert!(prompt.contains("一次最多 10 张"));
 }
 
 #[test]
@@ -108,6 +110,7 @@ fn agent_can_return_a_direct_answer_with_safe_sources() {
     assert_eq!(value["message"], "直接回答");
     assert_eq!(value["sources"].as_array().unwrap().len(), 1);
     assert_eq!(value["fields"], serde_json::json!({}));
+    assert_eq!(value["warnings"], serde_json::json!([]));
 
     let offline = parse_agent_response(json, &input(""), "run-2".into(), 0, false, false).unwrap();
     assert!(serde_json::to_value(offline).unwrap()["sources"]
@@ -122,4 +125,24 @@ fn agent_cannot_modify_without_a_target_card() {
     let error =
         parse_agent_response(json, &input("x>2"), "run-1".into(), 0, false, false).unwrap_err();
     assert_eq!(error.code, "INVALID_AI_OUTPUT");
+}
+
+#[test]
+fn agent_preserves_each_created_card_in_a_multi_card_response() {
+    let json = r#"{
+      "action":"create_card","message":"已生成三道示例题","warnings":[],
+      "cards":[
+        {"question":{"value":"例题一","uncertain":false,"uncertainReason":null,"source":"inference"},"warnings":[]},
+        {"question":{"value":"例题二","uncertain":false,"uncertainReason":null,"source":"inference"},"warnings":[]},
+        {"question":{"value":"例题三","uncertain":false,"uncertainReason":null,"source":"inference"},"warnings":[]}
+      ]
+    }"#;
+    let proposal =
+        parse_agent_response(json, &input(""), "run-many".into(), 0, false, false).unwrap();
+    let value = serde_json::to_value(proposal).unwrap();
+    let cards = value["cards"].as_array().unwrap();
+    assert_eq!(cards.len(), 3);
+    assert_eq!(cards[0]["fields"]["question"]["value"], "例题一");
+    assert_eq!(cards[1]["fields"]["question"]["value"], "例题二");
+    assert_eq!(cards[2]["fields"]["question"]["value"], "例题三");
 }

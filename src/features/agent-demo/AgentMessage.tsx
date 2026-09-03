@@ -5,12 +5,12 @@ import { AgentProposalCard } from "./AgentProposalCard";
 
 type Props = {
   message: AgentMessageType;
-  proposal?: AgentProposal;
+  proposals: AgentProposal[];
   onApply: (id: string) => void;
   onReject: (id: string) => void;
 };
 
-export function AgentMessage({ message, proposal, onApply, onReject }: Props) {
+export function AgentMessage({ message, proposals, onApply, onReject }: Props) {
   return (
     <article className={`agent-message ${message.role}`}>
       <span className="agent-avatar">{message.role === "agent" ? <Bot size={17} /> : <UserRound size={17} />}</span>
@@ -23,7 +23,8 @@ export function AgentMessage({ message, proposal, onApply, onReject }: Props) {
           {message.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
             {source.title}
           </a>)}</div> : null}
-        {proposal && <AgentProposalCard proposal={proposal} onApply={() => onApply(proposal.id)} onReject={() => onReject(proposal.id)} />}
+        {proposals.map((proposal) => <AgentProposalCard key={proposal.id} proposal={proposal}
+          onApply={() => onApply(proposal.id)} onReject={() => onReject(proposal.id)} />)}
       </div>
     </article>
   );
