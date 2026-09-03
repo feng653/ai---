@@ -10,6 +10,7 @@ export const ERROR_TYPES = [
 
 export type ErrorType = (typeof ERROR_TYPES)[number];
 export type CardStatus = "draft" | "organized";
+export const UNCATEGORIZED_CHAPTER_FILTER = "__uncategorized__";
 
 export type KnowledgePoint = {
   id?: string;
@@ -66,6 +67,8 @@ export type CardListItem = Pick<
 export type CardFilter = {
   query?: string;
   status?: CardStatus | "all";
+  knowledgeSubject?: string;
+  knowledgeChapter?: string;
   knowledgePoint?: string;
 };
 

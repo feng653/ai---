@@ -7,17 +7,39 @@ use chrono::Utc;
 use rusqlite::{params, params_from_iter, OptionalExtension};
 use uuid::Uuid;
 
+const UNCATEGORIZED_CHAPTER_FILTER: &str = "__uncategorized__";
+
 impl Storage {
     pub fn list_cards(&self, filter: CardFilter) -> Result<Vec<Card>, AppError> {
         let connection = self.lock()?;
         let mut sql = String::from("SELECT DISTINCT c.id FROM cards c");
         let mut conditions = Vec::new();
         let mut values = Vec::<rusqlite::types::Value>::new();
-        if let Some(point) = filter
+        let knowledge_subject = filter
+            .knowledge_subject
+            .filter(|value| !value.trim().is_empty());
+        let knowledge_chapter = filter
+            .knowledge_chapter
+            .filter(|value| !value.trim().is_empty());
+        let knowledge_point = filter
             .knowledge_point
-            .filter(|value| !value.trim().is_empty())
-        {
+            .filter(|value| !value.trim().is_empty());
+        if knowledge_subject.is_some() || knowledge_chapter.is_some() || knowledge_point.is_some() {
             sql.push_str(" JOIN card_knowledge_points ckp ON ckp.card_id = c.id JOIN knowledge_points kp ON kp.id = ckp.knowledge_point_id");
+        }
+        if let Some(subject) = knowledge_subject {
+            conditions.push("kp.subject = ?");
+            values.push(subject.trim().to_owned().into());
+        }
+        if let Some(chapter) = knowledge_chapter {
+            if chapter.trim() == UNCATEGORIZED_CHAPTER_FILTER {
+                conditions.push("(kp.chapter IS NULL OR TRIM(kp.chapter) = '')");
+            } else {
+                conditions.push("kp.chapter = ?");
+                values.push(chapter.trim().to_owned().into());
+            }
+        }
+        if let Some(point) = knowledge_point {
             conditions.push("(kp.id = ? OR kp.name = ?)");
             values.push(point.trim().to_owned().into());
             values.push(point.trim().to_owned().into());
@@ -31,9 +53,9 @@ impl Storage {
         }
         if let Some(query) = filter.query.filter(|value| !value.trim().is_empty()) {
             sql.push_str(" LEFT JOIN card_knowledge_points qckp ON qckp.card_id = c.id LEFT JOIN knowledge_points qkp ON qkp.id = qckp.knowledge_point_id");
-            conditions.push("(c.question LIKE ? ESCAPE '\\' OR c.user_answer LIKE ? ESCAPE '\\' OR c.correct_answer LIKE ? ESCAPE '\\' OR c.solution LIKE ? ESCAPE '\\' OR c.error_location LIKE ? ESCAPE '\\' OR c.error_reason LIKE ? ESCAPE '\\' OR c.error_type LIKE ? ESCAPE '\\' OR qkp.name LIKE ? ESCAPE '\\')");
+            conditions.push("(c.question LIKE ? ESCAPE '\\' OR c.user_answer LIKE ? ESCAPE '\\' OR c.correct_answer LIKE ? ESCAPE '\\' OR c.solution LIKE ? ESCAPE '\\' OR c.error_location LIKE ? ESCAPE '\\' OR c.error_reason LIKE ? ESCAPE '\\' OR c.error_type LIKE ? ESCAPE '\\' OR qkp.subject LIKE ? ESCAPE '\\' OR qkp.chapter LIKE ? ESCAPE '\\' OR qkp.name LIKE ? ESCAPE '\\')");
             let pattern = format!("%{}%", escape_like(query.trim()));
-            for _ in 0..8 {
+            for _ in 0..10 {
                 values.push(pattern.clone().into());
             }
         }

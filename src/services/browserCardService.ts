@@ -1,4 +1,7 @@
-import { calculateCardStatus, type Card, type CardAsset, type CardFilter } from "../domain/card";
+import {
+  calculateCardStatus, UNCATEGORIZED_CHAPTER_FILTER,
+  type Card, type CardAsset, type CardFilter,
+} from "../domain/card";
 import type { CardService, SaveCardRequest } from "./cardService.types";
 import { seedCards } from "./seedCards";
 
@@ -24,7 +27,12 @@ function storeCards(cards: Card[]): void {
 
 function matchesFilter(card: Card, filter: CardFilter): boolean {
   if (filter.status && filter.status !== "all" && card.status !== filter.status) return false;
-  if (filter.knowledgePoint && !card.knowledgePoints.some((point) => point.name === filter.knowledgePoint)) {
+  const hasKnowledgeFilter = filter.knowledgeSubject || filter.knowledgeChapter || filter.knowledgePoint;
+  if (hasKnowledgeFilter && !card.knowledgePoints.some((point) =>
+    (!filter.knowledgeSubject || point.subject === filter.knowledgeSubject)
+    && (!filter.knowledgeChapter || (filter.knowledgeChapter === UNCATEGORIZED_CHAPTER_FILTER
+      ? !point.chapter?.trim() : point.chapter === filter.knowledgeChapter))
+    && (!filter.knowledgePoint || point.id === filter.knowledgePoint || point.name === filter.knowledgePoint))) {
     return false;
   }
   const query = filter.query?.trim().toLocaleLowerCase();

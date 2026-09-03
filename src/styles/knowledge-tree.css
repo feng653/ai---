@@ -1,0 +1,39 @@
+.cards-library-layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; align-items: start; }
+.cards-results { min-width: 0; }
+.cards-results-heading { min-height: 34px; margin-bottom: 11px; display: flex; align-items: center; gap: 7px; color: var(--ink-3); font-size: 10px; }
+.cards-results-heading strong { color: var(--ink); font-size: 12px; }
+.cards-results-heading span { margin-left: auto; }
+.knowledge-tree-panel { max-height: calc(100vh - 220px); min-height: 360px; padding: 14px 12px 11px; position: sticky; top: 92px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; display: grid; grid-template-rows: auto auto minmax(120px, 1fr) auto; background: #fbfcfa; }
+.knowledge-tree-panel > header { padding: 1px 4px 11px; display: flex; align-items: flex-start; gap: 8px; }
+.knowledge-tree-panel h2 { margin: 0; font-size: 12px; }
+.knowledge-tree-panel header p { margin: 4px 0 0; color: var(--ink-3); font-size: 8px; }
+.knowledge-tree-panel header > span { margin-left: auto; padding: 3px 6px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: 7px; }
+.knowledge-tree-search { min-height: 34px; margin-bottom: 8px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; gap: 6px; color: var(--ink-3); background: #fff; }
+.knowledge-tree-search input { min-width: 0; width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 9px; }
+.knowledge-tree-search button { width: 22px; height: 22px; padding: 0; border: 0; display: grid; place-items: center; color: var(--ink-3); background: transparent; }
+.knowledge-tree, .knowledge-tree ul { margin: 0; padding: 0; list-style: none; }
+.knowledge-tree { padding-right: 2px; overflow-y: auto; }
+.knowledge-tree ul { margin-left: 12px; padding-left: 7px; border-left: 1px solid var(--line); }
+.knowledge-tree-row { min-height: 31px; display: flex; align-items: center; border-radius: 7px; }
+.knowledge-tree-row:hover { background: #f0f5f1; }
+.knowledge-tree-row.selected { color: var(--brand); background: var(--brand-soft); }
+.knowledge-tree-toggle, .knowledge-tree-spacer { width: 23px; height: 29px; flex: none; border: 0; display: grid; place-items: center; color: var(--ink-3); background: transparent; }
+.knowledge-tree-toggle svg { transition: transform .15s ease; }
+.knowledge-tree-toggle svg.open { transform: rotate(90deg); }
+.knowledge-tree-label { min-width: 0; min-height: 29px; padding: 0 6px 0 1px; border: 0; flex: 1; display: flex; align-items: center; gap: 6px; color: inherit; background: transparent; text-align: left; font-size: 9px; }
+.knowledge-tree-label i { width: 6px; height: 6px; flex: none; border: 1px solid #92a499; border-radius: 2px; }
+.level-1 > .knowledge-tree-row .knowledge-tree-label i { border-radius: 50%; border-color: var(--brand); background: var(--brand); }
+.level-2 > .knowledge-tree-row .knowledge-tree-label i { border-color: #71a083; background: #dcece2; }
+.level-3 > .knowledge-tree-row .knowledge-tree-label i { width: 5px; height: 5px; border: 0; border-radius: 50%; background: #a2afa7; }
+.knowledge-tree-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.knowledge-tree-label small { margin-left: auto; color: var(--ink-3); font-size: 7px; }
+.knowledge-tree-row.selected .knowledge-tree-label i { border-color: var(--brand); background: var(--brand); }
+.knowledge-tree-empty { padding: 28px 4px; color: var(--ink-3); text-align: center; font-size: 9px; }
+.knowledge-tree-panel > footer { padding: 9px 4px 1px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 3px 6px; }
+.knowledge-tree-panel footer span { color: var(--ink-3); font-size: 7px; }
+.knowledge-tree-panel footer strong { grid-column: 1; overflow: hidden; color: var(--brand); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.knowledge-tree-panel footer button { grid-column: 2; grid-row: 1 / 3; padding: 4px 6px; border: 0; border-radius: 6px; color: var(--ink-2); background: var(--surface-soft); font-size: 7px; }
+@media (max-width: 880px) {
+  .cards-library-layout { grid-template-columns: 1fr; }
+  .knowledge-tree-panel { max-height: 330px; min-height: 260px; position: static; }
+}

@@ -45,6 +45,66 @@ fn persists_searches_and_checks_revisions() {
 }
 
 #[test]
+fn filters_cards_at_each_knowledge_level() {
+    let directory = tempfile::tempdir().unwrap();
+    let storage = Storage::open(directory.path()).unwrap();
+    storage.save_card(input(), None, None).unwrap();
+    let mut physics = input();
+    physics.subject = "物理".into();
+    physics.question = "求物体加速度".into();
+    physics.knowledge_points[0].subject = "物理".into();
+    physics.knowledge_points[0].chapter = Some("力学".into());
+    physics.knowledge_points[0].name = "牛顿第二定律".into();
+    storage.save_card(physics, None, None).unwrap();
+    let mut uncategorized = input();
+    uncategorized.question = "综合题".into();
+    uncategorized.knowledge_points[0].chapter = None;
+    uncategorized.knowledge_points[0].name = "综合应用".into();
+    storage.save_card(uncategorized, None, None).unwrap();
+
+    let count = |filter| storage.list_cards(filter).unwrap().len();
+    assert_eq!(
+        count(CardFilter {
+            knowledge_subject: Some("物理".into()),
+            ..Default::default()
+        }),
+        1
+    );
+    assert_eq!(
+        count(CardFilter {
+            knowledge_chapter: Some("不等式".into()),
+            ..Default::default()
+        }),
+        1
+    );
+    assert_eq!(
+        count(CardFilter {
+            knowledge_subject: Some("物理".into()),
+            knowledge_chapter: Some("力学".into()),
+            knowledge_point: Some("牛顿第二定律".into()),
+            ..Default::default()
+        }),
+        1
+    );
+    assert_eq!(
+        count(CardFilter {
+            knowledge_subject: Some("数学".into()),
+            knowledge_point: Some("牛顿第二定律".into()),
+            ..Default::default()
+        }),
+        0
+    );
+    assert_eq!(
+        count(CardFilter {
+            knowledge_subject: Some("数学".into()),
+            knowledge_chapter: Some("__uncategorized__".into()),
+            ..Default::default()
+        }),
+        1
+    );
+}
+
+#[test]
 fn imports_reads_and_deletes_an_image_with_its_card() {
     let directory = tempfile::tempdir().unwrap();
     let storage = Storage::open(directory.path()).unwrap();

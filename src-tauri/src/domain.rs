@@ -89,6 +89,8 @@ impl CardStatus {
 pub struct CardFilter {
     pub query: Option<String>,
     pub status: Option<String>,
+    pub knowledge_subject: Option<String>,
+    pub knowledge_chapter: Option<String>,
     pub knowledge_point: Option<String>,
 }
 

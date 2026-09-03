@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { emptyCardInput } from "../domain/card";
+import { emptyCardInput, UNCATEGORIZED_CHAPTER_FILTER } from "../domain/card";
 import { BrowserCardService } from "./cardService";
 
 const service = new BrowserCardService();
@@ -10,6 +10,28 @@ describe("BrowserCardService", () => {
   it("searches across diagnosis and knowledge points", async () => {
     expect(await service.list({ query: "正数分支" })).toHaveLength(1);
     expect(await service.list({ knowledgePoint: "一元二次不等式" })).toHaveLength(1);
+  });
+
+  it("filters at subject, chapter, and leaf levels", async () => {
+    expect(await service.list({ knowledgeSubject: "数学" })).toHaveLength(3);
+    expect(await service.list({ knowledgeSubject: "数学", knowledgeChapter: "函数" })).toHaveLength(1);
+    expect(await service.list({
+      knowledgeSubject: "数学", knowledgeChapter: "函数", knowledgePoint: "函数图像",
+    })).toHaveLength(1);
+    expect(await service.list({ knowledgeSubject: "物理", knowledgePoint: "函数图像" })).toHaveLength(0);
+  });
+
+  it("filters points that have no chapter", async () => {
+    await service.save({
+      input: {
+        ...emptyCardInput(), question: "综合题",
+        knowledgePoints: [{ subject: "数学", chapter: null, name: "综合应用" }],
+      },
+    });
+    const matches = await service.list({
+      knowledgeSubject: "数学", knowledgeChapter: UNCATEGORIZED_CHAPTER_FILTER,
+    });
+    expect(matches.map((card) => card.question)).toEqual(["综合题"]);
   });
 
   it("saves and reloads a card", async () => {
