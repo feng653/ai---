@@ -9,6 +9,7 @@ import "./styles/image-editor.css";
 import "./styles/agent-demo.css";
 import "./styles/ai-connections.css";
 import "./styles/knowledge-tree.css";
+import "./styles/learning-content.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

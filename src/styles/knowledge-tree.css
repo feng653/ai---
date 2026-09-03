@@ -1,9 +1,10 @@
 .cards-library-layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; align-items: start; }
+.cards-page { padding-top: 20px; }
 .cards-results { min-width: 0; }
 .cards-results-heading { min-height: 34px; margin-bottom: 11px; display: flex; align-items: center; gap: 7px; color: var(--ink-3); font-size: 10px; }
 .cards-results-heading strong { color: var(--ink); font-size: 12px; }
 .cards-results-heading span { margin-left: auto; }
-.knowledge-tree-panel { max-height: calc(100vh - 220px); min-height: 360px; padding: 14px 12px 11px; position: sticky; top: 92px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; display: grid; grid-template-rows: auto auto minmax(120px, 1fr) auto; background: #fbfcfa; }
+.knowledge-tree-panel { max-height: calc(100vh - 112px); min-height: 520px; padding: 14px 12px 11px; position: sticky; top: 92px; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; display: grid; grid-template-rows: auto auto minmax(120px, 1fr) auto; background: #fbfcfa; }
 .knowledge-tree-panel > header { padding: 1px 4px 11px; display: flex; align-items: flex-start; gap: 8px; }
 .knowledge-tree-panel h2 { margin: 0; font-size: 12px; }
 .knowledge-tree-panel header p { margin: 4px 0 0; color: var(--ink-3); font-size: 8px; }

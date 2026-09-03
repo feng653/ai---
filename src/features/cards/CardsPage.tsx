@@ -1,19 +1,9 @@
-import { BookOpen, Clock3, Image, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MathContent } from "../../components/MathContent";
-import type { CardStatus } from "../../domain/card";
 import { useCards } from "../../hooks/useCards";
+import { KnowledgeContextView } from "./KnowledgeContextView";
 import { KnowledgeTreeFilter } from "./KnowledgeTreeFilter";
-import { selectionPath, type KnowledgeSelection } from "./knowledgeTree";
-
-const statusLabel: Record<CardStatus, string> = { draft: "待完善", organized: "已整理" };
-
-function formatUpdatedAt(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
-}
+import type { KnowledgeSelection } from "./knowledgeTree";
 
 export function CardsPage() {
   const navigate = useNavigate();
@@ -23,60 +13,13 @@ export function CardsPage() {
     knowledgeSubject: knowledge?.subject,
     knowledgeChapter: knowledge?.chapter, knowledgePoint: knowledge?.point,
   });
-  const cardCount = allCards.data?.length ?? 0;
-
   return (
     <div className="page-content cards-page">
-      <section className="page-heading">
-        <div>
-          <p className="eyebrow">PERSONAL ERROR LIBRARY</p>
-          <h1>我的错题</h1>
-          <p>把错误整理清楚，比记住答案更重要。</p>
-        </div>
-        <span>共 {cardCount} 张卡片</span>
-      </section>
-
       <section className="cards-library-layout">
         <KnowledgeTreeFilter cards={allCards.data ?? []} selection={knowledge} onChange={setKnowledge} />
-        <div className="cards-results">
-          <div className="cards-results-heading"><strong>{selectionPath(knowledge)}</strong>
-            <span>{cards.data?.length ?? 0} 张卡片</span></div>
-          {cards.isLoading ? (
-            <div className="empty-state"><span className="loading-spinner" /><h3>正在读取本地错题…</h3></div>
-          ) : cards.isError ? (
-            <div className="empty-state error"><h3>错题读取失败</h3><p>{String(cards.error)}</p></div>
-          ) : cards.data?.length ? (
-            <section className="card-grid" aria-label="错题卡片">
-              {cards.data.map((card) => (
-                <article className="question-card" key={card.id} tabIndex={0}
-                  onClick={() => navigate(`/cards/${card.id}`)}
-                  onKeyDown={(event) => event.key === "Enter" && navigate(`/cards/${card.id}`)}>
-                  <header><span className="subject">{card.subject || "未分类"}</span>
-                    <span className={`card-status ${card.status}`}>{statusLabel[card.status]}</span></header>
-                  {card.assets.length > 0 && <span className="image-badge"><Image size={13} />原题图片</span>}
-                  <MathContent className="question-title">{card.question || "仅保存了原始题目图片"}</MathContent>
-                  <MathContent className="diagnosis-preview">{card.errorReason || "还没有错因诊断，可以手动完善或使用 AI 整理。"}</MathContent>
-                  <footer>
-                    <div className="tag-list">
-                      {card.knowledgePoints.length ? card.knowledgePoints.slice(0, 3).map((point) => (
-                        <span key={`${point.subject}-${point.chapter}-${point.name}`}>{point.name}</span>
-                      )) : <span className="muted-tag">未关联知识点</span>}
-                    </div>
-                    <div className="card-meta"><span><Clock3 size={12} />{formatUpdatedAt(card.updatedAt)}</span>
-                      <span className="error-type">{card.errorType || "未诊断"}</span></div>
-                  </footer>
-                </article>
-              ))}
-            </section>
-          ) : (
-            <div className="empty-state">
-              <span className="empty-icon"><BookOpen size={27} /></span>
-              <h3>{knowledge ? "没有找到匹配的错题" : "还没有错题"}</h3>
-              <p>可以清除筛选，或上传题目图片新增错题。</p>
-              <button className="button primary" onClick={() => navigate("/cards/new")}><Sparkles size={16} />新增错题</button>
-            </div>
-          )}
-        </div>
+        <KnowledgeContextView allCards={allCards.data ?? []} cards={cards.data ?? []} selection={knowledge}
+          loading={cards.isLoading} error={cards.isError ? cards.error : undefined} onSelectionChange={setKnowledge}
+          onOpenCard={(id) => navigate(`/cards/${id}`)} onCreateCard={() => navigate("/cards/new")} />
       </section>
     </div>
   );
