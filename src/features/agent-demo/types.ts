@@ -32,6 +32,6 @@ export type AgentMessage = {
   role: "user" | "agent";
   text: string;
   attachments?: AgentAttachment[];
-  proposalId?: string;
+  proposalIds?: string[];
   sources?: Array<{ title: string; url: string }>;
 };

@@ -1,4 +1,4 @@
-import { applyAiProposal, type AiProposal, type ProposalKey } from "../../domain/ai";
+import { applyAiProposal, type AiCardProposal, type AiProposal, type ProposalKey } from "../../domain/ai";
 import { emptyCardInput, type Card, type CardAsset, type CardInput } from "../../domain/card";
 import type { AgentChange, AgentProposal } from "./types";
 
@@ -65,7 +65,7 @@ function displayValue(key: ProposalKey, value: unknown): string {
 }
 
 export function buildAgentProposal(
-  ai: AiProposal,
+  ai: AiCardProposal | AiProposal,
   base: CardInput,
   target: AgentTarget | undefined,
   newAssets: CardAsset[],
@@ -102,4 +102,8 @@ export function buildAgentProposal(
     newAssetIds: [...new Set([...inheritedAssetIds, ...newAssets.map((asset) => asset.id)])],
     status: "pending",
   };
+}
+
+export function agentCardProposals(ai: AiProposal): Array<AiCardProposal | AiProposal> {
+  return ai.action === "create_card" && ai.cards?.length ? ai.cards : [ai];
 }

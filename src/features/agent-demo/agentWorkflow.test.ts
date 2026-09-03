@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { AiProposal } from "../../domain/ai";
 import type { Card, CardAsset } from "../../domain/card";
-import { agentTarget, buildAgentProposal, cardReferenceLabel, prepareAgentInput } from "./agentWorkflow";
+import {
+  agentCardProposals, agentTarget, buildAgentProposal, cardReferenceLabel, prepareAgentInput,
+} from "./agentWorkflow";
 
 const card: Card = {
   id: "card-1", subject: "数学", question: "求函数 $f(x)$ 的导数", userAnswer: "",
@@ -39,5 +41,11 @@ describe("agent workflow", () => {
 
   it("uses a stable readable card reference", () => {
     expect(cardReferenceLabel(card)).toBe("求函数 $f(x)$ 的导数");
+  });
+
+  it("expands a multi-card AI response without dropping exercises", () => {
+    const cards = [{ fields: ai.fields, warnings: [] }, { fields: {}, warnings: ["复核"] }];
+    expect(agentCardProposals({ ...ai, action: "create_card", cards })).toEqual(cards);
+    expect(agentCardProposals(ai)).toEqual([ai]);
   });
 });

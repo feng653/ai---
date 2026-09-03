@@ -72,6 +72,11 @@ export type AiProposalFields = {
   knowledgePoints?: ProposedField<KnowledgePoint[]>;
 };
 
+export type AiCardProposal = {
+  fields: AiProposalFields;
+  warnings: string[];
+};
+
 export type AiProposal = {
   runId: string;
   baseRevision: number;
@@ -81,6 +86,7 @@ export type AiProposal = {
   sources: Array<{ title: string; url: string }>;
   fields: AiProposalFields;
   warnings: string[];
+  cards?: AiCardProposal[];
 };
 
 export type ProposalKey = keyof AiProposalFields;
@@ -99,7 +105,7 @@ export function getDefaultAcceptedFields(input: CardInput, proposal: AiProposal)
 
 export function applyAiProposal(
   input: CardInput,
-  proposal: AiProposal,
+  proposal: Pick<AiProposal, "fields">,
   accepted: ProposalKey[],
 ): CardInput {
   const next: CardInput = structuredClone(input);
