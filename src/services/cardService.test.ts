@@ -42,6 +42,26 @@ describe("BrowserCardService", () => {
     await expect(service.get(saved.id)).resolves.toMatchObject({ question: "新题目", revision: 1 });
   });
 
+  it("saves practice cards with source revisions and filters them separately", async () => {
+    const source = (await service.list({ kind: "mistake" }))[0];
+    const [saved] = await service.savePracticeCards([{
+      input: { ...emptyCardInput(), question: "变式题", solution: "答案",
+        knowledgePoints: source.knowledgePoints.slice(0, 1) },
+      sourceRevisions: [{ cardId: source.id, revision: source.revision }],
+    }]);
+    expect(saved).toMatchObject({ kind: "practice", sourceRevisions: [{ cardId: source.id }] });
+    expect(await service.list({ kind: "practice" })).toHaveLength(1);
+    expect(await service.list({ kind: "mistake" })).toHaveLength(3);
+  });
+
+  it("refuses practice cards generated from a stale browser source", async () => {
+    const source = (await service.list({ kind: "mistake" }))[0];
+    await expect(service.savePracticeCards([{
+      input: { ...emptyCardInput(), question: "过期变式题" },
+      sourceRevisions: [{ cardId: source.id, revision: source.revision + 1 }],
+    }])).rejects.toThrow("REVISION_CONFLICT");
+  });
+
   it("detects revision conflicts", async () => {
     const existing = (await service.list())[0];
     await expect(

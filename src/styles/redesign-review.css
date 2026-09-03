@@ -1,0 +1,74 @@
+.practice-builder,.practice-generation,.practice-results { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.practice-builder { padding: 22px; }
+.practice-builder > header,.practice-results > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.practice-builder > header h2,.practice-results > header h2 { margin: 5px 0 4px; font: 620 24px/1.35 "Iowan Old Style","Songti SC",serif; }
+.practice-builder > header p,.practice-results > header p { margin: 0; color: var(--ink-3); font-size: 10px; }
+.practice-builder > header small,.practice-results > header small { color: var(--moss); font-size: 9px; font-weight: 800; letter-spacing: .15em; }
+.practice-builder > header > span { min-width: 88px; padding: 8px 11px; display: inline-flex; align-items: baseline; justify-content: center; gap: 4px;
+  color: var(--ink-3); border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); font-size: 9px; }
+.practice-builder > header > span b { color: var(--brand); font-size: 17px; }
+.practice-builder-grid { margin-top: 18px; display: grid; grid-template-columns: minmax(0,1fr) 286px; align-items: start; gap: 12px; }
+.practice-flow { display: grid; gap: 10px; }
+.practice-step { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); }
+.practice-step > header { margin-bottom: 13px; display: flex; align-items: center; gap: 10px; }
+.practice-step > header > span { width: 30px; height: 30px; display: grid; flex: none; place-items: center; color: var(--brand); background: var(--brand-soft); border-radius: 9px; font-size: 9px; font-weight: 800; }
+.practice-step h3 { margin: 0 0 2px; font-size: 11px; }
+.practice-step header p { margin: 0; color: var(--ink-3); font-size: 8px; }
+.practice-point-groups { display: flex; flex-wrap: wrap; gap: 7px; }
+.practice-point-groups > button { min-height: 40px; padding: 0 8px 0 11px; display: inline-flex; align-items: center; gap: 8px;
+  color: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 9px; }
+.practice-point-groups > button b { min-width: 20px; height: 20px; display: grid; place-items: center; color: var(--ink-3); background: var(--surface-3); border-radius: 6px; font-size: 8px; }
+.practice-point-groups > button.active { color: var(--brand); border-color: #91ad98; background: var(--brand-soft); }
+.practice-point-groups > button.active b { color: #fff; background: var(--brand); }
+.source-range-head { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; color: var(--ink-3); font-size: 8px; }
+.source-range-head button { min-height: 32px; padding: 0 8px; color: var(--brand); border: 0; border-radius: 7px; background: var(--brand-soft); font-size: 8px; font-weight: 700; }
+.practice-source-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.practice-source-list > button { min-height: 58px; padding: 9px; display: grid; grid-template-columns: 26px 1fr; align-items: center; gap: 8px;
+  color: var(--ink); border: 1px solid var(--line); border-radius: 10px; text-align: left; background: var(--surface); }
+.practice-source-list > button:hover { border-color: #a9baad; }
+.practice-source-list > button[aria-checked="true"] { border-color: #8faa95; box-shadow: inset 3px 0 var(--brand-dark); }
+.practice-source-list > button > span:first-child { width: 24px; height: 24px; display: grid; place-items: center; color: #fff;
+  border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-soft); }
+.practice-source-list > button[aria-checked="true"] > span:first-child { border-color: var(--brand); background: var(--brand); }
+.practice-source-list > button > span:last-child { min-width: 0; display: grid; gap: 4px; }
+.practice-source-list b { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.practice-source-list small { color: var(--ink-3); font-size: 8px; }
+.quantity-control { display: flex; align-items: end; gap: 7px; }
+.quantity-control label { min-width: 180px; display: grid; gap: 6px; color: var(--ink-2); font-size: 9px; font-weight: 720; }
+.quantity-control input { height: 44px; padding: 0 11px; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 14px; font-weight: 750; }
+.quantity-control > div { display: flex; gap: 6px; }
+.quantity-control button { width: 44px; height: 44px; display: grid; place-items: center; color: var(--brand); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.quantity-control button svg { width: 17px; }
+.quantity-note { margin: 9px 0 0; color: var(--ink-3); font-size: 8px; }
+.practice-summary { position: sticky; top: 0; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: #f8faf6; }
+.practice-summary > small { color: var(--moss); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.practice-summary dl { margin: 14px 0 12px; display: grid; gap: 9px; }
+.practice-summary dl div { padding-bottom: 9px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.practice-summary dt { color: var(--ink-3); font-size: 9px; }
+.practice-summary dd { margin: 0; font-size: 10px; font-weight: 750; }
+.practice-summary p { padding: 10px; color: var(--brand-dark); border-radius: 9px; background: var(--brand-soft); font-size: 9px; line-height: 1.55; }
+.practice-summary .button { width: 100%; margin-top: 12px; }
+.practice-summary .button + small { margin-top: 9px; display: block; color: var(--ink-4); font-size: 8px; line-height: 1.5; letter-spacing: 0; }
+.practice-generation { min-height: 480px; padding: 70px 20px; display: grid; justify-items: center; align-content: center; text-align: center; }
+.practice-generation > span { width: 52px; height: 52px; margin-bottom: 14px; display: grid; place-items: center; color: #fff; background: var(--brand); border-radius: 15px; }
+.practice-generation > small { color: var(--moss); font-size: 9px; letter-spacing: .15em; }
+.practice-generation h2 { margin: 7px 0; font: 620 24px/1.4 "Iowan Old Style","Songti SC",serif; }
+.practice-generation p { margin: 0; color: var(--ink-3); font-size: 10px; }
+.practice-generation > i { width: min(420px,80%); height: 7px; margin-top: 24px; overflow: hidden; border-radius: 10px; background: var(--surface-3); }
+.practice-generation > i::after { content: ""; width: 55%; height: 100%; display: block; border-radius: inherit; background: var(--brand-dark); animation: practice-progress 1.1s ease-in-out infinite alternate; }
+@keyframes practice-progress { to { transform: translateX(82%); } }
+.practice-results { padding: 22px; }
+.practice-results > header { padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+.practice-card-grid { margin-top: 16px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.practice-card-grid > article { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); animation: redesign-card-enter var(--slow) var(--ease) both; }
+.practice-card-grid article > header,.practice-card-grid article > footer { padding: 11px 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.practice-card-grid article > header { border-bottom: 1px solid var(--line); }
+.practice-card-grid article > header span { display: flex; align-items: center; gap: 5px; color: var(--brand-dark); font-size: 9px; font-weight: 750; }
+.practice-card-grid header small,.practice-card-grid footer small { color: var(--ink-3); font-size: 8px; }
+.practice-prompt { min-height: 110px; padding: 17px 14px 0; font: 620 17px/1.55 "Iowan Old Style","Songti SC",serif; }
+.practice-card-grid article > p { padding: 0 14px 14px; color: var(--ink-3); font-size: 8px; }
+.practice-card-grid article > footer { border-top: 1px solid var(--line); }
+.practice-card-grid footer button { min-height: 36px; padding: 0 10px; display: flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 9px; }
+.practice-answer { padding: 13px 14px; color: var(--ink-2); background: var(--brand-soft); font-size: 10px; line-height: 1.65; }
+@media (max-width: 900px) { .practice-builder-grid { grid-template-columns: 1fr; } .practice-summary { position: static; } }
+@media (max-width: 620px) { .practice-builder { padding: 14px; } .practice-source-list,.practice-card-grid { grid-template-columns: 1fr; } }

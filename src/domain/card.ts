@@ -10,7 +10,10 @@ export const ERROR_TYPES = [
 
 export type ErrorType = (typeof ERROR_TYPES)[number];
 export type CardStatus = "draft" | "organized";
+export type CardKind = "mistake" | "practice";
 export const UNCATEGORIZED_CHAPTER_FILTER = "__uncategorized__";
+
+export type SourceRevision = { cardId: string; revision: number };
 
 export type KnowledgePoint = {
   id?: string;
@@ -45,6 +48,8 @@ export type CardInput = {
 
 export type Card = CardInput & {
   id: string;
+  kind?: CardKind;
+  sourceRevisions?: SourceRevision[];
   status: CardStatus;
   revision: number;
   createdAt: string;
@@ -70,6 +75,7 @@ export type CardFilter = {
   knowledgeSubject?: string;
   knowledgeChapter?: string;
   knowledgePoint?: string;
+  kind?: CardKind | "all";
 };
 
 const hasText = (value: string | null | undefined) => Boolean(value?.trim());

@@ -47,10 +47,26 @@ pub struct CardInput {
     pub assets: Vec<CardAsset>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceRevision {
+    pub card_id: String,
+    pub revision: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PracticeCardDraft {
+    pub input: CardInput,
+    pub source_revisions: Vec<SourceRevision>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Card {
     pub id: String,
+    pub kind: String,
+    pub source_revisions: Vec<SourceRevision>,
     pub subject: String,
     pub question: String,
     pub user_answer: String,
@@ -92,6 +108,7 @@ pub struct CardFilter {
     pub knowledge_subject: Option<String>,
     pub knowledge_chapter: Option<String>,
     pub knowledge_point: Option<String>,
+    pub kind: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

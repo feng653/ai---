@@ -160,8 +160,8 @@ export function AiConnectionsPage() {
   const summary = summaries.find((item) => item.id === selected);
   return <div className="connections-page">
     <header className="connections-header"><button type="button" className="back-link" onClick={() => history.back()}><ArrowLeft size={16} />返回</button>
-      <div><span className="eyebrow">AI CONNECTIONS</span><h1>连接 AI 服务</h1>
-        <p>选择适合你的模型服务，所有 AI 操作仍会在执行前等待确认。</p></div></header>
+      <div><span className="eyebrow">AI CONNECTIONS</span><h1>AI 接入</h1></div>
+      <span className="connection-count"><b>{summaries.filter((item) => item.configured).length}</b> 个服务可用</span></header>
     {query.error && <div className="inline-error">{errorMessage(query.error, "AI 配置读取失败")}</div>}
     <div className="connections-layout"><ProviderList selected={selected} summaries={summaries} draftId={draftId}
       onSelect={setSelected} onAdd={() => {

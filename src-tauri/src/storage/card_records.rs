@@ -1,16 +1,17 @@
-use crate::domain::{Card, CardAsset, CardStatus, KnowledgePoint};
+use crate::domain::{Card, CardAsset, CardStatus, KnowledgePoint, SourceRevision};
 use crate::error::AppError;
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use uuid::Uuid;
 
 pub(super) fn load_card(connection: &Connection, id: &str) -> Result<Card, AppError> {
     let mut card = connection.query_row(
-        "SELECT id, subject, question, user_answer, correct_answer, supplemental_note, solution, error_location, error_reason, error_type, status, revision, created_at, updated_at FROM cards WHERE id = ?1",
+        "SELECT id, subject, question, user_answer, correct_answer, supplemental_note, solution, error_location, error_reason, error_type, status, revision, created_at, updated_at, kind FROM cards WHERE id = ?1",
         [id],
         |row| {
             let status: String = row.get(10)?;
             Ok(Card {
                 id: row.get(0)?, subject: row.get(1)?, question: row.get(2)?,
+                kind: row.get(14)?, source_revisions: vec![],
                 user_answer: row.get(3)?, correct_answer: row.get(4)?,
                 supplemental_note: row.get(5)?, solution: row.get(6)?,
                 error_location: row.get(7)?, error_reason: row.get(8)?, error_type: row.get(9)?,
@@ -41,6 +42,15 @@ pub(super) fn load_card(connection: &Connection, id: &str) -> Result<Card, AppEr
                 byte_size: row.get(3)?,
                 width: row.get(4)?,
                 height: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut sources = connection.prepare("SELECT source_card_id, source_revision FROM practice_card_sources WHERE practice_card_id=?1 ORDER BY sort_order")?;
+    card.source_revisions = sources
+        .query_map([id], |row| {
+            Ok(SourceRevision {
+                card_id: row.get(0)?,
+                revision: row.get(1)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;

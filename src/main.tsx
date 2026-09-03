@@ -11,6 +11,11 @@ import "./styles/agent-harness.css";
 import "./styles/ai-connections.css";
 import "./styles/knowledge-tree.css";
 import "./styles/learning-content.css";
+import "./styles/redesign-shell.css";
+import "./styles/redesign-workspace.css";
+import "./styles/redesign-review.css";
+import "./styles/redesign-editor.css";
+import "./styles/redesign-detail.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

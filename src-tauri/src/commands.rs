@@ -2,7 +2,7 @@ use crate::ai::{
     AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, GeneratedKnowledgeCard,
     KnowledgeCardRequest, ProviderSummary,
 };
-use crate::domain::{Card, CardAsset, CardFilter, CardInput, ProviderStatus};
+use crate::domain::{Card, CardAsset, CardFilter, CardInput, PracticeCardDraft, ProviderStatus};
 use crate::error::AppError;
 use crate::storage::Storage;
 use serde::{Deserialize, Serialize};
@@ -30,6 +30,14 @@ pub fn save_card(
     expected_revision: Option<u64>,
 ) -> Result<Card, AppError> {
     storage.save_card(input, id, expected_revision)
+}
+
+#[tauri::command]
+pub fn save_practice_cards(
+    storage: State<'_, Storage>,
+    drafts: Vec<PracticeCardDraft>,
+) -> Result<Vec<Card>, AppError> {
+    storage.save_practice_cards(drafts)
 }
 
 #[tauri::command]

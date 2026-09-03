@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CardFilter } from "../domain/card";
-import { cardService, type SaveCardRequest } from "../services/cardService";
+import { cardService, type PracticeCardDraft, type SaveCardRequest } from "../services/cardService";
 
 export const cardKeys = {
   all: ["cards"] as const,
@@ -28,6 +28,14 @@ export function useSaveCard() {
       client.setQueryData(cardKeys.detail(card.id), card);
       void client.invalidateQueries({ queryKey: cardKeys.all });
     },
+  });
+}
+
+export function useSavePracticeCards() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (drafts: PracticeCardDraft[]) => cardService.savePracticeCards(drafts),
+    onSuccess: () => void client.invalidateQueries({ queryKey: cardKeys.all }),
   });
 }
 

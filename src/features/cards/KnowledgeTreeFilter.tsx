@@ -1,4 +1,4 @@
-import { ChevronRight, Search, X } from "lucide-react";
+import { Minus, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Card } from "../../domain/card";
 import {
@@ -28,7 +28,7 @@ function TreeBranch({ node, selectedKey, expanded, searching, onToggle, onSelect
     <div className={`knowledge-tree-row${selectedKey === node.key ? " selected" : ""}`}>
       {hasChildren ? <button className="knowledge-tree-toggle" type="button"
         aria-label={`${open ? "收起" : "展开"}${node.label}`} onClick={() => onToggle(node.key)}>
-        <ChevronRight className={open ? "open" : ""} size={14} />
+        {open ? <Minus size={10} /> : <Plus size={10} />}
       </button> : <span className="knowledge-tree-spacer" />}
       <button className="knowledge-tree-label" type="button" onClick={() => onSelect(node.selection)}>
         <i /><span>{node.label}</span><small>{node.count}</small>
@@ -58,11 +58,10 @@ export function KnowledgeTreeFilter({ cards, selection, onChange }: Props) {
   const select = (next: KnowledgeSelection) => onChange(selection?.key === next.key ? null : next);
 
   return <aside className="knowledge-tree-panel" aria-label="知识点分类">
-    <header><div><h2>知识点目录</h2><p>点击任意一级即可筛选</p></div>
-      <span>{tree.length} 个学科</span></header>
+    <header><h2>知识脉络</h2><span>{cards.length}</span></header>
     <label className="knowledge-tree-search">
       <Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)}
-        placeholder="搜索学科、章节或知识点…" aria-label="搜索知识点分类" />
+        placeholder="搜索学科或知识点" aria-label="搜索知识点分类" />
       {query ? <button type="button" aria-label="清除知识点搜索" onClick={() => setQuery("")}><X size={12} /></button> : null}
     </label>
     <ul className="knowledge-tree" role="tree">
@@ -70,7 +69,7 @@ export function KnowledgeTreeFilter({ cards, selection, onChange }: Props) {
         selectedKey={selection?.key} expanded={expanded} searching={Boolean(query.trim())}
         onToggle={toggle} onSelect={select} />) : <li className="knowledge-tree-empty">没有匹配的知识点</li>}
     </ul>
-    <footer><span>当前分类</span><strong>{selectionPath(selection)}</strong>
-      {selection ? <button type="button" onClick={() => onChange(null)}>清除筛选</button> : null}</footer>
+    <footer><strong>{selectionPath(selection)}</strong>
+      <button type="button" disabled={!selection} onClick={() => onChange(null)}>清除筛选</button></footer>
   </aside>;
 }

@@ -2,6 +2,8 @@
 
 本清单记录基线提交 `efeb38d86db04491fc134fae0592d5af37051df1` 中实际挂载的功能。优先级含义：P0 为核心数据或安全行为，P1 为主要任务流程，P2 为辅助体验。
 
+> 2026-09-03 落地状态：[x] 54 / 54 项已映射并实现，[x] C-01～C-16 保持，[ ] 桌面真实 Provider/凭据/文件生命周期/Agent 写审批仍待实机。逐项状态以 [迁移矩阵](migration-matrix.md) 为准，验证结果见 [新 UI 验收记录](evidence/2026-09-03-new-ui-walkthrough.md)。本文件继续保留旧基线事实，避免覆盖迁移前证据。
+
 ## 应用框架与导航
 
 | ID | 级别 | 用户能力与当前入口 | 必须覆盖的状态和交互 | 数据或副作用 | 当前证据 |
@@ -62,9 +64,9 @@
 | KNOW-002 | P1 | 查看知识卡片的来源数、错误样本数、内容覆盖度、核心方法和易错提醒 | 初始卡片、持续积累、证据较充分、来源内容缺失 | 来源更新后派生内容随之更新 | `KnowledgeCardView.tsx`、`learningContent.ts` 代码确认 |
 | KNOW-003 | P1 | 展开来源错题清单并进入来源详情 | details 开关、图片题占位、返回后的上下文 | 只导航 | `KnowledgeCardView.tsx`；人工待验 |
 | KNOW-004 | P1 | 对具体知识点执行 AI 生成或重新生成 | 连接、进度、错误、warnings、来源 revision 变化 | 生成结果目前只保存在当前页面内存；来源数量或 revision 变化后旧结果失效 | `KnowledgeContextView.test.tsx`、`KnowledgeCardView.tsx` 测试/代码确认 |
-| REVIEW-001 | P1 | 在复习题模块选择一个或多个知识点，再从范围内勾选作为生成依据的错题 | 无知识点、无来源错题、跨知识点多选、来源全选/取消 | 只建立生成范围，不立即生成 | 新需求；`docs/demo/knowledge-workspace-redesign/app.test.js` 覆盖 Demo |
-| REVIEW-002 | P1 | 选择生成总数并生成新练习题；每道所选错题至少对应 1 张 | 数量下限随来源数变化、生成中、失败、完成 | 生成数量不得小于来源错题数；新题需要保存 | 新需求；`docs/demo/knowledge-workspace-redesign/review-builder.js` |
-| REVIEW-003 | P1 | 将生成结果作为独立习题卡片查看，并保留知识点与来源错题关系 | 多卡片、答案展开、继续生成、来源追溯 | 所有成功生成的题目均持久化为习题卡片 | 新需求；生产实现待设计，Demo 已覆盖 |
+| REVIEW-001 | P1 | 在复习题模块选择一个或多个知识点，再从范围内勾选作为生成依据的错题 | 无知识点、无来源错题、跨知识点多选、来源全选/取消 | 只建立生成范围，不立即生成 | [x] `ReviewView.tsx`、`reviewCards.test.ts`、[浏览器证据](evidence/REVIEW-001-builder.png) |
+| REVIEW-002 | P1 | 选择生成总数并生成新练习题；每道所选错题至少对应 1 张 | 数量下限随来源数变化、生成中、失败、完成 | 生成数量不得小于来源错题数；新题需要保存 | [x] `reviewCards.test.ts`、`KnowledgeContextView.test.tsx` |
+| REVIEW-003 | P1 | 将生成结果作为独立习题卡片查看，并保留知识点与来源错题关系 | 多卡片、答案展开、继续生成、来源追溯 | 所有成功生成的题目均持久化为习题卡片 | [x] 浏览器/Tauri 存储实现与测试、[保存证据](evidence/REVIEW-003-saved.png) |
 
 ## AI 服务连接
 

@@ -51,6 +51,13 @@ impl Storage {
             conditions.push("c.status = ?");
             values.push(status.into());
         }
+        if let Some(kind) = filter.kind.filter(|value| value != "all") {
+            if kind != "mistake" && kind != "practice" {
+                return Err(AppError::validation("卡片类型筛选值无效"));
+            }
+            conditions.push("c.kind = ?");
+            values.push(kind.into());
+        }
         if let Some(query) = filter.query.filter(|value| !value.trim().is_empty()) {
             sql.push_str(" LEFT JOIN card_knowledge_points qckp ON qckp.card_id = c.id LEFT JOIN knowledge_points qkp ON qkp.id = qckp.knowledge_point_id");
             conditions.push("(c.question LIKE ? ESCAPE '\\' OR c.user_answer LIKE ? ESCAPE '\\' OR c.correct_answer LIKE ? ESCAPE '\\' OR c.solution LIKE ? ESCAPE '\\' OR c.error_location LIKE ? ESCAPE '\\' OR c.error_reason LIKE ? ESCAPE '\\' OR c.error_type LIKE ? ESCAPE '\\' OR qkp.subject LIKE ? ESCAPE '\\' OR qkp.chapter LIKE ? ESCAPE '\\' OR qkp.name LIKE ? ESCAPE '\\')");

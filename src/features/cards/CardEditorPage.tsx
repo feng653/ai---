@@ -1,11 +1,11 @@
-import { ArrowLeft, LoaderCircle, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Cloud, LoaderCircle, RefreshCw, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { applyAiProposal, getDefaultAcceptedFields, type AiProposal, type ProposalKey } from "../../domain/ai";
 import { emptyCardInput, validateCardInput, type CardAsset, type CardInput, type KnowledgePoint } from "../../domain/card";
 import { useAiStatus, useConnectAi } from "../../hooks/useAi";
-import { useCard, useDeleteCard, useSaveCard } from "../../hooks/useCards";
+import { useCard, useCards, useDeleteCard, useSaveCard } from "../../hooks/useCards";
 import { aiService, type AiProgress } from "../../services/aiService";
 import { cardService } from "../../services/cardService";
 import { errorMessage as getErrorMessage } from "../../services/errorMessage";
@@ -37,6 +37,7 @@ export function CardEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const cardQuery = useCard(id);
+  const availableCards = useCards({ kind: "mistake" });
   const saveCard = useSaveCard();
   const deleteCard = useDeleteCard();
   const aiStatus = useAiStatus();
@@ -46,6 +47,8 @@ export function CardEditorPage() {
   const [chapterDraft, setChapterDraft] = useState("");
   const [pointDraft, setPointDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [conflictMessage, setConflictMessage] = useState("");
+  const [draftStatus, setDraftStatus] = useState("尚未修改");
   const [progress, setProgress] = useState<AiProgress | null>(null);
   const [proposal, setProposal] = useState<AiProposal | null>(null);
   const [acceptedFields, setAcceptedFields] = useState<ProposalKey[]>([]);
@@ -73,6 +76,7 @@ export function CardEditorPage() {
           setKnowledgePoints(draft.knowledgePoints ?? []);
           setAssets(draft.assets ?? []);
           restored = true;
+          setDraftStatus("已恢复草稿");
         } else localStorage.removeItem(draftKey);
       } catch { localStorage.removeItem(draftKey); }
     }
@@ -84,15 +88,6 @@ export function CardEditorPage() {
     initialized.current = true;
   }, [cardQuery.data, cardQuery.isLoading, draftKey, form, id]);
 
-  useEffect(() => {
-    if (!initialized.current) return;
-    const timer = window.setTimeout(() => localStorage.setItem(draftKey, JSON.stringify({
-      values: watched, knowledgePoints, assets: storableAssets(assets),
-      baseRevision: cardQuery.data?.revision,
-    })), 700);
-    return () => window.clearTimeout(timer);
-  }, [assets, cardQuery.data?.revision, draftKey, knowledgePoints, watched]);
-
   const currentInput = useMemo<CardInput>(
     () => ({ ...watched, knowledgePoints, assets }), [assets, knowledgePoints, watched],
   );
@@ -100,6 +95,19 @@ export function CardEditorPage() {
     ? ({ ...formValues(cardQuery.data), knowledgePoints: cardQuery.data.knowledgePoints, assets: cardQuery.data.assets } as CardInput)
     : emptyCardInput();
   const hasUnsavedChanges = JSON.stringify(comparableInput(currentInput)) !== JSON.stringify(comparableInput(baseline));
+  const draftSnapshot = useMemo(() => JSON.stringify({ values: watched, knowledgePoints,
+    assets: storableAssets(assets), baseRevision: cardQuery.data?.revision }),
+  [assets, cardQuery.data?.revision, knowledgePoints, watched]);
+
+  useEffect(() => {
+    if (!initialized.current || !hasUnsavedChanges) return;
+    setDraftStatus("正在暂存");
+    const timer = window.setTimeout(() => {
+      localStorage.setItem(draftKey, draftSnapshot);
+      setDraftStatus("草稿已保留");
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, draftSnapshot, hasUnsavedChanges]);
 
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => {
@@ -143,6 +151,7 @@ export function CardEditorPage() {
     const errors = validateCardInput(input);
     if (errors.length) { setErrorMessage(errors.join("；")); return; }
     setErrorMessage("");
+    setConflictMessage("");
     try {
       const saved = await saveCard.mutateAsync({ id, input, expectedRevision: cardQuery.data?.revision });
       const savedIds = new Set(saved.assets.map((asset) => asset.id));
@@ -150,14 +159,20 @@ export function CardEditorPage() {
         .filter((asset) => !savedIds.has(asset.id)).map((asset) => cardService.deleteAsset(asset.id)));
       localStorage.removeItem(draftKey);
       navigate(`/cards/${saved.id}`);
-    } catch (error) { setErrorMessage(getErrorMessage(error, "保存失败")); }
+    } catch (error) {
+      const message = getErrorMessage(error, "保存失败");
+      if (message.includes("REVISION_CONFLICT") || message.includes("版本")) setConflictMessage(message);
+      else setErrorMessage(message);
+    }
   });
 
   const handleDelete = async () => {
     if (!id || !window.confirm("删除后无法恢复，确认删除这张错题吗？")) return;
-    await deleteCard.mutateAsync(id);
-    localStorage.removeItem(draftKey);
-    navigate("/");
+    try {
+      await deleteCard.mutateAsync(id);
+      localStorage.removeItem(draftKey);
+      navigate("/");
+    } catch (error) { setErrorMessage(getErrorMessage(error, "删除失败，请重试")); }
   };
 
   const organize = async () => {
@@ -197,16 +212,21 @@ export function CardEditorPage() {
   return (
     <div className="editor-page">
       <header className="editor-header">
-        <div><button className="button ghost" type="button" onClick={closeEditor}><ArrowLeft size={17} />返回</button><h1>{id ? "编辑错题" : "新增错题"}</h1><p>先保存原始材料，也可以稍后再整理。</p></div>
+        <div><button className="button ghost" type="button" onClick={closeEditor}><ArrowLeft size={17} />返回</button><h1>{id ? "编辑错题" : "整理一道错题"}</h1><p>先保存原始材料，也可以稍后再整理。</p></div>
         <div className="editor-actions">
+          <span className="draft-state" role="status"><Cloud size={12} />{draftStatus}</span>
           {id && <button className="button danger ghost" type="button" onClick={handleDelete}><Trash2 size={16} />删除</button>}
           <button className="button primary" type="button" onClick={handleSave} disabled={saveCard.isPending}>{saveCard.isPending ? <LoaderCircle className="spin" size={17} /> : <Save size={17} />}保存卡片</button>
         </div>
       </header>
       <form className="editor-layout" onSubmit={handleSave}>
         <div className="editor-main">
+          {conflictMessage && <div className="conflict-banner" role="alert"><div><strong>检测到版本冲突</strong>
+            <span>{conflictMessage}。当前草稿仍保留。</span></div><button type="button" className="button"
+              onClick={() => window.location.reload()}><RefreshCw size={14} />重新载入</button></div>}
           {errorMessage && <div className="inline-error" role="alert">{errorMessage}</div>}
           <CardEditorFields form={form} assets={assets} knowledgePoints={knowledgePoints}
+            availableCards={availableCards.data ?? []}
             chapterDraft={chapterDraft} pointDraft={pointDraft} fileInput={imageImport.fileInput}
             setChapterDraft={setChapterDraft} setPointDraft={setPointDraft}
             setKnowledgePoints={setKnowledgePoints} addKnowledgePoint={addKnowledgePoint}

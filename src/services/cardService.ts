@@ -2,7 +2,7 @@ import { BrowserCardService } from "./browserCardService";
 import type { CardService } from "./cardService.types";
 import { TauriCardService } from "./tauriCardService";
 
-export type { CardService, SaveCardRequest } from "./cardService.types";
+export type { CardService, PracticeCardDraft, SaveCardRequest } from "./cardService.types";
 export { BrowserCardService } from "./browserCardService";
 export { TauriCardService } from "./tauriCardService";
 

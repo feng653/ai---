@@ -1,14 +1,18 @@
 import { ArrowLeft, Edit3, Image, Sparkles, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AssetPreview } from "../../components/AssetPreview";
 import { MathContent } from "../../components/MathContent";
-import { useCard, useDeleteCard } from "../../hooks/useCards";
+import { useCard, useCards, useDeleteCard } from "../../hooks/useCards";
+import { errorMessage } from "../../services/errorMessage";
 
 export function CardDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const card = useCard(id);
+  const sourceCards = useCards({ kind: "mistake" });
   const remove = useDeleteCard();
+  const [actionError, setActionError] = useState("");
 
   if (card.isLoading) return <div className="page-content"><div className="empty-state"><span className="loading-spinner" /></div></div>;
   if (!card.data) return <div className="page-content"><div className="empty-state"><h3>找不到这张错题</h3><button className="button" onClick={() => navigate("/")}>返回错题库</button></div></div>;
@@ -16,8 +20,9 @@ export function CardDetailPage() {
   const item = card.data;
   const handleDelete = async () => {
     if (!window.confirm("删除后无法恢复，确认删除这张错题吗？")) return;
-    await remove.mutateAsync(item.id);
-    navigate("/");
+    setActionError("");
+    try { await remove.mutateAsync(item.id); navigate("/"); }
+    catch (error) { setActionError(errorMessage(error, "删除失败，请重试")); }
   };
 
   return (
@@ -33,12 +38,23 @@ export function CardDetailPage() {
 
       <section className="detail-heading">
         <div>
+          {item.kind === "practice" && <span className="practice-kind">习题卡</span>}
           <span className={`card-status ${item.status}`}>{item.status === "organized" ? "已整理" : "待完善"}</span>
           <span>{item.subject || "未分类"}</span>
         </div>
         <MathContent className="detail-question">{item.question || "仅保存了原始图片"}</MathContent>
         <small>最近修改：{new Date(item.updatedAt).toLocaleString("zh-CN")}</small>
       </section>
+      {actionError && <p className="inline-error" role="alert">{actionError}</p>}
+
+      {item.kind === "practice" && <section className="detail-block practice-origin">
+        <h3>来源错题与版本</h3><div>{(item.sourceRevisions ?? []).map((source) => {
+          const origin = sourceCards.data?.find((candidate) => candidate.id === source.cardId);
+          return <button type="button" key={source.cardId} disabled={!origin}
+            onClick={() => origin && navigate(`/cards/${origin.id}`)}><span>{origin?.question || "来源卡片已删除"}</span>
+            <small>revision {source.revision}</small></button>;
+        })}</div>
+      </section>}
 
       {item.assets.length > 0 && (
         <section className="detail-block">

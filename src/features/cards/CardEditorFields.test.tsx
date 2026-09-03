@@ -12,6 +12,7 @@ function Harness({ selectImage }: { selectImage: (file?: File) => void }) {
       form={form}
       assets={[]}
       knowledgePoints={[]}
+      availableCards={[]}
       chapterDraft=""
       pointDraft=""
       fileInput={createRef<HTMLInputElement>()}

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Card, CardAsset, CardFilter } from "../domain/card";
-import type { CardService, SaveCardRequest } from "./cardService.types";
+import type { CardService, PracticeCardDraft, SaveCardRequest } from "./cardService.types";
 
 export class TauriCardService implements CardService {
   list(filter: CardFilter = {}): Promise<Card[]> {
@@ -13,6 +13,10 @@ export class TauriCardService implements CardService {
 
   save(request: SaveCardRequest): Promise<Card> {
     return invoke<Card>("save_card", request);
+  }
+
+  savePracticeCards(drafts: PracticeCardDraft[]): Promise<Card[]> {
+    return invoke<Card[]>("save_practice_cards", { drafts });
   }
 
   delete(id: string): Promise<void> {

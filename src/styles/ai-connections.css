@@ -4,6 +4,8 @@
 .back-link:hover { color: var(--ink); }
 .connections-header h1 { margin: 8px 0 7px; font: 700 30px/1.2 Georgia, "Songti SC", serif; }
 .connections-header p { margin: 0; color: var(--ink-3); font-size: 13px; }
+.connection-count { min-width: 94px; min-height: 40px; margin-left: auto; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--ink-3); font-size: 10px; }
+.connection-count b { color: var(--brand); font-size: 17px; }
 .connections-header .eyebrow { display: flex; align-items: center; gap: 9px; }
 .connections-header .eyebrow b { padding: 4px 7px; border-radius: 6px; background: var(--amber-soft); color: var(--amber); font-size: 9px; letter-spacing: .04em; }
 .connections-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }

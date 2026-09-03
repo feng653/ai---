@@ -2,7 +2,7 @@ import {
   calculateCardStatus, UNCATEGORIZED_CHAPTER_FILTER,
   type Card, type CardAsset, type CardFilter,
 } from "../domain/card";
-import type { CardService, SaveCardRequest } from "./cardService.types";
+import type { CardService, PracticeCardDraft, SaveCardRequest } from "./cardService.types";
 import { seedCards } from "./seedCards";
 
 const STORAGE_KEY = "zhishi.browser.cards.v1";
@@ -26,6 +26,7 @@ function storeCards(cards: Card[]): void {
 }
 
 function matchesFilter(card: Card, filter: CardFilter): boolean {
+  if (filter.kind && filter.kind !== "all" && (card.kind ?? "mistake") !== filter.kind) return false;
   if (filter.status && filter.status !== "all" && card.status !== filter.status) return false;
   const hasKnowledgeFilter = filter.knowledgeSubject || filter.knowledgeChapter || filter.knowledgePoint;
   if (hasKnowledgeFilter && !card.knowledgePoints.some((point) =>
@@ -71,6 +72,8 @@ export class BrowserCardService implements CardService {
     const card: Card = {
       ...input,
       id: existing?.id ?? crypto.randomUUID(),
+      kind: existing?.kind ?? "mistake",
+      sourceRevisions: existing?.sourceRevisions ?? [],
       status: calculateCardStatus(input),
       revision: (existing?.revision ?? 0) + 1,
       createdAt: existing?.createdAt ?? now,
@@ -80,6 +83,33 @@ export class BrowserCardService implements CardService {
     else cards.unshift(card);
     storeCards(cards);
     return card;
+  }
+
+  async savePracticeCards(drafts: PracticeCardDraft[]): Promise<Card[]> {
+    const cards = loadCards();
+    if (!drafts.length) throw new Error("至少需要生成一张习题卡");
+    for (const draft of drafts) {
+      if (!draft.sourceRevisions.length) throw new Error("习题卡必须保留来源错题版本");
+      for (const source of draft.sourceRevisions) {
+        const current = cards.find((card) => card.id === source.cardId && (card.kind ?? "mistake") === "mistake");
+        if (!current || current.revision !== source.revision) {
+          throw new Error("REVISION_CONFLICT: 来源错题已变化，请重新选择后生成");
+        }
+      }
+    }
+    const now = new Date().toISOString();
+    const saved = drafts.map(({ input, sourceRevisions }) => ({
+      ...input,
+      id: crypto.randomUUID(),
+      kind: "practice" as const,
+      sourceRevisions,
+      status: calculateCardStatus(input),
+      revision: 1,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    storeCards([...saved, ...cards]);
+    return saved;
   }
 
   async delete(id: string): Promise<void> {

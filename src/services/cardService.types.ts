@@ -1,4 +1,4 @@
-import type { Card, CardAsset, CardFilter, CardInput } from "../domain/card";
+import type { Card, CardAsset, CardFilter, CardInput, SourceRevision } from "../domain/card";
 
 export type SaveCardRequest = {
   id?: string;
@@ -6,10 +6,16 @@ export type SaveCardRequest = {
   expectedRevision?: number;
 };
 
+export type PracticeCardDraft = {
+  input: CardInput;
+  sourceRevisions: SourceRevision[];
+};
+
 export interface CardService {
   list(filter?: CardFilter): Promise<Card[]>;
   get(id: string): Promise<Card | null>;
   save(request: SaveCardRequest): Promise<Card>;
+  savePracticeCards(drafts: PracticeCardDraft[]): Promise<Card[]>;
   delete(id: string): Promise<void>;
   importAsset(file: File): Promise<CardAsset>;
   deleteAsset(id: string): Promise<void>;

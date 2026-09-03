@@ -40,7 +40,9 @@ function RunItem({ run, onResolve }: { run: AgentRunActivity; onResolve: Props["
 
 export function AgentTimeline({ items, busy, onResolve }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), [items, busy]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [items, busy]);
   return <div className="harness-timeline" aria-live="polite">
     {items.map((item) => item.kind === "message" ? <article className={`harness-message ${item.role}`} key={item.id}>
       <span>{item.role === "agent" ? <Bot size={14} /> : <UserRound size={14} />}</span>

@@ -142,10 +142,10 @@ API 流程：
 
 | 旅程 | 旧 UI 结果 | 旧 UI 证据 | 新 UI 结果 | 新 UI 证据 | 备注 |
 |---|---|---|---|---|---|
-| J-01 | 待执行 | — | 未开始 | — | — |
-| J-02 | 待执行 | — | 未开始 | — | — |
-| J-03 | 待执行 | — | 未开始 | — | — |
-| J-04 | 待执行 | — | 未开始 | — | — |
-| J-05 | 待执行 | — | 未开始 | — | 仅桌面可完成真实凭据验证 |
-| J-06 | 待执行 | — | 未开始 | — | 浏览器和桌面分别记录 |
-| J-07 | 待执行 | — | 未开始 | — | 特别检查待审批资产清理 |
+| J-01 | 基线保留 | 静态审计 | [x] 代码与正常页面；[ ] 图片异常分支实机 | [编辑器](evidence/CARD-003-editor.png)、[详情](evidence/CARD-001-detail.png)、`pnpm check` | 保存/详情主链已实现；桌面图片生命周期待验 |
+| J-02 | 基线保留 | 静态审计 | [x] revision 自动化；[ ] 刷新和关闭窗口录屏 | `cardService.test.ts`、`tauriCardService.test.ts` | 草稿和冲突 UI 已实现，不把代码检查记作完整人工通过 |
+| J-03 | 基线保留 | 静态审计 | [x] 审阅逻辑自动化；[ ] 真实 Provider | `domain/ai.test.ts`、`aiService.test.ts`、[编辑器](evidence/CARD-003-editor.png) | 需桌面连接 AI 后完成全链 |
+| J-04 | 基线保留 | 静态审计 | [x] 浏览器主链与持久化测试 | [知识列表](evidence/KNOW-001-grid.png)、[知识详情](evidence/KNOW-002-detail.png)、[生成器](evidence/REVIEW-001-builder.png)、[保存结果](evidence/REVIEW-003-saved.png) | 来源 revision 由 TS/Rust 测试覆盖 |
+| J-05 | 基线保留 | 静态审计 | [x] 页面与前端契约；[ ] 真实凭据 | [AI 接入](evidence/AICONN-001-settings.png)、前端/Rust 测试 | 仅桌面可完成真实凭据验证 |
+| J-06 | 基线保留 | 静态审计 | [x] 浏览器模拟 UI 与 reducer；[ ] 桌面真实工具 | [Agent](evidence/AGENT-001-open.png)、Agent TS/Rust 测试 | 浏览器和桌面分别记录 |
+| J-07 | 基线保留 | 静态审计 | [x] 代码与 reducer；[ ] 活动 run/待审批实机 | `useAgentHarness.ts`、`agentReducer.test.ts` | 特别检查待审批资产清理 |

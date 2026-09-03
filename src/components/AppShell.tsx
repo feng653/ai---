@@ -1,17 +1,34 @@
-import { BookOpenCheck, CirclePlus, PanelLeftClose, Search, Sparkles } from "lucide-react";
-import { useState } from "react";
+import {
+  BookOpenCheck, CirclePlus, PanelLeftClose, PlugZap,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AgentWorkspace } from "../features/agent/AgentWorkspace";
+import { KnowledgeTreeFilter } from "../features/cards/KnowledgeTreeFilter";
+import { KnowledgeWorkspaceContext } from "../features/cards/KnowledgeWorkspaceContext";
+import type { KnowledgeSelection } from "../features/cards/knowledgeTree";
+import { useCards } from "../hooks/useCards";
 
 const SIDEBAR_STORAGE_KEY = "zhishi:sidebar-collapsed";
+const isTauri = () => Boolean(window.__TAURI_INTERNALS__);
+
+function pageContext(pathname: string) {
+  if (pathname === "/") return { eyebrow: "学习工作台", title: "错题与知识" };
+  if (pathname === "/settings/ai") return { eyebrow: "设置", title: "AI 接入" };
+  if (pathname.endsWith("/edit") || pathname === "/cards/new") return { eyebrow: "卡片编辑器", title: "整理一道错题" };
+  return { eyebrow: "错题详情", title: "查看学习记录" };
+}
 
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAiSettings = location.pathname === "/settings/ai";
+  const context = pageContext(location.pathname);
+  const [selection, setSelection] = useState<KnowledgeSelection | null>(null);
+  const allCards = useCards({ kind: "mistake" });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true",
   );
+  const workspace = useMemo(() => ({ selection, setSelection }), [selection]);
 
   function toggleSidebar() {
     setIsSidebarCollapsed((collapsed) => {
@@ -19,73 +36,45 @@ export function AppShell() {
       return !collapsed;
     });
   }
-
   function handleBrandClick() {
-    if (isSidebarCollapsed) {
-      toggleSidebar();
-      return;
-    }
+    if (isSidebarCollapsed) { toggleSidebar(); return; }
     navigate("/");
   }
 
-  return (
+  return <KnowledgeWorkspaceContext.Provider value={workspace}>
+    <a className="skip-link" href="#main-content">跳到主要内容</a>
     <div className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <button
-            className="brand"
-            onClick={handleBrandClick}
-            aria-label={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}
-            title={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}
-          >
-            <span className="brand-mark"><BookOpenCheck size={21} /></span>
-            <span className="brand-copy"><strong>知拾</strong><small>个人错题卡片</small></span>
-          </button>
-          {!isSidebarCollapsed && (
-            <button
-              className="sidebar-toggle"
-              onClick={toggleSidebar}
-              aria-label="收起侧边栏"
-              title="收起侧边栏"
-            >
-              <PanelLeftClose size={18} />
-            </button>
-          )}
-        </div>
-        <p className="nav-label">错题库</p>
-        <nav className="side-nav">
-          <NavLink to="/" end title="我的错题"><BookOpenCheck size={18} /><span>我的错题</span></NavLink>
-          <NavLink to="/cards/new" title="新增错题"><CirclePlus size={18} /><span>新增错题</span></NavLink>
-          <NavLink to="/settings/ai" title="AI 接入"><Sparkles size={18} /><span>AI 接入</span></NavLink>
+        <div className="sidebar-header"><button className="brand" onClick={handleBrandClick}
+          aria-label={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}
+          title={isSidebarCollapsed ? "展开侧边栏" : "知拾首页"}>
+          <span className="brand-mark"><BookOpenCheck size={22} /></span>
+          <span className="brand-copy"><strong>知拾</strong><small>知识工作台</small></span>
+        </button></div>
+        <nav className="side-nav" aria-label="主导航">
+          <NavLink to="/" end title="错题与知识"><BookOpenCheck /><span>错题与知识</span></NavLink>
+          <NavLink to="/cards/new" title="新增错题"><CirclePlus /><span>新增错题</span></NavLink>
+          <NavLink to="/settings/ai" title="AI 接入"><PlugZap /><span>AI 接入</span></NavLink>
         </nav>
+        {location.pathname === "/" && <KnowledgeTreeFilter cards={allCards.data ?? []}
+          selection={selection} onChange={setSelection} />}
+        <div className="sidebar-footer">
+          {!isSidebarCollapsed && <button className="sidebar-toggle" onClick={toggleSidebar}
+            aria-label="收起侧边栏" title="收起侧边栏"><PanelLeftClose /><span>收起侧边栏</span></button>}
+        </div>
       </aside>
-
-      <main className="main-area">
+      <section className="main-area">
         <header className="topbar">
-          <button className="mobile-brand" onClick={() => navigate("/")}>
-            <span className="brand-mark"><BookOpenCheck size={18} /></span>知拾
-          </button>
-          <div className="breadcrumb">
-            {location.pathname === "/" ? <><Search size={16} />错题库</> : isAiSettings ? "设置 / AI 接入" : "整理错题"}
-          </div>
-          <div className="top-actions">
-            <button
-              className={`ai-status ${isAiSettings ? "connected" : ""}`}
-              onClick={() => navigate("/settings/ai")}
-              title="管理 AI 服务"
-            >
-              <span className="status-dot" />
-              <Sparkles size={15} />
-              AI 接入
-            </button>
-            <button className="button primary" onClick={() => navigate("/cards/new")}>
-              <CirclePlus size={17} />新增错题
-            </button>
-          </div>
+          <button className="mobile-brand" onClick={() => navigate("/")} aria-label="返回错题库">
+            <span className="brand-mark"><BookOpenCheck /></span></button>
+          <div className="page-context"><small>{context.eyebrow}</small><strong>{context.title}</strong></div>
+          <span className="runtime-badge"><i />{isTauri() ? "桌面运行" : "浏览器预览 · 本地模拟"}</span>
+          <button className="button quiet top-action" onClick={() => navigate("/cards/new")}>
+            <CirclePlus /><span>新增错题</span></button>
         </header>
-        <Outlet />
-      </main>
+        <main id="main-content"><Outlet /></main>
+      </section>
       <AgentWorkspace />
     </div>
-  );
+  </KnowledgeWorkspaceContext.Provider>;
 }

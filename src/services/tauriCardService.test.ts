@@ -31,4 +31,12 @@ describe("TauriCardService IPC contract", () => {
     expect(url).toMatch(/^blob:/);
     URL.revokeObjectURL(url!);
   });
+
+  it("sends a practice batch with source revisions", async () => {
+    const drafts = [{ input: { ...emptyCardInput(), question: "变式题" },
+      sourceRevisions: [{ cardId: "source-1", revision: 3 }] }];
+    mockedInvoke.mockResolvedValue([]);
+    await service.savePracticeCards(drafts);
+    expect(mockedInvoke).toHaveBeenCalledWith("save_practice_cards", { drafts });
+  });
 });

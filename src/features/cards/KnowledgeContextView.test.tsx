@@ -19,8 +19,9 @@ const card: Card = {
 };
 
 function renderView(activeSelection: KnowledgeSelection | null = selection) {
-  const result = render(<KnowledgeContextView allCards={[card]} cards={[card]} selection={activeSelection}
-    loading={false} onSelectionChange={vi.fn()} onOpenCard={vi.fn()} onCreateCard={vi.fn()} />);
+  const result = render(<KnowledgeContextView allCards={[card]} cards={[card]} savedPracticeCards={[]}
+    selection={activeSelection} loading={false} onSelectionChange={vi.fn()} onOpenCard={vi.fn()}
+    onCreateCard={vi.fn()} onSavePractice={vi.fn().mockResolvedValue([])} />);
   return result.container;
 }
 
@@ -54,20 +55,18 @@ describe("KnowledgeContextView", () => {
     }), expect.any(Function));
   });
 
-  it("lets the user choose how many review questions are generated", () => {
-    const container = renderView();
+  it("lets the user choose sources and enforces the generation minimum", () => {
+    renderView();
     fireEvent.click(screen.getByRole("tab", { name: /复习题/ }));
-    fireEvent.change(screen.getByRole("combobox", { name: "每次生成复习题数量" }), { target: { value: "5" } });
-    expect(container.querySelectorAll(".review-questions > article")).toHaveLength(5);
-    fireEvent.click(screen.getAllByRole("button", { name: "查看答案" })[0]);
-    expect(screen.getByText("答案")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: /标记掌握/ })[0]);
-    expect(screen.getByText(/1\/5 已掌握/)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /两个电阻串联/ })).toHaveAttribute("aria-checked", "true");
+    fireEvent.change(screen.getByRole("spinbutton", { name: "生成卡片数" }), { target: { value: "0" } });
+    expect(screen.getByRole("spinbutton", { name: "生成卡片数" })).toHaveValue(1);
+    expect(screen.getByRole("button", { name: /生成并保存 1 张/ })).toBeEnabled();
   });
 
   it("disables review outside a concrete knowledge point", () => {
     const container = renderView({ ...selection, key: "物理/电学", label: "电学", point: undefined });
-    expect(screen.getByRole("tab", { name: /复习题/ })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: /复习题/ })).toBeEnabled();
     fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
     expect(container.querySelector(".knowledge-card-preview")).toHaveClass("math-content");
   });
