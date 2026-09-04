@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const sourceRoots = ["src", "src-tauri/src", "scripts", "docs"];
 const extensions = new Set([".ts", ".tsx", ".css", ".rs", ".mjs", ".js", ".html"]);
+const ignoredExtensions = new Set([".md"]);
 const maxLines = 250;
 
 async function collect(directory) {
@@ -18,7 +19,7 @@ async function collect(directory) {
 
 const files = (await Promise.all(sourceRoots.map((directory) => collect(join(root, directory)))))
   .flat()
-  .filter((file) => extensions.has(extname(file)));
+  .filter((file) => !ignoredExtensions.has(extname(file)) && extensions.has(extname(file)));
 const oversized = [];
 for (const file of files) {
   const lines = (await readFile(file, "utf8")).split(/\r?\n/).length;
