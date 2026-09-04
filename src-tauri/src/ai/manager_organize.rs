@@ -15,6 +15,7 @@ impl AiManager {
         base_revision: u64,
         asset_paths: Vec<PathBuf>,
         agent: Option<AgentRequest>,
+        additional_requirements: Option<String>,
         mut progress: F,
     ) -> Result<AiProposal, AppError>
     where
@@ -25,7 +26,14 @@ impl AiManager {
         if active == CODEX_ID {
             let codex = Arc::clone(&self.codex);
             return tauri::async_runtime::spawn_blocking(move || {
-                codex.organize(input, base_revision, asset_paths, agent, progress)
+                codex.organize(
+                    input,
+                    base_revision,
+                    asset_paths,
+                    agent,
+                    additional_requirements,
+                    progress,
+                )
             })
             .await
             .map_err(|error| {
@@ -54,6 +62,7 @@ impl AiManager {
                 base_revision,
                 asset_paths,
                 agent,
+                additional_requirements,
                 official_web_search: active == DEEPSEEK_ID,
             },
         )

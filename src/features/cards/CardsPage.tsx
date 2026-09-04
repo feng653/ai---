@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCards, useSavePracticeCards } from "../../hooks/useCards";
+import { useCards } from "../../hooks/useCards";
 import { KnowledgeContextView } from "./KnowledgeContextView";
 import { useKnowledgeWorkspace } from "./KnowledgeWorkspaceContext";
 
@@ -17,7 +17,6 @@ export function CardsPage() {
     knowledgePoint: selection?.point,
   });
   const practiceCards = useCards({ kind: "practice" });
-  const savePracticeCards = useSavePracticeCards();
 
   return <div className="page-content cards-page">
     <header className="library-toolbar">
@@ -32,7 +31,6 @@ export function CardsPage() {
       savedPracticeCards={practiceCards.data ?? []} selection={selection}
       loading={cards.isLoading} error={cards.isError ? cards.error : undefined}
       onSelectionChange={setSelection} onOpenCard={(id) => navigate(`/cards/${id}`)}
-      onCreateCard={() => navigate("/cards/new")}
-      onSavePractice={(drafts) => savePracticeCards.mutateAsync(drafts)} />
+      onCreateCard={() => navigate("/cards/new")} />
   </div>;
 }

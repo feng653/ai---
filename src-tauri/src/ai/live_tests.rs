@@ -35,11 +35,15 @@ fn codex_live_agent_create_proposal() {
                 target_provided: false,
                 web_search: false,
             }),
+            None,
             |_| {},
         )
         .expect("real Codex run failed");
     let value = serde_json::to_value(proposal).unwrap();
-    assert_eq!(value["promptVersion"], "agent-choice-v6-multi-card");
+    assert_eq!(
+        value["promptVersion"],
+        "agent-choice-v7-additional-requirements"
+    );
     assert!(value["cards"][0]["fields"]["question"]["value"]
         .as_str()
         .is_some_and(|question| question.contains('4')));
@@ -79,6 +83,7 @@ fn codex_live_agent_follow_up_proposal() {
                 target_provided: true,
                 web_search: false,
             }),
+            None,
             |_| {},
         )
         .expect("real Codex follow-up failed");

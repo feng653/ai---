@@ -1,4 +1,4 @@
-import type { CardInput, ErrorType, KnowledgePoint } from "./card";
+import type { CardInput, ErrorType, KnowledgePoint, SourceRevision } from "./card";
 
 export type AiProviderState = "unavailable" | "disconnected" | "checking" | "connected" | "expired";
 
@@ -32,6 +32,7 @@ export type ApiProviderInput = {
 
 export type KnowledgeCardGenerationRequest = {
   topic: { subject: string; chapter?: string | null; name: string };
+  additionalRequirements?: string;
   sourceCards: Array<{
     id: string;
     revision: number;
@@ -68,6 +69,33 @@ export type KnowledgeCardRecord = {
 };
 
 export type KnowledgeCardSaveInput = Omit<KnowledgeCardRecord, "createdAt" | "updatedAt">;
+
+export type PracticeDifficulty = "easier" | "same" | "harder";
+
+export type PracticeGenerationRequest = {
+  topics: KnowledgePoint[];
+  additionalRequirements?: string;
+  sourceCards: Array<{
+    id: string;
+    revision: number;
+    subject: string;
+    question: string;
+    userAnswer: string;
+    correctAnswer: string;
+    solution: string;
+    errorLocation: string;
+    errorReason: string;
+    errorType: string;
+    knowledgePoints: KnowledgePoint[];
+  }>;
+  count: number;
+  difficulty: PracticeDifficulty;
+};
+
+export type GeneratedPracticeCardDraft = {
+  input: CardInput;
+  sourceRevisions: SourceRevision[];
+};
 
 export type ProposedField<T> = {
   value: T | null;

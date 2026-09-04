@@ -5,8 +5,14 @@ import type { Card } from "../../domain/card";
 import type { KnowledgeSelection } from "./knowledgeTree";
 import { KnowledgeContextView } from "./KnowledgeContextView";
 import { aiService } from "../../services/aiService";
+import { knowledgeGenerationRuns, practiceGenerationRuns } from "./learningGenerationRun";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => {
+  cleanup();
+  knowledgeGenerationRuns.dismiss(selection.key);
+  practiceGenerationRuns.dismiss("practice-generator");
+  vi.restoreAllMocks();
+});
 
 const selection: KnowledgeSelection = {
   key: "物理/电学/串联电路", label: "串联电路", subject: "物理", chapter: "电学", point: "串联电路",
@@ -24,7 +30,7 @@ function renderView(activeSelection: KnowledgeSelection | null = selection) {
   const result = render(<QueryClientProvider client={client}><KnowledgeContextView
     allCards={[card]} cards={[card]} savedPracticeCards={[]}
     selection={activeSelection} loading={false} onSelectionChange={vi.fn()} onOpenCard={vi.fn()}
-    onCreateCard={vi.fn()} onSavePractice={vi.fn().mockResolvedValue([])} />
+    onCreateCard={vi.fn()} />
   </QueryClientProvider>);
   return result.container;
 }
@@ -49,6 +55,9 @@ describe("KnowledgeContextView", () => {
     });
     renderView();
     fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
+    fireEvent.change(screen.getByRole("textbox", { name: /附加要求/ }), {
+      target: { value: "对比串联与并联公式" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "AI 生成" }));
 
     await waitFor(() => expect(screen.getByText("串联电路的总电阻等于各分电阻之和。")).toBeInTheDocument());
@@ -59,6 +68,7 @@ describe("KnowledgeContextView", () => {
     await waitFor(() => expect(screen.getByText("已保存知识卡片")).toBeInTheDocument());
     expect(generate).toHaveBeenCalledWith(expect.objectContaining({
       topic: { subject: "物理", chapter: "电学", name: "串联电路" },
+      additionalRequirements: "对比串联与并联公式",
       sourceCards: [expect.objectContaining({ id: "series", revision: 1 })],
     }), expect.any(Function));
   });
@@ -80,13 +90,39 @@ describe("KnowledgeContextView", () => {
     expect(screen.getByRole("button", { name: /保存知识卡片/ })).toBeEnabled();
   });
 
+  it("keeps generating after leaving the knowledge tab and restores the draft", async () => {
+    let finish: ((value: Awaited<ReturnType<typeof aiService.generateKnowledgeCard>>) => void) | undefined;
+    vi.spyOn(aiService, "getStatus").mockResolvedValue({ state: "connected", provider: "deepseek", message: "ok" });
+    vi.spyOn(aiService, "generateKnowledgeCard").mockImplementation(() => new Promise((resolve) => {
+      finish = resolve;
+    }));
+    renderView();
+    fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
+    fireEvent.click(screen.getByRole("button", { name: "AI 生成" }));
+    expect(screen.getByRole("status")).toHaveTextContent("可以离开此页");
+    fireEvent.click(screen.getByRole("tab", { name: /关联错题/ }));
+    await waitFor(() => expect(finish).toBeTypeOf("function"));
+    finish?.({
+      runId: "background-run", promptVersion: "knowledge-v1",
+      coreMethod: "离页后完成的核心方法。", mistakeReminder: "离页后完成的提醒。",
+      sourceRevisions: [{ cardId: "series", revision: 1 }], warnings: [],
+    });
+    fireEvent.click(screen.getByRole("tab", { name: /知识卡片/ }));
+
+    expect(await screen.findByText("离页后完成的核心方法。")).toBeInTheDocument();
+    expect(screen.getByText("AI 草稿预览")).toBeInTheDocument();
+  });
+
   it("lets the user choose sources and enforces the generation minimum", () => {
     renderView();
     fireEvent.click(screen.getByRole("tab", { name: /复习题/ }));
+    expect(screen.getByRole("heading", { name: "复习题卡片" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /两个电阻串联/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "AI 生成复习题" }));
     expect(screen.getByRole("checkbox", { name: /两个电阻串联/ })).toHaveAttribute("aria-checked", "true");
     fireEvent.change(screen.getByRole("spinbutton", { name: "生成卡片数" }), { target: { value: "0" } });
     expect(screen.getByRole("spinbutton", { name: "生成卡片数" })).toHaveValue(1);
-    expect(screen.getByRole("button", { name: /生成并保存 1 张/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /AI 生成并保存 1 张/ })).toBeEnabled();
   });
 
   it("disables review outside a concrete knowledge point", () => {

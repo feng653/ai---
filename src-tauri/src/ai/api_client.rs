@@ -29,6 +29,7 @@ pub struct OrganizeInput {
     pub base_revision: u64,
     pub asset_paths: Vec<PathBuf>,
     pub agent: Option<AgentRequest>,
+    pub additional_requirements: Option<String>,
     pub official_web_search: bool,
 }
 pub fn http_client() -> Result<Client, AppError> {
@@ -56,7 +57,6 @@ pub async fn test_connection(
     let (status, body) = read_limited(response, MAX_ERROR_BYTES).await?;
     ensure_success(status, body)
 }
-
 pub async fn organize(
     client: &Client,
     config: &ApiProviderConfig,
@@ -68,6 +68,7 @@ pub async fn organize(
         base_revision,
         asset_paths,
         agent,
+        additional_requirements,
         official_web_search,
     } = input;
     let agent_mode = agent.is_some();
@@ -84,7 +85,12 @@ pub async fn organize(
             web_search,
         )?
     } else {
-        proposal::build_prompt(&card, asset_paths.len(), None, &[])?
+        proposal::build_prompt(
+            &card,
+            asset_paths.len(),
+            additional_requirements.as_deref(),
+            &[],
+        )?
     };
     if web_search {
         let json = deepseek::agent(client, config, api_key, &prompt, &asset_paths).await?;
@@ -125,7 +131,6 @@ pub async fn organize(
         proposal::parse_proposal(&json, &card, Uuid::new_v4().to_string(), base_revision)
     }
 }
-
 pub(super) async fn post_json(
     client: &Client,
     config: &ApiProviderConfig,
@@ -144,7 +149,6 @@ pub(super) async fn post_json(
     ensure_success(status, text.clone())?;
     Ok(text)
 }
-
 fn request_content(prompt: &str, images: &[PathBuf]) -> Result<Value, AppError> {
     if images.is_empty() {
         return Ok(Value::String(prompt.into()));
@@ -168,7 +172,6 @@ fn request_content(prompt: &str, images: &[PathBuf]) -> Result<Value, AppError> 
     }
     Ok(Value::Array(blocks))
 }
-
 pub(super) fn image_mime(path: &Path) -> Result<&'static str, AppError> {
     match path
         .extension()
@@ -183,7 +186,6 @@ pub(super) fn image_mime(path: &Path) -> Result<&'static str, AppError> {
         _ => Err(AppError::validation("AI 暂不支持该图片格式")),
     }
 }
-
 pub(super) fn extract_content(body: &str) -> Result<String, AppError> {
     let response: ChatResponse = serde_json::from_str(body).map_err(|error| {
         AppError::new("INVALID_AI_OUTPUT", format!("API 响应格式无效：{error}"))
@@ -196,11 +198,9 @@ pub(super) fn extract_content(body: &str) -> Result<String, AppError> {
         .filter(|content| !content.trim().is_empty())
         .ok_or_else(|| AppError::new("INVALID_AI_OUTPUT", "API 未返回可用内容"))
 }
-
 fn endpoint(base_url: &str, path: &str) -> String {
     format!("{}/{}", base_url.trim_end_matches('/'), path)
 }
-
 fn ensure_success(status: StatusCode, body: String) -> Result<(), AppError> {
     if status.is_success() {
         return Ok(());

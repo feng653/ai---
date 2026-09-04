@@ -21,10 +21,11 @@ describe("AiOrganizeRunStore", () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe("card:1", listener);
 
-    store.start("card:1", emptyCardInput(), 2);
+    store.start("card:1", emptyCardInput(), 2, "  只用代数方法  ");
     expect(store.get("card:1")).toMatchObject({ status: "running" });
     store.start("card:1", emptyCardInput(), 2);
     expect(organize).toHaveBeenCalledOnce();
+    expect((organize.mock.calls[0] as unknown[])[7]).toBe("只用代数方法");
     reportProgress?.({ stage: "analyzing", message: "正在分析" });
     expect(store.get("card:1")).toMatchObject({
       status: "running", progress: { message: "正在分析" },

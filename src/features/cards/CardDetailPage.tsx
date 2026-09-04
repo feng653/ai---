@@ -15,11 +15,13 @@ export function CardDetailPage() {
   const [actionError, setActionError] = useState("");
 
   if (card.isLoading) return <div className="page-content"><div className="empty-state"><span className="loading-spinner" /></div></div>;
-  if (!card.data) return <div className="page-content"><div className="empty-state"><h3>找不到这张错题</h3><button className="button" onClick={() => navigate("/")}>返回错题库</button></div></div>;
+  if (!card.data) return <div className="page-content"><div className="empty-state"><h3>找不到这张卡片</h3><button className="button" onClick={() => navigate("/")}>返回卡片库</button></div></div>;
 
   const item = card.data;
+  const isPractice = item.kind === "practice";
   const handleDelete = async () => {
-    if (!window.confirm("删除后无法恢复，确认删除这张错题吗？")) return;
+    const label = isPractice ? "复习题卡片" : "错题";
+    if (!window.confirm(`删除后无法恢复，确认删除这张${label}吗？`)) return;
     setActionError("");
     try { await remove.mutateAsync(item.id); navigate("/"); }
     catch (error) { setActionError(errorMessage(error, "删除失败，请重试")); }
@@ -31,7 +33,7 @@ export function CardDetailPage() {
         <button className="button ghost" onClick={() => navigate("/")}><ArrowLeft size={17} />返回</button>
         <div className="toolbar-actions">
           <button className="button danger ghost" onClick={handleDelete} disabled={remove.isPending}><Trash2 size={16} />删除</button>
-          <button className="button" onClick={() => navigate(`/cards/${item.id}/edit?ai=1`)}><Sparkles size={16} />AI 重新整理</button>
+          {!isPractice && <button className="button" onClick={() => navigate(`/cards/${item.id}/edit?ai=1`)}><Sparkles size={16} />AI 重新整理</button>}
           <button className="button primary" onClick={() => navigate(`/cards/${item.id}/edit`)}><Edit3 size={16} />编辑卡片</button>
         </div>
       </div>
@@ -65,26 +67,27 @@ export function CardDetailPage() {
         </section>
       )}
 
-      <section className="answer-comparison detail-block">
-        <h3>作答对照</h3>
-        <div>
-          <article className="answer wrong"><small>我的答案</small><MathContent>{item.userAnswer || "未填写"}</MathContent></article>
-          <article className="answer correct"><small>正确答案</small><MathContent>{item.correctAnswer || "待补充"}</MathContent></article>
-        </div>
-      </section>
+      {isPractice ? <section className="detail-block"><h3>参考答案</h3>
+        <MathContent>{item.correctAnswer || "待补充"}</MathContent></section>
+        : <section className="answer-comparison detail-block">
+          <h3>作答对照</h3><div>
+            <article className="answer wrong"><small>我的答案</small><MathContent>{item.userAnswer || "未填写"}</MathContent></article>
+            <article className="answer correct"><small>正确答案</small><MathContent>{item.correctAnswer || "待补充"}</MathContent></article>
+          </div>
+        </section>}
 
       <section className="detail-block">
         <h3>正确解法</h3>
         <MathContent>{item.solution || "还没有填写正确解法。"}</MathContent>
       </section>
 
-      <section className="detail-block diagnosis-block">
+      {!isPractice && <section className="detail-block diagnosis-block">
         <h3>错因诊断</h3>
         <dl>
           <div><dt>第一处错误 · {item.errorType || "未分类"}</dt><dd><MathContent>{item.errorLocation || "暂未定位错误位置"}</MathContent></dd></div>
           <div><dt>为什么会错</dt><dd><MathContent>{item.errorReason || "尚未进行诊断，可手动填写或使用 AI 整理。"}</MathContent></dd></div>
         </dl>
-      </section>
+      </section>}
 
       {item.supplementalNote && <section className="detail-block"><h3>补充说明</h3><MathContent>{item.supplementalNote}</MathContent></section>}
 

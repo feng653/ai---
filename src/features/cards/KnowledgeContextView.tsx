@@ -4,12 +4,12 @@ import { UNCATEGORIZED_CHAPTER_FILTER, type Card } from "../../domain/card";
 import {
   useDeleteKnowledgeCard, useKnowledgeCards, useSaveKnowledgeCard,
 } from "../../hooks/useKnowledgeCards";
-import type { PracticeCardDraft } from "../../services/cardService";
 import { KnowledgeCardView } from "./KnowledgeCardView";
 import type { KnowledgeSelection } from "./knowledgeTree";
 import { buildKnowledgeCard, buildKnowledgeCards } from "./learningContent";
 import { RelatedCardsView } from "./RelatedCardsView";
 import { ReviewView } from "./ReviewView";
+import { practiceCardsForSelection } from "./reviewCards";
 
 type View = "cards" | "knowledge" | "review";
 type Props = {
@@ -22,13 +22,12 @@ type Props = {
   onSelectionChange: (selection: KnowledgeSelection | null) => void;
   onOpenCard: (id: string) => void;
   onCreateCard: () => void;
-  onSavePractice: (drafts: PracticeCardDraft[]) => Promise<Card[]>;
 };
 
 export function KnowledgeContextView(props: Props) {
   const {
     allCards, cards, savedPracticeCards, selection, loading, error,
-    onSelectionChange, onOpenCard, onCreateCard, onSavePractice,
+    onSelectionChange, onOpenCard, onCreateCard,
   } = props;
   const [view, setView] = useState<View>("cards");
   const persisted = useKnowledgeCards();
@@ -37,6 +36,10 @@ export function KnowledgeContextView(props: Props) {
   const knowledgeCards = useMemo(() => buildKnowledgeCards(allCards, selection), [allCards, selection]);
   const detail = useMemo(() => buildKnowledgeCard(allCards, selection), [allCards, selection]);
   const reviewReady = knowledgeCards.length > 0;
+  const visiblePracticeCards = useMemo(
+    () => practiceCardsForSelection(savedPracticeCards, selection),
+    [savedPracticeCards, selection],
+  );
   const records = useMemo(() => Object.fromEntries(
     (persisted.data ?? []).map((record) => [record.key, record]),
   ), [persisted.data]);
@@ -63,7 +66,7 @@ export function KnowledgeContextView(props: Props) {
       <button type="button" role="tab" aria-selected={view === "knowledge"} className={view === "knowledge" ? "active" : ""}
         onClick={() => setView("knowledge")}>知识卡片 <small>{knowledgeCards.length}</small></button>
       <button type="button" role="tab" aria-selected={view === "review"} className={view === "review" ? "active" : ""}
-        disabled={!reviewReady} onClick={() => setView("review")}>复习题 <small>{savedPracticeCards.length}</small></button>
+        disabled={!reviewReady} onClick={() => setView("review")}>复习题 <small>{visiblePracticeCards.length}</small></button>
       <span>{selection?.point ? `${cards.length} 道错题用于当前知识点` : `当前范围包含 ${knowledgeCards.length} 张知识卡片`}</span>
     </div>
     {view === "cards" && <RelatedCardsView cards={cards} loading={loading} error={error}
@@ -73,6 +76,6 @@ export function KnowledgeContextView(props: Props) {
       onPersist={persist} onDiscard={(key) => deleteKnowledgeCard.mutateAsync(key)}
       onSelect={onSelectionChange} onOpenSource={onOpenCard} />}
     {view === "review" && <ReviewView allCards={allCards} initialSelection={selection}
-      savedCards={savedPracticeCards} onOpenSource={onOpenCard} onSave={onSavePractice} />}
+      savedCards={savedPracticeCards} onOpenCard={onOpenCard} />}
   </div>;
 }

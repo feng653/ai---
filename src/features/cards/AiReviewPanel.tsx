@@ -4,6 +4,7 @@ import type { AiProposal, ProposalKey } from "../../domain/ai";
 import type { KnowledgePoint } from "../../domain/card";
 import type { AiProgress } from "../../services/aiService";
 import { MathContent } from "../../components/MathContent";
+import { AiRequirementsField } from "./AiRequirementsField";
 
 const labels: Record<ProposalKey, string> = {
   question: "题目", userAnswer: "我的答案", correctAnswer: "正确答案",
@@ -32,6 +33,8 @@ type Props = {
   acceptedFields: ProposalKey[];
   connected: boolean;
   connecting: boolean;
+  additionalRequirements: string;
+  setAdditionalRequirements: (value: string) => void;
   setAcceptedFields: Dispatch<SetStateAction<ProposalKey[]>>;
   isFieldConflict: (key: ProposalKey) => boolean;
   organize: () => Promise<void>;
@@ -41,10 +44,14 @@ type Props = {
 
 export function AiReviewPanel(props: Props) {
   const { progress, proposal, runError, acceptedFields, connected, connecting,
-    setAcceptedFields, isFieldConflict, organize, applyProposal, dismissRun } = props;
+    additionalRequirements, setAdditionalRequirements, setAcceptedFields,
+    isFieldConflict, organize, applyProposal, dismissRun } = props;
   return (
     <aside className="ai-review-panel">
       <div className="ai-panel-heading"><span><Sparkles size={18} /></span><div><h2>AI 整理</h2><p>建议不会自动覆盖你的内容</p></div></div>
+      {!proposal && <AiRequirementsField id="mistake-card-ai-requirements"
+        value={additionalRequirements} onChange={setAdditionalRequirements}
+        disabled={Boolean(progress) || connecting} />}
       {progress ? (
         <div className="ai-progress" role="status" aria-live="polite" aria-atomic="true"><LoaderCircle className="spin" size={22} /><strong>{progress.message}</strong><small>可以离开本页，返回后仍可查看进度和结果</small></div>
       ) : proposal ? (

@@ -9,6 +9,7 @@ mod codex_app_server_tests;
 mod codex_assets;
 mod codex_auth;
 mod codex_learning;
+mod codex_practice;
 mod deepseek;
 mod knowledge;
 #[cfg(test)]
@@ -18,6 +19,10 @@ mod manager_agent;
 mod manager_learning;
 mod manager_organize;
 mod manager_state;
+mod practice;
+mod practice_parse;
+#[cfg(test)]
+mod practice_tests;
 mod process;
 mod process_error;
 #[cfg(test)]
@@ -33,6 +38,7 @@ mod settings;
 pub use knowledge::KnowledgeCardRequest;
 pub use manager::AiManager;
 pub use manager_state::ProviderSummary;
+pub use practice::PracticeGenerationRequest;
 pub use proposal::AiProposal;
 pub use settings::ApiProviderInput;
 

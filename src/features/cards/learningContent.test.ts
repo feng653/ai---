@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "../../domain/card";
 import type { KnowledgeSelection } from "./knowledgeTree";
-import { buildKnowledgeCard, buildKnowledgeCards, buildReviewSet } from "./learningContent";
+import { buildKnowledgeCard, buildKnowledgeCards } from "./learningContent";
 
 const seriesSelection: KnowledgeSelection = {
   key: "物理/电学/串联电路", label: "串联电路", subject: "物理", chapter: "电学", point: "串联电路",
@@ -29,12 +29,5 @@ describe("learning content", () => {
   it("only builds a detail for a concrete knowledge point", () => {
     expect(buildKnowledgeCard([seriesCard], { ...seriesSelection, point: undefined })).toBeNull();
     expect(buildKnowledgeCard([seriesCard], seriesSelection)?.sources).toHaveLength(1);
-  });
-
-  it.each([1, 3, 5])("honors a review generation count of %i", (count) => {
-    const questions = buildReviewSet([seriesCard], seriesSelection, count);
-    expect(questions).toHaveLength(count);
-    expect(new Set(questions.map((question) => question.id))).toHaveLength(count);
-    expect(questions.every((question) => question.answer && question.explanation)).toBe(true);
   });
 });

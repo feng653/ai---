@@ -7,7 +7,7 @@ mod parse;
 
 pub use super::prompt::build_prompt;
 
-pub const PROMPT_VERSION: &str = "agent-choice-v6-multi-card";
+pub const PROMPT_VERSION: &str = "agent-choice-v7-additional-requirements";
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

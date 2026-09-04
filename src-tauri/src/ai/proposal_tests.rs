@@ -54,6 +54,13 @@ fn prompt_excludes_internal_asset_paths_and_marks_input_untrusted() {
 }
 
 #[test]
+fn prompt_rejects_overlong_additional_requirements() {
+    let requirements = "a".repeat(501);
+    let error = build_prompt(&input("x>2"), 0, Some(&requirements), &[]).unwrap_err();
+    assert_eq!(error.code, "VALIDATION_ERROR");
+}
+
+#[test]
 fn agent_prompt_exposes_all_actions_and_target_boundary() {
     let prompt = build_agent_prompt(&input(""), 0, "解释二次函数", &[], false, true).unwrap();
     assert!(prompt.contains("reply"));

@@ -46,14 +46,16 @@ describe("TauriAiService", () => {
     expect(progress).toHaveBeenCalledWith({ stage: "validating", message: "正在验证" });
     expect(unlisten).toHaveBeenCalledOnce();
     expect(invoke).toHaveBeenCalledWith("organize_card", {
-      input,
-      baseRevision: 2,
       requestId: expect.any(String),
-      agentTurn: {
-        instruction: "再简短一点",
-        history: ["先给出完整解法"],
-        targetProvided: false,
-        webSearch: false,
+      request: {
+        input,
+        baseRevision: 2,
+        agentTurn: {
+          instruction: "再简短一点",
+          history: ["先给出完整解法"],
+          targetProvided: false,
+          webSearch: false,
+        },
       },
     });
   });
@@ -67,7 +69,28 @@ describe("TauriAiService", () => {
     const service = new TauriAiService();
     await service.organize(emptyCardInput(), 0, undefined, "查找最新资料", [], false, true);
     expect(invoke).toHaveBeenCalledWith("organize_card", expect.objectContaining({
-      agentTurn: expect.objectContaining({ webSearch: true }),
+      request: expect.objectContaining({
+        agentTurn: expect.objectContaining({ webSearch: true }),
+      }),
+    }));
+  });
+
+  it("forwards additional requirements without enabling Agent mode", async () => {
+    vi.mocked(listen).mockResolvedValue(vi.fn());
+    vi.mocked(invoke).mockResolvedValue({
+      action: "create_card", message: "完成", sources: [], fields: {}, warnings: [],
+      runId: "run-2", baseRevision: 0, promptVersion: "v7",
+    });
+    const service = new TauriAiService();
+    await service.organize(
+      emptyCardInput(), 0, undefined, undefined, undefined, undefined, undefined,
+      "  只用代数方法  ",
+    );
+    expect(invoke).toHaveBeenCalledWith("organize_card", expect.objectContaining({
+      request: expect.objectContaining({
+        agentTurn: null,
+        additionalRequirements: "只用代数方法",
+      }),
     }));
   });
 
@@ -123,6 +146,26 @@ describe("TauriAiService", () => {
     await service.deleteKnowledgeCard(input.key);
     expect(invoke).toHaveBeenCalledWith("delete_knowledge_card", { key: input.key });
   });
+
+  it("generates practice drafts through AI with request-scoped progress", async () => {
+    const unlisten = vi.fn();
+    vi.mocked(listen).mockResolvedValue(unlisten);
+    vi.mocked(invoke).mockResolvedValue([]);
+    const request = {
+      topics: [{ subject: "数学", chapter: "函数", name: "单调性" }],
+      sourceCards: [{
+        id: "card-1", revision: 2, subject: "数学", question: "来源题", userAnswer: "原答案",
+        correctAnswer: "正解", solution: "方法", errorLocation: "第一步", errorReason: "漏条件",
+        errorType: "审题错误", knowledgePoints: [{ subject: "数学", chapter: "函数", name: "单调性" }],
+      }],
+      count: 1, difficulty: "harder" as const,
+    };
+    await new TauriAiService().generatePracticeCards(request);
+    expect(invoke).toHaveBeenCalledWith("generate_practice_cards", {
+      request, requestId: expect.any(String),
+    });
+    expect(unlisten).toHaveBeenCalledOnce();
+  });
 });
 
 describe("BrowserUnavailableAiService", () => {
@@ -131,5 +174,6 @@ describe("BrowserUnavailableAiService", () => {
     await expect(service.connect()).resolves.toMatchObject({ state: "unavailable" });
     await expect(service.organize()).rejects.toThrow("桌面应用");
     await expect(service.generateKnowledgeCard({} as never)).rejects.toThrow("桌面应用");
+    await expect(service.generatePracticeCards({} as never)).rejects.toThrow("桌面应用");
   });
 });

@@ -3,7 +3,8 @@ import { listen } from "@tauri-apps/api/event";
 import type {
   AiProposal, AiProviderId, AiProviderStatus, AiProviderSummary, ApiProviderInput,
   GeneratedKnowledgeCard, KnowledgeCardGenerationRequest,
-  KnowledgeCardRecord, KnowledgeCardSaveInput,
+  GeneratedPracticeCardDraft, KnowledgeCardRecord, KnowledgeCardSaveInput,
+  PracticeGenerationRequest,
 } from "../domain/ai";
 import type { CardInput } from "../domain/card";
 
@@ -25,6 +26,10 @@ export interface AiService {
     request: KnowledgeCardGenerationRequest,
     onProgress?: (progress: AiProgress) => void,
   ): Promise<GeneratedKnowledgeCard>;
+  generatePracticeCards(
+    request: PracticeGenerationRequest,
+    onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedPracticeCardDraft[]>;
   listKnowledgeCards(): Promise<KnowledgeCardRecord[]>;
   saveKnowledgeCard(input: KnowledgeCardSaveInput): Promise<KnowledgeCardRecord>;
   deleteKnowledgeCard(key: string): Promise<void>;
@@ -38,6 +43,7 @@ export interface AiService {
     agentHistory?: string[],
     agentTarget?: boolean,
     agentWebSearch?: boolean,
+    additionalRequirements?: string,
   ): Promise<AiProposal>;
 }
 
@@ -75,6 +81,10 @@ export class BrowserUnavailableAiService implements AiService {
     _request: KnowledgeCardGenerationRequest,
     _onProgress?: (progress: AiProgress) => void,
   ): Promise<GeneratedKnowledgeCard> { throw desktopOnly(); }
+  async generatePracticeCards(
+    _request: PracticeGenerationRequest,
+    _onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedPracticeCardDraft[]> { throw desktopOnly(); }
   async listKnowledgeCards(): Promise<KnowledgeCardRecord[]> { return []; }
   async saveKnowledgeCard(input: KnowledgeCardSaveInput): Promise<KnowledgeCardRecord> {
     const now = new Date().toISOString();
@@ -136,6 +146,22 @@ export class TauriAiService implements AiService {
     }
   }
 
+  async generatePracticeCards(
+    request: PracticeGenerationRequest,
+    onProgress?: (progress: AiProgress) => void,
+  ): Promise<GeneratedPracticeCardDraft[]> {
+    const requestId = crypto.randomUUID();
+    const unlisten = await listen<AiProgressEvent>("ai-progress", (event) => {
+      if (event.payload.requestId !== requestId) return;
+      onProgress?.({ stage: event.payload.stage, message: event.payload.message });
+    });
+    try {
+      return await invoke("generate_practice_cards", { request, requestId });
+    } finally {
+      unlisten();
+    }
+  }
+
   listKnowledgeCards(): Promise<KnowledgeCardRecord[]> {
     return invoke("list_knowledge_cards");
   }
@@ -156,6 +182,7 @@ export class TauriAiService implements AiService {
     agentHistory?: string[],
     agentTarget = false,
     agentWebSearch = false,
+    additionalRequirements?: string,
   ): Promise<AiProposal> {
     const requestId = crypto.randomUUID();
     const unlisten = await listen<AiProgressEvent>("ai-progress", (event) => {
@@ -163,13 +190,15 @@ export class TauriAiService implements AiService {
       onProgress?.({ stage: event.payload.stage, message: event.payload.message });
     });
     try {
-      return await invoke("organize_card", {
-        input, baseRevision, requestId,
+      const requirements = additionalRequirements?.trim();
+      return await invoke("organize_card", { request: {
+        input, baseRevision,
         agentTurn: agentInstruction?.trim() ? {
           instruction: agentInstruction.trim(), history: agentHistory?.slice(-8) ?? [],
           targetProvided: agentTarget, webSearch: agentWebSearch,
         } : null,
-      });
+        ...(requirements ? { additionalRequirements: requirements } : {}),
+      }, requestId });
     } finally {
       unlisten();
     }

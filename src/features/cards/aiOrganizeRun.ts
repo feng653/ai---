@@ -32,7 +32,7 @@ export class AiOrganizeRunStore {
     };
   }
 
-  start(key: string, input: CardInput, baseRevision: number): void {
+  start(key: string, input: CardInput, baseRevision: number, additionalRequirements = ""): void {
     if (this.get(key).status === "running") return;
     const operationId = crypto.randomUUID();
     const base = structuredClone(input);
@@ -41,7 +41,7 @@ export class AiOrganizeRunStore {
       status: "running", operationId, input: base,
       progress: { stage: "preparing", message: "正在启动 AI 整理…" },
     });
-    void this.execute(operationId, base, baseRevision);
+    void this.execute(operationId, base, baseRevision, additionalRequirements.trim());
   }
 
   dismiss(key: string): void {
@@ -70,12 +70,13 @@ export class AiOrganizeRunStore {
     operationId: string,
     input: CardInput,
     baseRevision: number,
+    additionalRequirements: string,
   ): Promise<void> {
     try {
       const proposal = await this.service.organize(input, baseRevision, (progress) => {
         const currentKey = this.currentKey(operationId);
         if (currentKey) this.set(currentKey, { status: "running", operationId, input, progress });
-      });
+      }, undefined, undefined, undefined, undefined, additionalRequirements);
       const currentKey = this.currentKey(operationId);
       if (currentKey) {
         this.set(currentKey, { status: "succeeded", operationId, input, proposal });

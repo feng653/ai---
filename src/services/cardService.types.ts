@@ -1,4 +1,5 @@
-import type { Card, CardAsset, CardFilter, CardInput, SourceRevision } from "../domain/card";
+import type { Card, CardAsset, CardFilter, CardInput } from "../domain/card";
+import type { GeneratedPracticeCardDraft } from "../domain/ai";
 
 export type SaveCardRequest = {
   id?: string;
@@ -7,10 +8,7 @@ export type SaveCardRequest = {
   forceDraft?: boolean;
 };
 
-export type PracticeCardDraft = {
-  input: CardInput;
-  sourceRevisions: SourceRevision[];
-};
+export type PracticeCardDraft = GeneratedPracticeCardDraft;
 
 export interface CardService {
   list(filter?: CardFilter): Promise<Card[]>;

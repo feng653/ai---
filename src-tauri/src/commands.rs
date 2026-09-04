@@ -1,6 +1,6 @@
 use crate::ai::{
     AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, KnowledgeCardRequest,
-    ProviderSummary,
+    PracticeGenerationRequest, ProviderSummary,
 };
 use crate::domain::{
     Card, CardAsset, CardFilter, CardInput, GeneratedKnowledgeCard, KnowledgeCardRecord,
@@ -8,9 +8,12 @@ use crate::domain::{
 };
 use crate::error::AppError;
 use crate::storage::Storage;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 use tauri::{Emitter, State, Window};
+
+mod organize_request;
+use organize_request::OrganizeCardRequest;
 
 #[tauri::command]
 pub fn list_cards(
@@ -157,11 +160,15 @@ pub async fn organize_card(
     manager: State<'_, Arc<AiManager>>,
     storage: State<'_, Storage>,
     window: Window,
-    input: CardInput,
-    base_revision: u64,
+    request: OrganizeCardRequest,
     request_id: String,
-    agent_turn: Option<AgentTurn>,
 ) -> Result<AiProposal, AppError> {
+    let OrganizeCardRequest {
+        input,
+        base_revision,
+        agent_turn,
+        additional_requirements,
+    } = request;
     let asset_paths = storage.resolve_asset_paths(&input.assets)?;
     let agent = agent_turn.map(|turn| AgentRequest {
         instruction: turn.instruction,
@@ -170,15 +177,22 @@ pub async fn organize_card(
         web_search: turn.web_search,
     });
     manager
-        .organize(input, base_revision, asset_paths, agent, move |progress| {
-            let _ = window.emit(
-                "ai-progress",
-                AiProgressPayload {
-                    request_id: request_id.clone(),
-                    progress,
-                },
-            );
-        })
+        .organize(
+            input,
+            base_revision,
+            asset_paths,
+            agent,
+            additional_requirements,
+            move |progress| {
+                let _ = window.emit(
+                    "ai-progress",
+                    AiProgressPayload {
+                        request_id: request_id.clone(),
+                        progress,
+                    },
+                );
+            },
+        )
         .await
 }
 
@@ -202,14 +216,24 @@ pub async fn generate_knowledge_card(
         .await
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AgentTurn {
-    instruction: String,
-    history: Vec<String>,
-    target_provided: bool,
-    #[serde(default)]
-    web_search: bool,
+#[tauri::command]
+pub async fn generate_practice_cards(
+    manager: State<'_, Arc<AiManager>>,
+    window: Window,
+    request: PracticeGenerationRequest,
+    request_id: String,
+) -> Result<Vec<PracticeCardDraft>, AppError> {
+    manager
+        .generate_practice_cards(request, move |progress| {
+            let _ = window.emit(
+                "ai-progress",
+                AiProgressPayload {
+                    request_id: request_id.clone(),
+                    progress,
+                },
+            );
+        })
+        .await
 }
 
 #[derive(Clone, Serialize)]

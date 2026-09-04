@@ -131,6 +131,7 @@ impl CodexProvider {
         base_revision: u64,
         asset_paths: Vec<PathBuf>,
         agent: Option<AgentRequest>,
+        additional_requirements: Option<String>,
         mut progress: F,
     ) -> Result<AiProposal, AppError>
     where
@@ -165,7 +166,12 @@ impl CodexProvider {
                 request.web_search,
             )?
         } else {
-            proposal::build_prompt(&input, images.len(), None, &[])?
+            proposal::build_prompt(
+                &input,
+                images.len(),
+                additional_requirements.as_deref(),
+                &[],
+            )?
         };
         progress(AiProgress {
             stage: "analyzing",

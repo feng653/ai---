@@ -31,6 +31,7 @@ export function CardEditorPage() {
   const [assets, setAssets] = useState<CardAsset[]>([]);
   const [chapterDraft, setChapterDraft] = useState("");
   const [pointDraft, setPointDraft] = useState("");
+  const [additionalRequirements, setAdditionalRequirements] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [conflictMessage, setConflictMessage] = useState("");
   const [draftStatus, setDraftStatus] = useState("尚未修改");
@@ -177,7 +178,7 @@ export function CardEditorPage() {
       if (status.state !== "connected") throw new Error(status.message || "AI 当前不可用");
       const base = structuredClone(currentInput);
       setAcceptedFields([]);
-      aiOrganizeRuns.start(aiRunKey, base, cardQuery.data?.revision ?? 0);
+      aiOrganizeRuns.start(aiRunKey, base, cardQuery.data?.revision ?? 0, additionalRequirements);
     } catch (error) { setErrorMessage(getErrorMessage(error, "AI 整理失败，原始内容已保留")); }
   };
 
@@ -222,6 +223,8 @@ export function CardEditorPage() {
         <AiReviewPanel progress={progress} proposal={proposal} acceptedFields={acceptedFields}
           runError={aiRun.status === "failed" ? aiRun.message : null}
           connected={aiStatus.data?.state === "connected"} connecting={connectAi.isPending}
+          additionalRequirements={additionalRequirements}
+          setAdditionalRequirements={setAdditionalRequirements}
           setAcceptedFields={setAcceptedFields} isFieldConflict={isFieldConflict}
           organize={organize} applyProposal={applyProposal}
           dismissRun={() => aiOrganizeRuns.dismiss(aiRunKey)} />

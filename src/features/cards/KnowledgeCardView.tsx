@@ -4,11 +4,17 @@ import { MathContent } from "../../components/MathContent";
 import type {
   GeneratedKnowledgeCard, KnowledgeCardGenerationRequest, KnowledgeCardRecord, KnowledgeCardStatus,
 } from "../../domain/ai";
-import { aiService, type AiProgress } from "../../services/aiService";
 import { errorMessage } from "../../services/errorMessage";
 import { UNCATEGORIZED_CHAPTER_FILTER } from "../../domain/card";
 import type { KnowledgeSelection } from "./knowledgeTree";
 import type { KnowledgeCardContent } from "./learningContent";
+import {
+  initialKnowledgeProgress, knowledgeGenerationRuns,
+} from "./learningGenerationRun";
+import {
+  useKnowledgeGenerationRun, useKnowledgeGenerationRunsVersion,
+} from "./useLearningGenerationRun";
+import { AiRequirementsField } from "./AiRequirementsField";
 
 type Props = {
   cards: KnowledgeCardContent[];
@@ -29,13 +35,17 @@ function sourcesCurrent(card: KnowledgeCardContent, generated: GeneratedKnowledg
       source.id === item.cardId && source.revision === item.revision));
 }
 
-function generationRequest(card: KnowledgeCardContent): KnowledgeCardGenerationRequest {
+function generationRequest(
+  card: KnowledgeCardContent, additionalRequirements: string,
+): KnowledgeCardGenerationRequest {
   return {
     topic: {
       subject: card.selection.subject,
       chapter: card.selection.chapter === UNCATEGORIZED_CHAPTER_FILTER ? null : card.selection.chapter,
       name: card.selection.point!,
     },
+    ...(additionalRequirements.trim()
+      ? { additionalRequirements: additionalRequirements.trim() } : {}),
     sourceCards: card.sources.map((source) => ({
       id: source.id, revision: source.revision, question: source.question,
       userAnswer: source.userAnswer, correctAnswer: source.correctAnswer, solution: source.solution,
@@ -56,47 +66,54 @@ function SourceList({ card, onOpen }: { card: KnowledgeCardContent; onOpen: (id:
 export function KnowledgeCardView({
   cards, detail, records, persistenceBusy, onPersist, onDiscard, onSelect, onOpenSource,
 }: Props) {
-  const [progress, setProgress] = useState<AiProgress | null>(null);
-  const [generationError, setGenerationError] = useState("");
-  const currentRecord = detail ? records[detail.selection.key] : undefined;
+  const [persistenceError, setPersistenceError] = useState("");
+  const [requirementsByKey, setRequirementsByKey] = useState<Record<string, string>>({});
+  const runKey = detail?.selection.key ?? "knowledge:none";
+  const additionalRequirements = requirementsByKey[runKey] ?? "";
+  const run = useKnowledgeGenerationRun(runKey);
+  useKnowledgeGenerationRunsVersion();
+  const persistedRecord = detail ? records[detail.selection.key] : undefined;
+  const generatedRecord = run.status === "succeeded" ? run.result : undefined;
+  const currentRecord = generatedRecord && (!persistedRecord
+    || generatedRecord.updatedAt >= persistedRecord.updatedAt) ? generatedRecord : persistedRecord;
   const currentGenerated = currentRecord?.content;
   const currentSources = detail && currentGenerated ? sourcesCurrent(detail, currentGenerated) : true;
+  const progress = run.status === "running" ? run.progress : null;
+  const generationError = persistenceError || (run.status === "failed" ? run.message : "");
 
-  const generate = async () => {
+  const generate = () => {
     if (!detail || progress) return;
-    setGenerationError("");
-    setProgress({ stage: "preparing", message: "正在连接 AI…" });
-    try {
-      let status = await aiService.getStatus();
-      if (status.state !== "connected") status = await aiService.connect();
-      if (status.state !== "connected") throw new Error(status.message || "AI 当前不可用");
-      const next = await aiService.generateKnowledgeCard(generationRequest(detail), setProgress);
-      await onPersist(detail, next, "draft");
-    } catch (error) {
-      setGenerationError(errorMessage(error, "知识卡片生成失败，原内容已保留"));
-    } finally {
-      setProgress(null);
-    }
+    setPersistenceError("");
+    knowledgeGenerationRuns.start(detail.selection.key, {
+      key: detail.selection.key,
+      subject: detail.selection.subject,
+      chapter: detail.selection.chapter === UNCATEGORIZED_CHAPTER_FILTER
+        ? null : detail.selection.chapter,
+      name: detail.selection.point!,
+      request: generationRequest(detail, additionalRequirements),
+    }, initialKnowledgeProgress);
   };
 
   const save = async () => {
     if (!detail || !currentGenerated || !currentSources || persistenceBusy) return;
-    setGenerationError("");
+    setPersistenceError("");
     try {
       await onPersist(detail, currentGenerated, "saved");
+      knowledgeGenerationRuns.dismiss(detail.selection.key);
     } catch (error) {
-      setGenerationError(errorMessage(error, "知识卡片保存失败，草稿仍保留"));
+      setPersistenceError(errorMessage(error, "知识卡片保存失败，草稿仍保留"));
     }
   };
 
   const discard = async () => {
     if (!detail || !currentRecord || persistenceBusy
       || !window.confirm("确定放弃这份知识卡片草稿吗？")) return;
-    setGenerationError("");
+    setPersistenceError("");
     try {
       await onDiscard(detail.selection.key);
+      knowledgeGenerationRuns.dismiss(detail.selection.key);
     } catch (error) {
-      setGenerationError(errorMessage(error, "知识卡片草稿删除失败"));
+      setPersistenceError(errorMessage(error, "知识卡片草稿删除失败"));
     }
   };
 
@@ -109,7 +126,14 @@ export function KnowledgeCardView({
       {progress ? <LoaderCircle className="spin" size={14} /> : <Sparkles size={14} />}
       {progress ? "生成中…" : currentGenerated ? "重新生成" : "AI 生成"}
     </button></header>
-    {progress && <p className="knowledge-generation-status" role="status">{progress.message}</p>}
+    <AiRequirementsField id="knowledge-card-ai-requirements"
+      value={additionalRequirements}
+      onChange={(value) => setRequirementsByKey((current) => ({ ...current, [runKey]: value }))}
+      disabled={Boolean(progress) || persistenceBusy}
+      placeholder="例如：优先总结判断步骤，并对比我混淆的两个公式" />
+    {progress && <p className="knowledge-generation-status" role="status">
+      {progress.message} 可以离开此页，完成后会自动保存为待审核草稿。
+    </p>}
     {generationError && <p className="knowledge-generation-error" role="alert">{generationError}</p>}
     {currentGenerated?.warnings.map((warning) => <p className="knowledge-generation-warning" key={warning}>{warning}</p>)}
     {currentRecord && <div className={`knowledge-draft-bar ${currentRecord.status}`}>
@@ -140,14 +164,23 @@ export function KnowledgeCardView({
   if (!cards.length) return <div className="learning-empty"><strong>还没有可生成的知识卡片</strong>
     <span>为错题关联具体知识点后，这里会按知识点自动汇总。</span></div>;
   return <section className="knowledge-card-grid" aria-label="知识卡片">
-    {cards.map((card) => <article key={card.selection.key}>
+    {cards.map((card) => {
+      const cardRun = knowledgeGenerationRuns.get(card.selection.key);
+      const runRecord = cardRun.status === "succeeded" ? cardRun.result : undefined;
+      const record = runRecord && (!records[card.selection.key]
+        || runRecord.updatedAt >= records[card.selection.key].updatedAt)
+        ? runRecord : records[card.selection.key];
+      const status = cardRun.status === "running" ? "生成中"
+        : cardRun.status === "failed" ? "生成失败"
+          : record?.status === "draft" ? "待审核" : record ? "已保存" : card.coverage;
+      return <article key={card.selection.key}>
       <header><span>{card.selection.subject} / {card.selection.chapter}</span>
-        <em>{records[card.selection.key]?.status === "draft" ? "草稿" : records[card.selection.key] ? "已保存" : card.coverage}</em></header>
+        <em>{status}</em></header>
       <h3>{card.selection.point}</h3><MathContent className="knowledge-card-preview">
-        {records[card.selection.key]?.content.coreMethod ?? card.preview}
+        {record?.content.coreMethod ?? card.preview}
       </MathContent>
       <div><span><b>{card.sources.length}</b> 道错题</span><span><b>{card.mistakes.length}</b> 个错误样本</span></div>
       <footer><span>一知识点一张卡</span><button type="button" onClick={() => onSelect(card.selection)}>查看知识卡片 →</button></footer>
-    </article>)}
+    </article>; })}
   </section>;
 }
