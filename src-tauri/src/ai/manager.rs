@@ -44,7 +44,7 @@ impl AiManager {
             active: active == CODEX_ID,
             configured: self.codex.is_configured(),
             base_url: None,
-            model: None,
+            model: self.codex.selected_model()?,
         }];
         values.push(self.api_summary(DEEPSEEK_ID, "DeepSeek API", &active)?);
         for (id, _) in self.settings.custom_configs()? {

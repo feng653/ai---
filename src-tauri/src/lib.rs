@@ -2,6 +2,8 @@ mod agent;
 mod ai;
 mod commands;
 mod commands_agent;
+mod commands_models;
+use commands_models::{list_codex_models, save_codex_model};
 mod domain;
 mod error;
 mod storage;
@@ -42,6 +44,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            list_codex_models,
+            save_codex_model,
             list_cards,
             get_card,
             save_card,

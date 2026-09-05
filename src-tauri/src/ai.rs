@@ -2,6 +2,8 @@ mod api_agent;
 mod api_client;
 mod api_learning;
 mod codex;
+mod codex_models;
+pub use codex_models::CodexModels;
 mod codex_app_server;
 mod codex_app_server_process;
 #[cfg(test)]

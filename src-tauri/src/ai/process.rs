@@ -18,14 +18,7 @@ pub struct ExecutionPaths<'a> {
     pub codex_home: &'a Path,
 }
 
-pub fn prepare_codex_home(home: &Path) -> Result<(), AppError> {
-    std::fs::create_dir_all(home)?;
-    std::fs::write(
-        home.join("config.toml"),
-        "cli_auth_credentials_store = \"file\"\n",
-    )?;
-    Ok(())
-}
+pub use super::codex_models::prepare_codex_home;
 pub fn probe(executable: &Path, home: &Path) -> Result<String, AppError> {
     prepare_codex_home(home)?;
     let version = run_cli(

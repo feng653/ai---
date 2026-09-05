@@ -3,6 +3,7 @@ import {
   KeyRound, LoaderCircle, Plus, Sparkles,
 } from "lucide-react";
 import { useState } from "react";
+import { CodexModelSelector } from "./CodexModelSelector";
 import type { AiProviderSummary, ApiProviderInput, CustomAiProviderId } from "../../domain/ai";
 import {
   useAiProviders, useDisconnectAiProvider, useLoginCodex, useSaveApiProvider,
@@ -65,6 +66,7 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已登录" : "尚未连接"}</span>
         <h2 id="codex-title">连接 Codex</h2></div></div>
+    {summary?.configured && <CodexModelSelector current={summary.model} disabled={login.isPending || disconnect.isPending} />}
     {notice && <div className="connection-notice" role="status">{notice}</div>}
     <div className="connection-actions">
       {summary?.configured && <button type="button" className="button danger" disabled={disconnect.isPending || login.isPending} onClick={remove}>退出登录</button>}
