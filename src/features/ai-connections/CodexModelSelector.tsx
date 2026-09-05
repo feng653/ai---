@@ -1,3 +1,4 @@
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { codexModelService } from "../../services/codexModelService";
@@ -19,14 +20,17 @@ export function CodexModelSelector({ current, disabled }: { current?: string; di
   const available = models.some((model) => model.model === selected);
   const busy = disabled || catalog.isFetching || save.isPending;
   return <div className="codex-model-selector">
-    <label className="field">模型<select value={selected} disabled={busy || catalog.isError}
+    <div className="model-field-heading"><label htmlFor="codex-model">模型</label>
+      <button type="button" className="button ghost model-refresh" aria-label="刷新模型" title="刷新模型"
+        disabled={busy} onClick={() => void catalog.refetch()}><RefreshCw size={15} /></button>
+    </div>
+    <label className="field"><select id="codex-model" value={selected} disabled={busy || catalog.isError}
       onChange={(event) => { setChoice(event.target.value); setSaved(false); save.reset(); }}>
       {!selected && <option value="">选择模型</option>}
       {selected && !available && <option value={selected}>{selected}（不可用）</option>}
       {models.map((model) => <option key={model.model} value={model.model}>{model.displayName}{model.isDefault ? "（默认）" : ""}</option>)}
     </select></label>
-    <div className="connection-actions">
-      <button type="button" className="button" disabled={busy} onClick={() => void catalog.refetch()}>刷新模型</button>
+    <div className="form-actions">
       <button type="button" className="button primary" disabled={busy || !available || catalog.isError}
         onClick={() => { setSaved(false); save.mutate(selected); }}>{save.isPending ? "保存中…" : "保存模型"}</button>
     </div>

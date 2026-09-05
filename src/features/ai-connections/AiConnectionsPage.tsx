@@ -3,6 +3,7 @@ import {
   KeyRound, LoaderCircle, Plus, Sparkles,
 } from "lucide-react";
 import { useState } from "react";
+import { ProviderActivation } from "./ProviderActivation";
 import { CodexModelSelector } from "./CodexModelSelector";
 import type { AiProviderSummary, ApiProviderInput, CustomAiProviderId } from "../../domain/ai";
 import {
@@ -61,23 +62,26 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
     try { await disconnect.mutateAsync("codex"); setNotice("已退出 Codex 登录。"); }
     catch (error) { setNotice(errorMessage(error, "退出登录失败")); }
   };
+  const busy = login.isPending || disconnect.isPending || select.isPending;
   return <section className="connection-panel" aria-labelledby="codex-title">
     <div className="connection-heading"><ProviderMark kind="codex" initials="C" logo="/brands/codex.png" />
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已登录" : "尚未连接"}</span>
-        <h2 id="codex-title">连接 Codex</h2></div></div>
-    {summary?.configured && <CodexModelSelector current={summary.model} disabled={login.isPending || disconnect.isPending} />}
+        <h2 id="codex-title">连接 Codex</h2></div>
+      <ProviderActivation summary={summary} busy={busy} onSelect={() => select.mutate("codex")} /></div>
+    {summary?.configured && <CodexModelSelector current={summary.model} disabled={busy} />}
     {notice && <div className="connection-notice" role="status">{notice}</div>}
-    <div className="connection-actions">
-      {summary?.configured && <button type="button" className="button danger" disabled={disconnect.isPending || login.isPending} onClick={remove}>退出登录</button>}
-      {summary?.configured && !summary.active && <button type="button" className="button" disabled={select.isPending}
-        onClick={() => select.mutate("codex")}>设为当前</button>}
-      <button type="button" className="button primary connect-button" disabled={login.isPending} onClick={runLogin}>
-        {login.isPending ? <LoaderCircle className="spin" size={17} /> : <Globe2 size={17} />}
+    <div className={summary?.configured ? "connection-account-actions" : "connection-actions"}>
+      <button type="button" className={summary?.configured ? "button ghost account-link" : "button primary"}
+        disabled={busy} onClick={runLogin}>
+        {login.isPending ? <LoaderCircle className="spin" size={16} /> : <Globe2 size={16} />}
         {login.isPending ? "等待浏览器授权…" : summary?.configured ? "重新登录" : "通过浏览器登录"}
-        {!login.isPending && <ExternalLink size={14} />}
+        {!login.isPending && <ExternalLink size={13} />}
       </button>
+      {summary?.configured && <button type="button" className="button ghost danger account-link"
+        disabled={busy} onClick={remove}>退出登录</button>}
     </div>
+    {select.error && <p role="alert">{errorMessage(select.error, "切换失败")}</p>}
   </section>;
 }
 
@@ -112,14 +116,14 @@ function ApiProviderPanel({ id, summary, onRemoved }: ApiPanelProps) {
     try { await disconnect.mutateAsync(id); onRemoved(); }
     catch (error) { setNotice(errorMessage(error, "删除配置失败")); }
   };
-  const busy = save.isPending || test.isPending || disconnect.isPending;
+  const busy = save.isPending || test.isPending || disconnect.isPending || select.isPending;
   return <section className="connection-panel" aria-labelledby={`${id}-title`}>
     <div className="connection-heading"><ProviderMark kind={isCustom ? "custom" : "deepseek"} initials={isCustom ? "A" : "D"}
       logo={isCustom ? undefined : "/brands/deepseek.png"} />
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已配置" : "尚未配置"}</span>
         <h2 id={`${id}-title`}>{isCustom ? "配置自定义 API" : "配置 DeepSeek API"}</h2>
-        </div></div>
+        </div><ProviderActivation summary={summary} busy={busy} onSelect={() => select.mutate(id)} /></div>
     <fieldset disabled={busy} className="connection-form">
       {isCustom && <label><span>服务名称</span><input value={name} onChange={(event) => setName(event.target.value)} aria-label="服务名称" /></label>}
       <label><span>API Key <b>{summary?.configured ? "留空则保留原 Key" : "必填"}</b></span><div className="secret-input"><KeyRound size={16} />
@@ -137,12 +141,13 @@ function ApiProviderPanel({ id, summary, onRemoved }: ApiPanelProps) {
     {notice && <div className="connection-notice" role="status">{notice.startsWith("连接测试成功") || notice.startsWith("配置已")
       ? <Check size={15} /> : <Sparkles size={15} />}{notice}</div>}
     <div className="form-actions">
-      {summary?.configured && <button type="button" className="button danger" disabled={busy} onClick={remove}>删除配置</button>}
-      {summary?.configured && !summary.active && <button type="button" className="button" disabled={busy || select.isPending}
-        onClick={() => select.mutate(id)}>设为当前</button>}
       <button type="button" className="button" disabled={busy} onClick={() => run("test")}>测试连接</button>
       <button type="button" className="button primary" disabled={busy} onClick={() => run("save")}>保存配置</button>
     </div>
+    {summary?.configured && <div className="connection-account-actions">
+      <button type="button" className="button ghost danger account-link" disabled={busy} onClick={remove}>删除配置</button>
+    </div>}
+    {select.error && <p role="alert">{errorMessage(select.error, "切换失败")}</p>}
   </section>;
 }
 

@@ -2,6 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AiConnectionsPage } from "./AiConnectionsPage";
 
+const providerState = vi.hoisted(() => ({ configured: false, activeId: "", pending: false }));
+vi.mock("./CodexModelSelector", () => ({ CodexModelSelector: () => <div>模型设置</div> }));
+
 const actions = vi.hoisted(() => ({
   login: vi.fn(), save: vi.fn(), test: vi.fn(), select: vi.fn(), disconnect: vi.fn(),
 }));
@@ -12,16 +15,18 @@ vi.mock("../../hooks/useAi", () => ({
     { id: "deepseek", name: "DeepSeek API", state: "disconnected", message: "尚未配置", active: false, configured: false },
     { id: "custom:a46fcc5d-da6c-49fc-87dc-96e41a4c50c4", name: "校内模型", state: "connected", message: "配置已保存", active: false, configured: true, baseUrl: "https://school.example/v1", model: "school-math" },
     { id: "custom:7835450e-3602-4418-bf16-3d329aa79c1a", name: "本地模型", state: "connected", message: "配置已保存", active: false, configured: true, baseUrl: "http://localhost:11434/v1", model: "local-math" },
-  ] }),
+  ].map((summary) => providerState.configured
+    ? { ...summary, configured: true, active: summary.id === providerState.activeId } : summary) }),
   useLoginCodex: () => ({ mutateAsync: actions.login, isPending: false }),
   useSaveApiProvider: () => ({ mutateAsync: actions.save, isPending: false }),
   useTestApiProvider: () => ({ mutateAsync: actions.test, isPending: false }),
-  useSelectAiProvider: () => ({ mutate: actions.select, isPending: false }),
+  useSelectAiProvider: () => ({ mutate: actions.select, isPending: providerState.pending }),
   useDisconnectAiProvider: () => ({ mutateAsync: actions.disconnect, isPending: false }),
 }));
 
 describe("AiConnectionsPage", () => {
-  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.clearAllMocks(); });
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.clearAllMocks();
+    providerState.configured = false; providerState.activeId = ""; providerState.pending = false; });
 
   it("starts the isolated Codex browser login", async () => {
     actions.login.mockResolvedValue({ state: "connected" });
@@ -67,4 +72,32 @@ describe("AiConnectionsPage", () => {
     })));
     expect(screen.getByRole("status")).toHaveTextContent("连接测试成功");
   });
+  it.each(["codex", "deepseek", "custom:a46fcc5d-da6c-49fc-87dc-96e41a4c50c4"])(
+    "keeps the activation control mounted and inert after selecting %s", (id) => {
+      providerState.configured = true;
+      const { rerender } = render(<AiConnectionsPage />);
+      if (id !== "codex") fireEvent.click(screen.getByRole("button", { name: id === "deepseek" ? /DeepSeek API/ : /校内模型/ }));
+      const activate = screen.getByRole("button", { name: "设为当前" });
+      const parent = activate.parentElement;
+      expect(parent).toHaveClass("connection-heading");
+      fireEvent.click(activate);
+      expect(actions.select).toHaveBeenCalledWith(id);
+      providerState.pending = true;
+      rerender(<AiConnectionsPage />);
+      expect(activate).toBeDisabled();
+      providerState.pending = false;
+      providerState.activeId = id;
+      rerender(<AiConnectionsPage />);
+      expect(screen.getByRole("button", { name: "当前使用" })).toBe(activate);
+      expect(activate.parentElement).toBe(parent);
+      expect(activate).toBeDisabled();
+      fireEvent.click(activate);
+      expect(actions.select).toHaveBeenCalledTimes(1);
+      expect(actions.login).not.toHaveBeenCalled();
+      expect(actions.test).not.toHaveBeenCalled();
+      expect(actions.save).not.toHaveBeenCalled();
+      expect(actions.disconnect).not.toHaveBeenCalled();
+    },
+  );
+
 });
