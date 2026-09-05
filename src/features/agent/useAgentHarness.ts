@@ -1,9 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useReducer, useRef, useState } from "react";
 import type {
   AgentMode, AgentReasoningEffort, AgentTimelineItem,
 } from "../../domain/agent";
 import type { CardAsset } from "../../domain/card";
-import { useCards } from "../../hooks/useCards";
+import { cardKeys, useCards } from "../../hooks/useCards";
 import { agentService } from "../../services/agentService";
 import { cardService } from "../../services/cardService";
 import { errorMessage } from "../../services/errorMessage";
@@ -11,6 +12,7 @@ import type { AgentAttachment } from "../agent-demo/types";
 import { agentReducer, welcomeItem } from "./agentReducer";
 
 export function useAgentHarness() {
+  const client = useQueryClient();
   const [items, dispatch] = useReducer(agentReducer, [welcomeItem()]);
   const [mode, setMode] = useState<AgentMode>("auto");
   const [reasoning, setReasoning] = useState<AgentReasoningEffort>("medium");
@@ -70,11 +72,14 @@ export function useAgentHarness() {
     try {
       await agentService.resolveApproval(approvalId, approved, (payload) => {
         dispatch({ type: "event", runId: payload.runId, event: payload.event });
+        if (payload.event.type === "approval_resolved" && payload.event.approved) {
+          void client.invalidateQueries({ queryKey: cardKeys.all });
+        }
       });
-      await cardsQuery.refetch();
     } catch (reason) {
       dispatch({ type: "error", text: errorMessage(reason, "批准操作处理失败") });
     } finally {
+      await client.invalidateQueries({ queryKey: cardKeys.all });
       setActiveRunId(undefined);
     }
   }

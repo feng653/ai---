@@ -9,3 +9,9 @@ export function errorMessage(error: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+export function isNotFoundError(error: unknown): boolean {
+  if (error && typeof error === "object" && "code" in error) return error.code === "NOT_FOUND";
+  const message = error instanceof Error ? error.message : error;
+  return typeof message === "string" && /^NOT_FOUND(?::|\s|$)/.test(message);
+}

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CardFilter } from "../domain/card";
+import { isNotFoundError } from "../services/errorMessage";
+import type { Card, CardFilter } from "../domain/card";
 import { cardService, type PracticeCardDraft, type SaveCardRequest } from "../services/cardService";
 
 export const cardKeys = {
@@ -15,7 +16,10 @@ export function useCards(filter: CardFilter = {}) {
 export function useCard(id?: string) {
   return useQuery({
     queryKey: cardKeys.detail(id ?? ""),
-    queryFn: () => cardService.get(id!),
+    queryFn: async () => {
+      try { return await cardService.get(id!); }
+      catch (error) { if (isNotFoundError(error)) return null; throw error; }
+    },
     enabled: Boolean(id),
   });
 }
@@ -42,7 +46,16 @@ export function useSavePracticeCards() {
 export function useDeleteCard() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => cardService.delete(id),
-    onSuccess: () => void client.invalidateQueries({ queryKey: cardKeys.all }),
+    mutationFn: async (id: string) => {
+      try { await cardService.delete(id); }
+      catch (error) { if (!isNotFoundError(error)) throw error; }
+    },
+    onSuccess: async (_, id) => {
+      await client.cancelQueries({ queryKey: cardKeys.all });
+      client.setQueryData(cardKeys.detail(id), null);
+      client.setQueriesData<Card[]>({ queryKey: ["cards", "list"] },
+        (cards) => cards?.filter((card) => card.id !== id));
+      await client.invalidateQueries({ queryKey: cardKeys.all });
+    },
   });
 }
