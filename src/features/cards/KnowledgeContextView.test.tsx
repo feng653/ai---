@@ -116,7 +116,7 @@ describe("KnowledgeContextView", () => {
   it("lets the user choose sources and enforces the generation minimum", () => {
     renderView();
     fireEvent.click(screen.getByRole("tab", { name: /复习题/ }));
-    expect(screen.getByRole("heading", { name: "复习题卡片" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "错因复习" })).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /两个电阻串联/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "AI 生成复习题" }));
     expect(screen.getByRole("checkbox", { name: /两个电阻串联/ })).toHaveAttribute("aria-checked", "true");

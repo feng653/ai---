@@ -2,6 +2,7 @@ import { ArrowLeft, Edit3, Image, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AssetPreview } from "../../components/AssetPreview";
+import { ReviewFlashcard } from "./ReviewFlashcard";
 import { MathContent } from "../../components/MathContent";
 import { useCard, useCards, useDeleteCard } from "../../hooks/useCards";
 import { errorMessage } from "../../services/errorMessage";
@@ -44,9 +45,10 @@ export function CardDetailPage() {
           <span className={`card-status ${item.status}`}>{item.status === "organized" ? "已整理" : "草稿"}</span>
           <span>{item.subject || "未分类"}</span>
         </div>
-        <MathContent className="detail-question">{item.question || "仅保存了原始图片"}</MathContent>
+        {!isPractice && <MathContent className="detail-question">{item.question || "图片错题"}</MathContent>}
         <small>最近修改：{new Date(item.updatedAt).toLocaleString("zh-CN")}</small>
       </section>
+      {isPractice && <ReviewFlashcard key={item.id} card={item} />}
       {actionError && <p className="inline-error" role="alert">{actionError}</p>}
 
       {item.kind === "practice" && <section className="detail-block practice-origin">
@@ -58,7 +60,7 @@ export function CardDetailPage() {
         })}</div>
       </section>}
 
-      {item.assets.length > 0 && (
+      {!isPractice && item.assets.length > 0 && (
         <section className="detail-block">
           <h3><Image size={16} />原始图片</h3>
           <div className="asset-grid">
@@ -67,19 +69,17 @@ export function CardDetailPage() {
         </section>
       )}
 
-      {isPractice ? <section className="detail-block"><h3>参考答案</h3>
-        <MathContent>{item.correctAnswer || "待补充"}</MathContent></section>
-        : <section className="answer-comparison detail-block">
+      {!isPractice && <section className="answer-comparison detail-block">
           <h3>作答对照</h3><div>
             <article className="answer wrong"><small>我的答案</small><MathContent>{item.userAnswer || "未填写"}</MathContent></article>
             <article className="answer correct"><small>正确答案</small><MathContent>{item.correctAnswer || "待补充"}</MathContent></article>
           </div>
         </section>}
 
-      <section className="detail-block">
+      {!isPractice && <section className="detail-block">
         <h3>正确解法</h3>
-        <MathContent>{item.solution || "还没有填写正确解法。"}</MathContent>
-      </section>
+        <MathContent>{item.solution || "未填写"}</MathContent>
+      </section>}
 
       {!isPractice && <section className="detail-block diagnosis-block">
         <h3>错因诊断</h3>
@@ -89,7 +89,7 @@ export function CardDetailPage() {
         </dl>
       </section>}
 
-      {item.supplementalNote && <section className="detail-block"><h3>补充说明</h3><MathContent>{item.supplementalNote}</MathContent></section>}
+      {!isPractice && item.supplementalNote && <section className="detail-block"><h3>补充说明</h3><MathContent>{item.supplementalNote}</MathContent></section>}
 
       <section className="detail-block">
         <h3>关联知识点</h3>

@@ -3,6 +3,7 @@ import { canSaveCard, type Card, type CardInput } from "../../domain/card";
 import type { SaveCardRequest } from "../../services/cardService";
 import { cardService } from "../../services/cardService";
 import { errorMessage } from "../../services/errorMessage";
+import { removeEditorDraft } from "./editorDraftStore";
 import { aiOrganizeRuns } from "./aiOrganizeRun";
 import { storableAssets } from "./cardEditorModel";
 
@@ -21,7 +22,7 @@ export function useNewCardLeave(options: Options) {
   const canSave = canSaveCard(options.input);
 
   const finish = () => {
-    localStorage.removeItem(options.draftKey);
+    removeEditorDraft(options.draftKey);
     setOpen(false);
     options.onLeave();
   };

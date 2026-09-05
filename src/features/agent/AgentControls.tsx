@@ -1,4 +1,4 @@
-import { ChevronDown, ShieldCheck, Wrench } from "lucide-react";
+import { ChevronDown, Wrench } from "lucide-react";
 import type { AgentMode, AgentReasoningEffort, AgentToolManifest } from "../../domain/agent";
 
 type Props = {
@@ -18,10 +18,6 @@ const effortNames: Record<AgentReasoningEffort, string> = {
 
 export function AgentControls(props: Props) {
   return <div className="harness-controls">
-    <div className="harness-policy">
-      <ShieldCheck size={14} />
-      <span>读取自动执行，创建、修改和删除必须经你批准</span>
-    </div>
     <div className="harness-options">
       <div className="harness-modes" aria-label="运行模式">
         <button className={props.mode === "auto" ? "active" : ""} disabled={props.busy}

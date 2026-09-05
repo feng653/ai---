@@ -1,6 +1,6 @@
 import {
   ArrowLeft, Check, ChevronRight, ExternalLink, Eye, EyeOff, Globe2,
-  KeyRound, LoaderCircle, LockKeyhole, Plus, ShieldCheck, Sparkles,
+  KeyRound, LoaderCircle, Plus, Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import type { AiProviderSummary, ApiProviderInput, CustomAiProviderId } from "../../domain/ai";
@@ -34,7 +34,7 @@ function ProviderList({
         className={`provider-item${selected === provider.id ? " active" : ""}`}
         onClick={() => onSelect(provider.id)}>
         <ProviderMark kind={provider.kind} initials={provider.initials} logo={provider.logo} />
-        <span><strong>{provider.name}</strong><small>{summary?.message ?? provider.summary}</small></span>
+        <span><strong>{provider.name}</strong></span>
         <span className={`provider-badge ${summary?.active ? "green" : provider.accent}`}>{badge}</span>
         <ChevronRight size={16} />
       </button>;
@@ -64,14 +64,7 @@ function CodexPanel({ summary }: { summary?: AiProviderSummary }) {
     <div className="connection-heading"><ProviderMark kind="codex" initials="C" logo="/brands/codex.png" />
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已登录" : "尚未连接"}</span>
-        <h2 id="codex-title">连接 Codex</h2><p>用于 AI 整理和知拾 Agent；模型会通过隔离的 Codex App Server 运行。</p></div></div>
-    <div className="login-flow">
-      <div><span>1</span><strong>打开登录页面</strong><small>由 Codex 启动官方授权页</small></div><i />
-      <div><span>2</span><strong>完成账号授权</strong><small>登录信息仅在官方网页填写</small></div><i />
-      <div><span>3</span><strong>返回知拾</strong><small>授权结果保存到知拾专用目录</small></div>
-    </div>
-    <div className="privacy-callout"><ShieldCheck size={19} /><div><strong>独立的凭据边界</strong>
-      <p>不读取本机 Codex 配置和登录缓存；退出时只清理知拾专用登录。</p></div></div>
+        <h2 id="codex-title">连接 Codex</h2></div></div>
     {notice && <div className="connection-notice" role="status">{notice}</div>}
     <div className="connection-actions">
       {summary?.configured && <button type="button" className="button danger" disabled={disconnect.isPending || login.isPending} onClick={remove}>退出登录</button>}
@@ -124,9 +117,8 @@ function ApiProviderPanel({ id, summary, onRemoved }: ApiPanelProps) {
       <div><span className={`connection-state${summary?.configured ? " ready" : ""}`}><i />
         {summary?.active && summary.configured ? "当前使用" : summary?.configured ? "已配置" : "尚未配置"}</span>
         <h2 id={`${id}-title`}>{isCustom ? "配置自定义 API" : "配置 DeepSeek API"}</h2>
-        <p>{isCustom ? "填写兼容 OpenAI Chat Completions 格式的模型服务。" : "通过 DeepSeek 官方 OpenAI 兼容接口调用模型。"}</p></div></div>
-    <div className="credential-warning"><LockKeyhole size={17} />API Key 保存在系统凭据库中，页面不会回显。</div>
-    <div className="connection-form">
+        </div></div>
+    <fieldset disabled={busy} className="connection-form">
       {isCustom && <label><span>服务名称</span><input value={name} onChange={(event) => setName(event.target.value)} aria-label="服务名称" /></label>}
       <label><span>API Key <b>{summary?.configured ? "留空则保留原 Key" : "必填"}</b></span><div className="secret-input"><KeyRound size={16} />
         <input type={visible ? "text" : "password"} value={apiKey} onChange={(event) => setApiKey(event.target.value)}
@@ -139,7 +131,7 @@ function ApiProviderPanel({ id, summary, onRemoved }: ApiPanelProps) {
         : <select value={model} onChange={(event) => setModel(event.target.value)} aria-label="模型名称">
           <option value="deepseek-v4-flash">deepseek-v4-flash</option><option value="deepseek-v4-pro">deepseek-v4-pro</option>
           <option value="deepseek-v4-flash-vision-exp">deepseek-v4-flash-vision-exp</option></select>}</label>
-    </div>
+    </fieldset>
     {notice && <div className="connection-notice" role="status">{notice.startsWith("连接测试成功") || notice.startsWith("配置已")
       ? <Check size={15} /> : <Sparkles size={15} />}{notice}</div>}
     <div className="form-actions">
@@ -160,7 +152,7 @@ export function AiConnectionsPage() {
   const summary = summaries.find((item) => item.id === selected);
   return <div className="connections-page">
     <header className="connections-header"><button type="button" className="back-link" onClick={() => history.back()}><ArrowLeft size={16} />返回</button>
-      <div><span className="eyebrow">AI CONNECTIONS</span><h1>AI 接入</h1></div>
+      <div><h1>AI 接入</h1></div>
       <span className="connection-count"><b>{summaries.filter((item) => item.configured).length}</b> 个服务可用</span></header>
     {query.error && <div className="inline-error">{errorMessage(query.error, "AI 配置读取失败")}</div>}
     <div className="connections-layout"><ProviderList selected={selected} summaries={summaries} draftId={draftId}

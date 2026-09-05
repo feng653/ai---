@@ -34,7 +34,7 @@ impl CodexProvider {
         let prompt = practice::build_prompt(&request)?;
         progress(AiProgress {
             stage: "analyzing",
-            message: "Codex 正在根据错题和错误点设计相似题…".into(),
+            message: "Codex 正在生成复习卡…".into(),
         });
         let json = execute(
             executable,

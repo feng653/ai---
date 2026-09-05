@@ -1,5 +1,6 @@
 # Demo 索引
 
+- [learning-flow-upgrade/index.html](./learning-flow-upgrade/index.html)：以图片收录、知识树找错题、错因概念问答为核心的重设计原型，保留旧知识卡与练习，Agent 使用 @ 逐级引用，包含 AI 供应商设置及可收起侧栏；Agent 演示全类型卡片编辑与联网来源呈现。AI 和搜索为明确标注的模拟，人工交互未验收；范围与待验项见同目录 README。
 - `agent-harness/index.html`：通用 AI Agent Harness 演示，支持纯聊天、多步工具调用、思考状态、写操作审批、拒绝、取消和运行记录。
 - `ai-agent-workflows/index.html`：照片错题到学习闭环交互原型，验证“唯一全局 Agent 入口 + 创建页一键派发”的职责分离、Agent 内照片任务、串行队列、重启恢复、明确来源按钮、逐字段/逐卡审核，以及知识卡和练习批次后续流程；同目录 `contract-freeze.md` 仅为已废止的历史记录，当前依据见 `docs/AI学习闭环-全流程功能清单.md` 与 `docs/AI生成练习卡-PRD.md`。
 - `error-card-library/index.html`：错题卡片新增、整理、筛选和详情交互演示。

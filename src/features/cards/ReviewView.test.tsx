@@ -41,13 +41,13 @@ describe("ReviewView", () => {
     const onOpenCard = vi.fn();
     renderView([practice], onOpenCard);
 
-    expect(screen.getByRole("heading", { name: "复习题卡片" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "错因复习" })).toBeInTheDocument();
     expect(screen.queryByText("选择知识点范围")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /进入卡片/ }));
     expect(onOpenCard).toHaveBeenCalledWith("practice");
     fireEvent.click(screen.getByRole("button", { name: "AI 生成复习题" }));
     expect(screen.getByText("选择知识点范围")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /持平/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("combobox", { name: "练习类型" })).toHaveValue("recall");
   });
 
   it("sends difficulty and real error evidence to AI before saving", async () => {
@@ -63,6 +63,7 @@ describe("ReviewView", () => {
     const save = vi.spyOn(cardService, "savePracticeCards").mockResolvedValue([practice]);
     renderView([]);
     fireEvent.click(screen.getByRole("button", { name: "AI 生成复习题" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "练习类型" }), { target: { value: "similar" } });
     fireEvent.click(screen.getByRole("button", { name: /更难/ }));
     fireEvent.change(screen.getByRole("textbox", { name: /附加要求/ }), {
       target: { value: "加入参数讨论" },
@@ -87,7 +88,7 @@ describe("ReviewView", () => {
     const first = renderView([]);
     fireEvent.click(screen.getByRole("button", { name: "AI 生成复习题" }));
     fireEvent.click(screen.getByRole("button", { name: /AI 生成并保存 1 张/ }));
-    expect(screen.getByRole("status")).toHaveTextContent("可以离开此页");
+    expect(screen.getByRole("status")).toHaveTextContent("AI 正在生成复习题");
     first.unmount();
     await waitFor(() => expect(finish).toBeTypeOf("function"));
     finish?.([{

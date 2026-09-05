@@ -33,7 +33,7 @@ describe("AppShell", () => {
 
     expect(document.querySelector(".app-shell")).toHaveClass("sidebar-collapsed");
     expect(window.localStorage.getItem("zhishi:sidebar-collapsed")).toBe("true");
-    expect(screen.getByRole("link", { name: "错题与知识" })).toHaveAttribute("title", "错题与知识");
+    expect(screen.getByRole("link", { name: "错题库" })).toHaveAttribute("title", "错题库");
     expect(screen.queryByRole("button", { name: "收起侧边栏" })).not.toBeInTheDocument();
 
     firstRender.unmount();

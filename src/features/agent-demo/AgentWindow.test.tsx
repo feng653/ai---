@@ -29,10 +29,10 @@ describe("AgentWindow", () => {
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
     expect(screen.getByRole("dialog", { name: "AI Agent" })).toBeInTheDocument();
     expect(screen.getByText("AI 可直接回答；卡片写入仍需你的确认")).toBeInTheDocument();
-    const input = screen.getByPlaceholderText(/提问，或描述要创建/);
+    const input = screen.getByRole("combobox", { name: "消息" });
     fireEvent.change(input, { target: { value: "尚未发送的内容" } });
     fireEvent.click(screen.getByRole("button", { name: "新对话" }));
-    await waitFor(() => expect(screen.getByPlaceholderText(/提问，或描述要创建/)).toHaveValue(""));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "消息" })).toHaveValue(""));
     fireEvent.click(screen.getByRole("button", { name: "收起 AI Agent" }));
     expect(screen.queryByRole("dialog", { name: "AI Agent" })).toBeNull();
   });
@@ -46,7 +46,7 @@ describe("AgentWindow", () => {
     save.mockResolvedValue({ revision: 1 });
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+    fireEvent.change(screen.getByRole("combobox", { name: "消息" }), {
       target: { value: "创建卡片：解方程 x=1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -73,7 +73,7 @@ describe("AgentWindow", () => {
     }));
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+    fireEvent.change(screen.getByRole("combobox", { name: "消息" }), {
       target: { value: "生成三道示例题" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -96,7 +96,7 @@ describe("AgentWindow", () => {
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "联网搜索" }));
-    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+    fireEvent.change(screen.getByRole("combobox", { name: "消息" }), {
       target: { value: "请直接解释这个概念" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -112,7 +112,7 @@ describe("AgentWindow", () => {
   it("does not create a conversation from a chat command", async () => {
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), {
+    fireEvent.change(screen.getByRole("combobox", { name: "消息" }), {
       target: { value: "请创建一个新对话" },
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
@@ -138,7 +138,7 @@ describe("AgentWindow", () => {
     save.mockResolvedValue({ revision: 1, question: "解方程 $x=1$", knowledgePoints: [] });
     render(<AgentWindow />);
     fireEvent.click(screen.getByRole("button", { name: "打开 AI Agent" }));
-    const input = screen.getByPlaceholderText(/提问，或描述要创建/);
+    const input = screen.getByRole("combobox", { name: "消息" });
     fireEvent.change(input, { target: { value: "创建卡片：解方程 x=1" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
     await screen.findByRole("button", { name: "确认执行" });

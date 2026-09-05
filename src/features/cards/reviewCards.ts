@@ -24,15 +24,16 @@ export function practiceCardsForSelection(cards: Card[], selection: KnowledgeSel
 
 export function buildPracticeGenerationRequest(
   cards: Card[], selectedPointKeys: Set<string>, count: number, difficulty: PracticeDifficulty,
-  additionalRequirements = "",
+  additionalRequirements = "", selectedSourceIds?: Set<string>, mode?: "similar" | "recall",
 ): PracticeGenerationRequest | null {
-  const sources = reviewSources(cards, selectedPointKeys);
+  const sources = reviewSources(cards, selectedPointKeys).filter((card) => !selectedSourceIds || selectedSourceIds.has(card.id));
   const total = Math.max(sources.length, Math.min(50, Math.trunc(count) || sources.length));
   if (!sources.length) return null;
   const topics = sources.flatMap((card) => card.knowledgePoints)
     .filter((point) => selectedPointKeys.has(pointKey(point)))
     .filter((point, index, all) => all.findIndex((candidate) => pointKey(candidate) === pointKey(point)) === index);
   return {
+    ...(mode ? { mode } : {}),
     topics,
     count: total,
     difficulty,

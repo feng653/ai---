@@ -35,6 +35,7 @@ export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onG
       .map((card) => card.id),
   ));
   const [count, setCount] = useState(Math.max(1, selectedSources.size));
+  const [mode, setMode] = useState<"recall" | "similar">("recall");
   const [difficulty, setDifficulty] = useState<PracticeDifficulty>("same");
   const [additionalRequirements, setAdditionalRequirements] = useState("");
 
@@ -53,16 +54,16 @@ export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onG
   const minimum = selectedSources.size;
   const submit = () => {
     const request = buildPracticeGenerationRequest(
-      allCards, selectedPoints, count, difficulty, additionalRequirements,
+      allCards, selectedPoints, count, difficulty, additionalRequirements, selectedSources, mode,
     );
     if (request) onGenerate(request);
   };
 
   return <section className="practice-builder">
-    <header><div><small>AI 生成设置</small><h2>根据错题生成相似题</h2>
-      <p>错误点和难度要求会一并交给当前 AI 服务。</p></div>
+    <header><div><h2>生成复习问答</h2></div>
       <button type="button" className="button ghost" onClick={onCancel}>返回卡片页</button></header>
     {error && <p className="inline-error" role="alert">{error}</p>}
+    <label className="field">类型<select aria-label="练习类型" value={mode} onChange={(event) => setMode(event.target.value as "recall" | "similar")}><option value="recall">错因概念问答</option><option value="similar">相似练习</option></select></label>
     <div className="practice-builder-grid"><div className="practice-flow">
       <ReviewStep number="01" title="选择知识点范围" hint="支持跨知识点多选。">
         <div className="practice-point-groups">{points.map((card) => <button type="button"
@@ -80,13 +81,13 @@ export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onG
           <span>{selectedSources.has(card.id) && <Check size={12} aria-hidden="true" />}</span><span><b>{card.question || "图片题"}</b>
             <small>{card.errorReason || card.errorLocation || "尚未补充错误点"}</small></span></button>)}</div>
       </ReviewStep>
-      <ReviewStep number="03" title="选择题目难度" hint="难度相对于本次选择的来源错题。">
+      {mode === "similar" && <ReviewStep number="03" title="选择题目难度" hint="难度相对于本次选择的来源错题。">
         <div className="practice-difficulty" role="group" aria-label="题目难度">
           {difficulties.map((item) => <button type="button" key={item.value}
             aria-pressed={difficulty === item.value} className={difficulty === item.value ? "active" : ""}
-            onClick={() => setDifficulty(item.value)}><strong>{item.label}</strong><span>{item.hint}</span></button>)}
+            onClick={() => setDifficulty(item.value)}><strong>{item.label}</strong></button>)}
         </div>
-      </ReviewStep>
+      </ReviewStep>}
       <ReviewStep number="04" title="设置生成数量" hint="每道来源错题至少生成一张。">
         <div className="quantity-control"><label>生成卡片数<input aria-label="生成卡片数" type="number"
           min={minimum || 1} max={50} value={count}
@@ -100,14 +101,13 @@ export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onG
       <ReviewStep number="05" title="补充生成要求" hint="可选；用于指定题型、侧重点或表达方式。">
         <AiRequirementsField id="practice-card-ai-requirements"
           value={additionalRequirements} onChange={setAdditionalRequirements}
-          placeholder="例如：多设计参数讨论题，解析先提示定义域" />
+ />
       </ReviewStep>
     </div><aside className="practice-summary"><small>本次生成</small><dl>
       <div><dt>知识点</dt><dd>{selectedPoints.size} 个</dd></div>
       <div><dt>来源错题</dt><dd>{minimum} 道</dd></div>
-      <div><dt>题目难度</dt><dd>{difficulties.find((item) => item.value === difficulty)?.label}</dd></div>
+      {mode === "similar" && <div><dt>题目难度</dt><dd>{difficulties.find((item) => item.value === difficulty)?.label}</dd></div>}
       <div><dt>习题卡片</dt><dd>{count} 张</dd></div></dl>
-      <p>{minimum ? "AI 将依据题目、作答和错误点生成新题。" : "请选择生成范围。"}</p>
       <button type="button" className="button primary" disabled={!minimum} onClick={submit}>
         <Sparkles size={15} aria-hidden="true" />AI 生成并保存 {count} 张
       </button></aside></div>
@@ -115,6 +115,5 @@ export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onG
 }
 
 function ReviewStep(props: { number: string; title: string; hint: string; children: React.ReactNode }) {
-  return <section className="practice-step"><header><span>{props.number}</span><div><h3>{props.title}</h3>
-    <p>{props.hint}</p></div></header>{props.children}</section>;
+  return <section className="practice-step"><header><div><h3>{props.title}</h3></div></header>{props.children}</section>;
 }

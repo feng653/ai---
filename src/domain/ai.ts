@@ -73,6 +73,7 @@ export type KnowledgeCardSaveInput = Omit<KnowledgeCardRecord, "createdAt" | "up
 export type PracticeDifficulty = "easier" | "same" | "harder";
 
 export type PracticeGenerationRequest = {
+  mode?: "similar" | "recall";
   topics: KnowledgePoint[];
   additionalRequirements?: string;
   sourceCards: Array<{

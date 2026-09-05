@@ -32,7 +32,7 @@ describe("CardEditorFields image input", () => {
     const image = new File([new Uint8Array([1, 2, 3])], "question.png", { type: "image/png" });
     render(<Harness selectImage={selectImage} />);
 
-    fireEvent.drop(screen.getByRole("button", { name: /选择或拖入题目图片/ }), {
+    fireEvent.drop(screen.getByRole("button", { name: /添加图片/ }), {
       dataTransfer: { files: [image] },
     });
 

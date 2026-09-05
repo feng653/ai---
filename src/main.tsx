@@ -16,6 +16,7 @@ import "./styles/redesign-workspace.css";
 import "./styles/redesign-review.css";
 import "./styles/redesign-editor.css";
 import "./styles/redesign-detail.css";
+import "./styles/learning-flow-upgrade.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

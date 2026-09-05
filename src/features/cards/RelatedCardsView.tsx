@@ -27,7 +27,6 @@ export function RelatedCardsView({ cards, loading, error, filtered, onOpen, onCr
   if (!cards.length) return <div className="empty-state">
     <span className="empty-icon"><BookOpen size={27} /></span>
     <h3>{filtered ? "没有找到匹配的错题" : "还没有错题"}</h3>
-    <p>可以清除筛选，或上传题目图片新增错题。</p>
     <button className="button primary" onClick={onCreate}><Sparkles size={16} />新增错题</button>
   </div>;
   return <section className="card-grid" aria-label="错题卡片">
@@ -36,8 +35,8 @@ export function RelatedCardsView({ cards, loading, error, filtered, onOpen, onCr
       <header><span className="subject">{card.subject || "未分类"}</span>
         <span className={`card-status ${card.status}`}>{statusLabel[card.status]}</span></header>
       {card.assets.length > 0 && <span className="image-badge"><Image size={13} />原题图片</span>}
-      <MathContent className="question-title">{card.question || "仅保存了原始题目图片"}</MathContent>
-      <MathContent className="diagnosis-preview">{card.errorReason || "还没有错因诊断，可以手动完善或使用 AI 整理。"}</MathContent>
+      <MathContent className="question-title">{card.question || "图片错题"}</MathContent>
+      <MathContent className="diagnosis-preview">{card.errorReason || "未记录错因"}</MathContent>
       <footer><div className="tag-list">
         {card.knowledgePoints.length ? card.knowledgePoints.slice(0, 3).map((point) => <span
           key={`${point.subject}-${point.chapter}-${point.name}`}>{point.name}</span>) : <span className="muted-tag">未关联知识点</span>}

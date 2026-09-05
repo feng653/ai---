@@ -1,7 +1,8 @@
 import { ImagePlus, Send, X } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 import type { Card } from "../../domain/card";
-import { agentId, cardReferenceLabel } from "./agentWorkflow";
+import { agentId } from "./agentWorkflow";
+import { useCardMentions } from "../agent/useCardMentions";
 import type { AgentAttachment } from "./types";
 
 type Props = {
@@ -21,27 +22,11 @@ function readImage(file: File): Promise<AgentAttachment> {
 
 export function AgentComposer({ busy, cards, onSend }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState("");
+  const mention = useCardMentions(cards);
+  const text = mention.text;
   const [attachments, setAttachments] = useState<AgentAttachment[]>([]);
-  const [referencedCards, setReferencedCards] = useState<Array<{ id: string; label: string }>>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
-  const [activeMention, setActiveMention] = useState(0);
-  const mentionMatch = text.match(/@([^@\s]*)$/);
-  const mentionQuery = mentionMatch?.[1].toLocaleLowerCase();
-  const mentionCards = mentionMatch ? cards.filter((card) =>
-    !mentionQuery || cardReferenceLabel(card).toLocaleLowerCase().includes(mentionQuery)
-      || card.question.toLocaleLowerCase().includes(mentionQuery)).slice(0, 5) : [];
-
-  const chooseMention = (card: Card) => {
-    if (!mentionMatch) return;
-    const start = mentionMatch.index ?? text.length;
-    const label = cardReferenceLabel(card);
-    setText(`${text.slice(0, start)}@${label} `);
-    setReferencedCards((items) => [...items.filter((item) => item.id !== card.id), { id: card.id, label }]);
-    setActiveMention(0);
-  };
-
   const addFiles = async (files: File[]) => {
     setError("");
     const available = 3 - attachments.length;
@@ -65,11 +50,10 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
 
   const submit = () => {
     if (busy || (!text.trim() && !attachments.length)) return;
-    const references = referencedCards.filter((item) => text.includes(`@${item.label}`)).map((item) => item.id);
+    const references = mention.references;
     onSend(text.trim(), attachments, references);
-    setText("");
+    mention.clear();
     setAttachments([]);
-    setReferencedCards([]);
   };
 
   return (
@@ -89,41 +73,30 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
             setAttachments((items) => items.filter((item) => item.id !== attachment.id))}><X size={13} /></button>
         </figure>)}
       </div>}
-      <textarea
-        value={text}
-        onChange={(event) => { setText(event.target.value); setActiveMention(0); }}
+      <label className="agent-message-label" htmlFor={`${mention.menuId}-input`}>消息</label>
+      <textarea id={`${mention.menuId}-input`} ref={mention.inputRef} value={text} rows={3}
+        role="combobox" aria-autocomplete="list" aria-controls={mention.menuId} aria-expanded={mention.open}
+        aria-activedescendant={mention.open && mention.options.length ? `${mention.menuId}-${mention.index}` : undefined}
+        onChange={(event) => mention.change(event.target.value, event.target.selectionStart)}
+        onClick={(event) => mention.change(event.currentTarget.value, event.currentTarget.selectionStart)}
         onKeyDown={(event) => {
-          if (mentionCards.length && event.key === "ArrowDown") {
-            event.preventDefault(); setActiveMention((index) => (index + 1) % mentionCards.length); return;
-          }
-          if (mentionCards.length && event.key === "ArrowUp") {
-            event.preventDefault(); setActiveMention((index) => (index - 1 + mentionCards.length) % mentionCards.length); return;
-          }
-          if (mentionCards.length && event.key === "Enter") {
-            event.preventDefault(); chooseMention(mentionCards[activeMention] ?? mentionCards[0]); return;
-          }
+          if (event.nativeEvent.isComposing || mention.keyDown(event)) return;
           if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submit(); }
-        }}
-        placeholder="提问，或描述要创建的卡片；修改时请 @ 卡片…"
-        rows={3}
-      />
-      {mentionCards.length > 0 && <div className="agent-mention-menu" role="listbox" aria-label="引用卡片">
-        <small>引用卡片</small>
-        {mentionCards.map((card, index) => <button
-          className={index === activeMention ? "active" : ""}
-          type="button"
-          role="option"
-          aria-selected={index === activeMention}
-          key={card.id}
-          onMouseDown={(event) => { event.preventDefault(); chooseMention(card); }}
-        ><strong>@{cardReferenceLabel(card)}</strong><span>{card.question || "仅有图片的错题"}</span></button>)}
+        }} />
+      {mention.open && <div className="agent-mention-menu" id={mention.menuId} role="listbox" aria-label="引用卡片">
+        <small>{mention.path.join(" / ") || "学科"}</small>
+        {mention.options.map((option, index) => <button id={`${mention.menuId}-${index}`}
+          className={index === mention.index ? "active" : ""} tabIndex={-1} type="button" role="option"
+          aria-selected={index === mention.index} key={option.card?.id || option.label}
+          onMouseDown={(event) => event.preventDefault()} onClick={() => mention.choose(option)}>
+          {option.label}{option.card ? "" : " ›"}</button>)}
+        {!mention.options.length && <span>无匹配结果</span>}
       </div>}
       {error && <small className="agent-input-error">{error}</small>}
       <footer>
         <button type="button" onClick={() => inputRef.current?.click()} disabled={attachments.length >= 3 || busy}>
           <ImagePlus size={17} />添加图片 <small>{attachments.length}/3</small>
         </button>
-        <span>Enter 发送 · Shift+Enter 换行</span>
         <button className="agent-send" type="button" onClick={submit} disabled={busy || (!text.trim() && !attachments.length)}>
           <Send size={16} />发送
         </button>

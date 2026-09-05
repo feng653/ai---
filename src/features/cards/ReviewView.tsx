@@ -36,7 +36,7 @@ export function ReviewView({ allCards, initialSelection, savedCards, onOpenCard 
   if (run.status === "running") return <section className="practice-generation" role="status">
     <span><LoaderCircle className="spin" aria-hidden="true" /></span><small>AI 正在生成复习题</small>
     <h2>{run.progress.message}</h2>
-    <p>可以离开此页；校验完成后，题目会自动进入练习题库。</p><i />
+    <i />
   </section>;
   if (mode === "setup" || run.status === "failed") return <ReviewBuilder
     allCards={allCards} initialSelection={initialSelection}

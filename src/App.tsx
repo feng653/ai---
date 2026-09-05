@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 
 const CardsPage = lazy(() => import("./features/cards/CardsPage")
@@ -11,6 +11,11 @@ const CardEditorPage = lazy(() => import("./features/cards/CardEditorPage")
 const AiConnectionsPage = lazy(() => import("./features/ai-connections/AiConnectionsPage")
   .then((module) => ({ default: module.AiConnectionsPage })));
 
+function EditorRoute() {
+  const location = useLocation();
+  return <CardEditorPage key={location.pathname} />;
+}
+
 function LoadingPage() {
   return <div className="page-content"><div className="empty-state"><span className="loading-spinner" /></div></div>;
 }
@@ -21,9 +26,9 @@ export default function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<CardsPage />} />
-          <Route path="cards/new" element={<CardEditorPage />} />
+          <Route path="cards/new" element={<EditorRoute />} />
           <Route path="cards/:id" element={<CardDetailPage />} />
-          <Route path="cards/:id/edit" element={<CardEditorPage />} />
+          <Route path="cards/:id/edit" element={<EditorRoute />} />
           <Route path="settings/ai" element={<AiConnectionsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

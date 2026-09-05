@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>知拾 · 学习流程升级原型</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="data.js" defer></script>
+  <script src="taxonomy.js" defer></script>
+  <script src="mentions.js" defer></script>
+  <script src="recall.js" defer></script>
+  <script src="flashcards.js" defer></script>
+  <script src="settings.js" defer></script>
+  <script src="sidebar.js" defer></script>
+  <script src="views.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <button id="sidebar-toggle" aria-controls="sidebar" aria-expanded="true" aria-label="收起侧栏">‹</button>
+      <a class="brand" href="index.html"><span>拾</span><div class="nav-label">知拾</div></a>
+      <button class="primary add-button" id="capture-button" data-action="new">＋ 添加错题</button>
+      <nav aria-label="主导航">
+        <button data-nav="mistake" aria-label="错题库" title="错题库"><span class="nav-symbol" aria-hidden="true">题</span><span class="nav-label">错题库</span> <span id="mistake-count"></span></button>
+        <button data-nav="practice" aria-label="错因复习" title="错因复习"><span class="nav-symbol" aria-hidden="true">复</span><span class="nav-label">错因复习</span> <span id="practice-count"></span></button>
+
+      </nav>
+      <section class="classification" aria-label="按知识分类查找"><h2>知识分类</h2><div id="classification-tree"></div></section>
+      <details class="legacy-cards"><summary>已有知识卡</summary><button data-nav="knowledge">查看与编辑 <span id="knowledge-count"></span></button></details>
+      <button class="settings-entry" data-action="settings" aria-label="AI 供应商" title="AI 供应商"><span class="nav-symbol" aria-hidden="true">AI</span><span class="nav-label">AI 供应商</span></button>
+      <details class="demo-tools" hidden>
+        <summary>原型演示选项</summary>
+        <label>下次操作结果<select id="demo-outcome"><option value="success">正常完成</option><option value="ai-fail">AI 失败</option><option value="save-fail">保存失败</option></select></label>
+      </details>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><span class="tag">模拟</span><button id="activity-button" data-action="activity">最近进度 <span id="activity-count">0</span></button></header>
+      <main id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <button class="agent-launcher primary" id="agent-launcher" data-action="agent-toggle" aria-controls="agent-panel" aria-expanded="false">✦ AI Agent</button>
+  <aside id="agent-panel" role="dialog" aria-label="AI Agent" hidden>
+    <header class="agent-header"><div><strong>AI Agent</strong></div><button data-action="agent-toggle" aria-label="收起 Agent">收起</button></header>
+    <div id="agent-thread" class="agent-thread" aria-label="对话与结果"></div>
+    <form id="agent-form" class="composer">
+      <label for="agent-message">消息<textarea id="agent-message" rows="3" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mention-options" required></textarea></label>
+      <div id="mention-menu" class="mention-menu" hidden><div id="mention-options" role="listbox" aria-label="引用卡片"></div></div>
+      <div class="composer-footer"><button class="primary" id="send-message" type="submit">发送</button></div>
+    </form>
+  </aside>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

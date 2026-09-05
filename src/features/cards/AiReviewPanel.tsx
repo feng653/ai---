@@ -48,15 +48,15 @@ export function AiReviewPanel(props: Props) {
     isFieldConflict, organize, applyProposal, dismissRun } = props;
   return (
     <aside className="ai-review-panel">
-      <div className="ai-panel-heading"><span><Sparkles size={18} /></span><div><h2>AI 整理</h2><p>建议不会自动覆盖你的内容</p></div></div>
+      <div className="ai-panel-heading"><span><Sparkles size={18} /></span><div><h2>AI 整理</h2></div></div>
       {!proposal && <AiRequirementsField id="mistake-card-ai-requirements"
         value={additionalRequirements} onChange={setAdditionalRequirements}
         disabled={Boolean(progress) || connecting} />}
       {progress ? (
-        <div className="ai-progress" role="status" aria-live="polite" aria-atomic="true"><LoaderCircle className="spin" size={22} /><strong>{progress.message}</strong><small>可以离开本页，返回后仍可查看进度和结果</small></div>
+        <div className="ai-progress" role="status" aria-live="polite" aria-atomic="true"><LoaderCircle className="spin" size={22} /><strong>{progress.message}</strong></div>
       ) : proposal ? (
         <div className="proposal-review">
-          <div className="success-note" role="status">已生成整理建议，请逐项确认。</div>
+          <div className="success-note" role="status">待应用</div>
           {proposal.warnings.map((warning) => <p className="proposal-warning" key={warning}>{warning}</p>)}
           {(Object.keys(proposal.fields) as ProposalKey[]).map((key) => {
             const suggestion = proposal.fields[key];
@@ -66,7 +66,8 @@ export function AiReviewPanel(props: Props) {
               <label className={`proposal-field ${conflict ? "conflict" : ""}`} key={key}>
                 <input
                   type="checkbox"
-                  checked={acceptedFields.includes(key)}
+                  checked={!conflict && acceptedFields.includes(key)}
+                  disabled={conflict}
                   onChange={(event) => setAcceptedFields((items) =>
                     event.target.checked ? [...items, key] : items.filter((item) => item !== key))}
                 />
@@ -80,7 +81,7 @@ export function AiReviewPanel(props: Props) {
           })}
           <div className="proposal-actions">
             <button type="button" className="button ghost" onClick={dismissRun}>拒绝全部</button>
-            <button type="button" className="button primary" disabled={!acceptedFields.length} onClick={applyProposal}>接受所选</button>
+            <button type="button" className="button primary" disabled={!acceptedFields.length} onClick={applyProposal}>应用所选</button>
           </div>
         </div>
       ) : runError ? (
@@ -93,11 +94,9 @@ export function AiReviewPanel(props: Props) {
         </div>
       ) : (
         <div className="ai-idle">
-          <p>识别题目、分析答案、诊断错因并推荐知识点。生成后由你确认。</p>
           <button className="button primary wide" type="button" onClick={organize} disabled={connecting}>
             <Sparkles size={17} />AI 整理
           </button>
-          <small>未连接 AI 不影响手动编辑和保存。</small>
         </div>
       )}
     </aside>

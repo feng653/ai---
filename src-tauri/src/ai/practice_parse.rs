@@ -1,5 +1,5 @@
 use super::practice::{
-    validate, PracticeGenerationRequest, PracticeSourceCard, PRACTICE_PROMPT_VERSION,
+    validate, PracticeGenerationRequest, PracticeMode, PracticeSourceCard, PRACTICE_PROMPT_VERSION,
 };
 use crate::domain::{CardInput, KnowledgePoint, PracticeCardDraft, SourceRevision};
 use crate::error::AppError;
@@ -123,10 +123,14 @@ fn to_draft(
             question,
             user_answer: String::new(),
             correct_answer: compact(correct_answer, 1200, "正确答案")?,
-            supplemental_note: format!(
-                "AI 根据来源错题生成 · 难度：{} · 提示版本：{PRACTICE_PROMPT_VERSION}",
-                request.difficulty.label()
-            ),
+            supplemental_note: if request.mode == PracticeMode::Recall {
+                "错因概念问答".into()
+            } else {
+                format!(
+                    "AI 根据来源错题生成 · 难度：{} · 提示版本：{PRACTICE_PROMPT_VERSION}",
+                    request.difficulty.label()
+                )
+            },
             solution: compact(solution, 2400, "解题步骤")?,
             error_location: String::new(),
             error_reason: String::new(),

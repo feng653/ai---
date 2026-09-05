@@ -22,7 +22,7 @@ describe("AgentComposer", () => {
       dataTransfer: { files: [image] },
     });
     await screen.findByAltText("question.png");
-    fireEvent.change(screen.getByPlaceholderText(/提问，或描述要创建/), { target: { value: "创建卡片" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "消息" }), { target: { value: "创建卡片" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => expect(onSend).toHaveBeenCalledOnce());
@@ -34,11 +34,24 @@ describe("AgentComposer", () => {
   it("autocompletes a referenced card after typing at", () => {
     const onSend = vi.fn();
     const view = render(<AgentComposer busy={false} cards={cards} onSend={onSend} />);
-    const input = view.getByPlaceholderText(/提问，或描述要创建/);
+    const input = view.getByRole("combobox", { name: "消息" });
     fireEvent.change(input, { target: { value: "修改 @导" } });
-    fireEvent.mouseDown(view.getByRole("option", { name: /@导数与单调区间/ }));
-    expect(input).toHaveValue("修改 @导数与单调区间 ");
+    fireEvent.click(view.getByRole("option", { name: /导数与单调区间/ }));
+    expect(input).toHaveValue("修改 @「导数与单调区间 · derivative」 ");
     fireEvent.click(view.getByRole("button", { name: "发送" }));
-    expect(onSend).toHaveBeenCalledWith("修改 @导数与单调区间", [], ["derivative"]);
+    expect(onSend).toHaveBeenCalledWith("修改 @「导数与单调区间 · derivative」", [], ["derivative"]);
   });
+  it("uses Tab through the classification path and removes deleted references", () => {
+    const onSend = vi.fn();
+    render(<AgentComposer busy={false} cards={cards} onSend={onSend} />);
+    const input = screen.getByRole("combobox", { name: "消息" });
+    fireEvent.change(input, { target: { value: "修改 @" } });
+    expect(screen.getByRole("option", { name: /数学/ })).toBeInTheDocument();
+    for (let step = 0; step < 4; step++) fireEvent.keyDown(input, { key: "Tab" });
+    expect(input).toHaveValue("修改 @「导数与单调区间 · derivative」 ");
+    fireEvent.change(input, { target: { value: "仅聊天" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    expect(onSend).toHaveBeenCalledWith("仅聊天", [], []);
+  });
+
 });

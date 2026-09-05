@@ -85,7 +85,7 @@ impl AiManager {
         });
         progress(AiProgress {
             stage: "analyzing",
-            message: format!("{} 正在设计相似复习题…", config.name),
+            message: format!("{} 正在生成复习卡…", config.name),
         });
         let json =
             api_learning::generate_practice(&self.client, &config, &key, &prompt, request.count)

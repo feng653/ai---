@@ -12,6 +12,8 @@ import { AiReviewPanel } from "./AiReviewPanel";
 import { aiOrganizeRuns } from "./aiOrganizeRun";
 import { CardEditorFields, type CardFormValues } from "./CardEditorFields";
 import { comparableInput, formValues, scalarKeys, storableAssets } from "./cardEditorModel";
+import { writeEditorDraft, removeEditorDraft } from "./editorDraftStore";
+import { useEditorDraftPersistence } from "./useEditorDraftPersistence";
 import { NewCardLeaveDialog } from "./NewCardLeaveDialog";
 import { ImageEditorDialog } from "../images/ImageEditorDialog";
 import { useImageImport } from "../images/useImageImport";
@@ -35,7 +37,8 @@ export function CardEditorPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [conflictMessage, setConflictMessage] = useState("");
   const [draftStatus, setDraftStatus] = useState("尚未修改");
-  const initialized = useRef(false);
+  const initialized = useRef(false), discardOnLeave = useRef(false);
+  const draftBaseRevision = useRef<number | undefined>(undefined);
   const draftKey = `zhishi.editor-draft.${id ?? "new"}`;
   const aiRunKey = `card-editor:${id ?? "new"}`;
   const { aiRun, progress, proposal, proposalBase,
@@ -48,6 +51,7 @@ export function CardEditorPage() {
     if (initialized.current || (id && cardQuery.isLoading)) return;
     const base = id ? cardQuery.data : emptyCardInput();
     if (!base) return;
+    draftBaseRevision.current = id ? cardQuery.data?.revision : undefined;
     let restored = false;
     const raw = localStorage.getItem(draftKey);
     if (raw) {
@@ -56,14 +60,16 @@ export function CardEditorPage() {
           values: CardFormValues; knowledgePoints: KnowledgePoint[];
           assets?: CardAsset[]; baseRevision?: number;
         };
-        if (!id || draft.baseRevision === cardQuery.data?.revision) {
+        {
+          draftBaseRevision.current = draft.baseRevision;
           form.reset(draft.values);
           setKnowledgePoints(draft.knowledgePoints ?? []);
           setAssets(draft.assets ?? []);
           restored = true;
           setDraftStatus("已恢复草稿");
-        } else localStorage.removeItem(draftKey);
-      } catch { localStorage.removeItem(draftKey); }
+          if (id && draft.baseRevision !== cardQuery.data?.revision) setConflictMessage("来源已更新；当前草稿保留，未覆盖最新卡片。");
+        }
+      } catch { removeEditorDraft(draftKey); }
     }
     if (!restored) {
       form.reset(formValues(base));
@@ -81,23 +87,15 @@ export function CardEditorPage() {
     : emptyCardInput();
   const hasUnsavedChanges = JSON.stringify(comparableInput(currentInput)) !== JSON.stringify(comparableInput(baseline));
   const draftSnapshot = useMemo(() => JSON.stringify({ values: watched, knowledgePoints,
-    assets: storableAssets(assets), baseRevision: cardQuery.data?.revision }),
+    assets: storableAssets(assets), baseRevision: draftBaseRevision.current }),
   [assets, cardQuery.data?.revision, knowledgePoints, watched]);
   const newCardLeave = useNewCardLeave({
     input: currentInput, draftKey, aiRunKey,
     saveCard: (request) => saveCard.mutateAsync(request),
-    onError: setErrorMessage, onLeave: () => navigate("/"),
+    onError: setErrorMessage, onLeave: () => { discardOnLeave.current = true; navigate("/"); },
   });
 
-  useEffect(() => {
-    if (!initialized.current || !hasUnsavedChanges) return;
-    setDraftStatus("正在暂存");
-    const timer = window.setTimeout(() => {
-      localStorage.setItem(draftKey, draftSnapshot);
-      setDraftStatus("草稿已保留");
-    }, 700);
-    return () => window.clearTimeout(timer);
-  }, [draftKey, draftSnapshot, hasUnsavedChanges]);
+  useEditorDraftPersistence(draftKey, draftSnapshot, hasUnsavedChanges, initialized, discardOnLeave, setDraftStatus);
 
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => {
@@ -113,9 +111,9 @@ export function CardEditorPage() {
   const closeEditor = () => {
     if (!id) { newCardLeave.request(); return; }
     if (hasUnsavedChanges && !window.confirm("当前修改已自动保存为草稿。确定离开吗？")) return;
-    localStorage.setItem(draftKey, JSON.stringify({
+    writeEditorDraft(draftKey, JSON.stringify({
       values: form.getValues(), knowledgePoints, assets: storableAssets(assets),
-      baseRevision: cardQuery.data?.revision,
+      baseRevision: draftBaseRevision.current,
     }));
     navigate(id ? `/cards/${id}` : "/");
   };
@@ -138,18 +136,19 @@ export function CardEditorPage() {
   };
 
   const handleSave = form.handleSubmit(async (values) => {
+    if (conflictMessage) return;
     const input: CardInput = { ...values, knowledgePoints, assets: storableAssets(assets) };
     const errors = validateCardInput(input);
     if (errors.length) { setErrorMessage(errors.join("；")); return; }
     setErrorMessage("");
     setConflictMessage("");
     try {
-      const saved = await saveCard.mutateAsync({ id, input, expectedRevision: cardQuery.data?.revision });
+      const saved = await saveCard.mutateAsync({ id, input, expectedRevision: draftBaseRevision.current });
       const savedIds = new Set(saved.assets.map((asset) => asset.id));
       await Promise.allSettled((cardQuery.data?.assets ?? [])
         .filter((asset) => !savedIds.has(asset.id)).map((asset) => cardService.deleteAsset(asset.id)));
       if (!id) aiOrganizeRuns.move(aiRunKey, `card-editor:${saved.id}`);
-      localStorage.removeItem(draftKey);
+      discardOnLeave.current = true; removeEditorDraft(draftKey);
       navigate(`/cards/${saved.id}`);
     } catch (error) {
       const message = getErrorMessage(error, "保存失败");
@@ -162,7 +161,7 @@ export function CardEditorPage() {
     if (!id || !window.confirm("删除后无法恢复，确认删除这张错题吗？")) return;
     try {
       await deleteCard.mutateAsync(id);
-      localStorage.removeItem(draftKey);
+      discardOnLeave.current = true; removeEditorDraft(draftKey);
       navigate("/");
     } catch (error) { setErrorMessage(getErrorMessage(error, "删除失败，请重试")); }
   };
@@ -184,7 +183,7 @@ export function CardEditorPage() {
 
   const applyProposal = () => {
     if (!proposal) return;
-    const next = applyAiProposal(currentInput, proposal, acceptedFields);
+    const next = applyAiProposal(currentInput, proposal, acceptedFields.filter((key) => !isFieldConflict(key)));
     for (const key of scalarKeys) form.setValue(key, next[key], { shouldDirty: true });
     setKnowledgePoints(next.knowledgePoints);
     aiOrganizeRuns.dismiss(aiRunKey);
@@ -200,7 +199,7 @@ export function CardEditorPage() {
   return (
     <div className="editor-page">
       <header className="editor-header">
-        <div><button className="button ghost" type="button" onClick={closeEditor}><ArrowLeft size={17} />返回</button><h1>{id ? "编辑错题" : "整理一道错题"}</h1><p>先保存原始材料，也可以稍后再整理。</p></div>
+        <div><button className="button ghost" type="button" onClick={closeEditor}><ArrowLeft size={17} />返回</button><h1>{id ? "编辑错题" : "添加错题"}</h1></div>
         <div className="editor-actions">
           <span className="draft-state" role="status"><Cloud size={12} />{draftStatus}</span>
           {id && <button className="button danger ghost" type="button" onClick={handleDelete}><Trash2 size={16} />删除</button>}
@@ -211,7 +210,7 @@ export function CardEditorPage() {
         <div className="editor-main">
           {conflictMessage && <div className="conflict-banner" role="alert"><div><strong>检测到版本冲突</strong>
             <span>{conflictMessage}。当前草稿仍保留。</span></div><button type="button" className="button"
-              onClick={() => window.location.reload()}><RefreshCw size={14} />重新载入</button></div>}
+              onClick={() => { if (window.confirm("放弃当前草稿并读取最新卡片？")) { discardOnLeave.current = true; removeEditorDraft(draftKey); window.location.reload(); } }}><RefreshCw size={14} />读取最新</button></div>}
           {errorMessage && <div className="inline-error" role="alert">{errorMessage}</div>}
           <CardEditorFields form={form} assets={assets} knowledgePoints={knowledgePoints}
             availableCards={availableCards.data ?? []}

@@ -9,7 +9,7 @@ describe("AiRequirementsField", () => {
 
     const input = screen.getByRole("textbox", { name: /附加要求/ });
     expect(input).toHaveAttribute("maxlength", String(AI_REQUIREMENTS_MAX_LENGTH));
-    expect(input).toHaveAccessibleDescription(/不改变卡片范围和可靠性规则/);
+    expect(input).toHaveAccessibleDescription(`5/${AI_REQUIREMENTS_MAX_LENGTH}`);
     expect(screen.getByText(`5/${AI_REQUIREMENTS_MAX_LENGTH}`)).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "步骤更简洁" } });
     expect(onChange).toHaveBeenCalledWith("步骤更简洁");

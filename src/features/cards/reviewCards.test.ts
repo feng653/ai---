@@ -44,4 +44,13 @@ describe("practice card generation", () => {
       key: "数学/函数/单调性", label: "单调性", subject: "数学", chapter: "函数", point: "单调性",
     })).toEqual([practice]);
   });
+  it("never expands explicitly selected source ids to other cards at the same point", () => {
+    const sources = [card("a", "单调性", 2), card("b", "单调性", 9)];
+    const points = new Set([pointKey(sources[0].knowledgePoints[0])]);
+    const request = buildPracticeGenerationRequest(sources, points, 1, "same", "", new Set(["b"]), "recall")!;
+    expect(request.sourceCards.map((source) => [source.id, source.revision])).toEqual([["b", 9]]);
+    expect(request.mode).toBe("recall");
+    expect(buildPracticeGenerationRequest(sources, points, 1, "same", "", new Set())).toBeNull();
+  });
+
 });

@@ -11,8 +11,8 @@ export const AI_REQUIREMENTS_MAX_LENGTH = 500;
 
 export function AiRequirementsField({
   id, value, onChange, disabled = false,
-  helper = "AI 会在不改变卡片范围和可靠性规则的前提下参考这些要求。",
-  placeholder = "例如：步骤更简洁，重点说明我容易混淆的地方",
+  helper = "",
+  placeholder = "",
 }: Props) {
   const helperId = `${id}-helper`;
   return <label className="ai-requirements-field" htmlFor={id}>

@@ -12,6 +12,7 @@ fn request() -> PracticeGenerationRequest {
         name: "单调性".into(),
     };
     PracticeGenerationRequest {
+        mode: super::practice::PracticeMode::Similar,
         topics: vec![point.clone()],
         additional_requirements: None,
         source_cards: vec![PracticeSourceCard {
@@ -71,4 +72,25 @@ fn rejects_overlong_additional_requirements() {
     let mut request = request();
     request.additional_requirements = Some("a".repeat(501));
     assert_eq!(build_prompt(&request).unwrap_err().code, "VALIDATION_ERROR");
+}
+
+#[test]
+fn recall_prompt_keeps_concepts_and_requires_error_evidence() {
+    let mut input = request();
+    input.mode = super::practice::PracticeMode::Recall;
+    let prompt = build_prompt(&input).unwrap();
+    assert!(prompt.contains("禁止生成计算型仿真试题"));
+    assert!(prompt.contains("题目正面不能泄露答案"));
+    assert!(!prompt.contains("改变题面、数值或情境"));
+    input.source_cards[0].error_reason.clear();
+    input.source_cards[0].error_location.clear();
+    assert_eq!(build_prompt(&input).unwrap_err().code, "VALIDATION_ERROR");
+}
+
+#[test]
+fn omitted_mode_preserves_legacy_requests() {
+    let mut value = serde_json::to_value(request()).unwrap();
+    value.as_object_mut().unwrap().remove("mode");
+    let input: PracticeGenerationRequest = serde_json::from_value(value).unwrap();
+    assert_eq!(input.mode, super::practice::PracticeMode::Similar);
 }

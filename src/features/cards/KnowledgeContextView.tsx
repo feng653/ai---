@@ -67,7 +67,7 @@ export function KnowledgeContextView(props: Props) {
         onClick={() => setView("knowledge")}>知识卡片 <small>{knowledgeCards.length}</small></button>
       <button type="button" role="tab" aria-selected={view === "review"} className={view === "review" ? "active" : ""}
         disabled={!reviewReady} onClick={() => setView("review")}>复习题 <small>{visiblePracticeCards.length}</small></button>
-      <span>{selection?.point ? `${cards.length} 道错题用于当前知识点` : `当前范围包含 ${knowledgeCards.length} 张知识卡片`}</span>
+
     </div>
     {view === "cards" && <RelatedCardsView cards={cards} loading={loading} error={error}
       filtered={Boolean(selection)} onOpen={onOpenCard} onCreate={onCreateCard} />}
