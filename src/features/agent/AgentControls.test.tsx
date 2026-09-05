@@ -5,22 +5,18 @@ import { AgentControls } from "./AgentControls";
 describe("AgentControls", () => {
   afterEach(cleanup);
 
-  it("exposes chat/tool modes, reasoning effort, and tool permissions", () => {
+  it("changes mode and reasoning without displaying tools", () => {
     const changeMode = vi.fn();
     const changeReasoning = vi.fn();
     render(<AgentControls mode="auto" reasoning="medium" busy={false}
-      onModeChange={changeMode} onReasoningChange={changeReasoning} tools={[
-        { name: "cards.search", description: "搜索卡片", sideEffect: false, approvalRequired: false },
-        { name: "cards.update", description: "更新卡片", sideEffect: true, approvalRequired: true },
-      ]} />);
+      onModeChange={changeMode} onReasoningChange={changeReasoning} />);
 
     fireEvent.click(screen.getByRole("button", { name: "仅聊天" }));
     fireEvent.change(screen.getByRole("combobox", { name: "思考强度" }), { target: { value: "high" } });
-    fireEvent.click(screen.getByText("可用工具", { exact: false }));
 
     expect(changeMode).toHaveBeenCalledWith("chat_only");
     expect(changeReasoning).toHaveBeenCalledWith("high");
-    expect(screen.getByText("cards.search")).toBeInTheDocument();
-    expect(screen.getByText("需批准")).toBeInTheDocument();
+    expect(screen.queryByText("可用工具")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "自动" })).toHaveAttribute("aria-pressed", "true");
   });
 });

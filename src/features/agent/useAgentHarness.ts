@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import type {
-  AgentMode, AgentReasoningEffort, AgentTimelineItem, AgentToolManifest,
+  AgentMode, AgentReasoningEffort, AgentTimelineItem,
 } from "../../domain/agent";
 import type { CardAsset } from "../../domain/card";
 import { useCards } from "../../hooks/useCards";
@@ -14,14 +14,9 @@ export function useAgentHarness() {
   const [items, dispatch] = useReducer(agentReducer, [welcomeItem()]);
   const [mode, setMode] = useState<AgentMode>("auto");
   const [reasoning, setReasoning] = useState<AgentReasoningEffort>("medium");
-  const [tools, setTools] = useState<AgentToolManifest[]>([]);
   const [activeRunId, setActiveRunId] = useState<string>();
   const cancelledRuns = useRef(new Set<string>());
   const cardsQuery = useCards();
-
-  useEffect(() => {
-    void agentService.listTools().then(setTools).catch(() => setTools([]));
-  }, []);
 
   async function send(text: string, attachments: AgentAttachment[], references: string[]) {
     const message = text.trim() || "请根据图片创建一张错题卡片";
@@ -42,7 +37,7 @@ export function useAgentHarness() {
         attachments: attachments.map((item) => ({ name: item.name, previewUrl: item.previewUrl })),
       } });
       setActiveRunId(runId);
-      const history = items.filter((item): item is Extract<AgentTimelineItem, { kind: "message" }> => item.kind === "message")
+      const history = items.filter((item): item is Extract<AgentTimelineItem, { kind: "message" }> => item.kind === "message" && !item.commentary)
         .slice(-12).map((item) => `${item.role === "user" ? "用户" : "Agent"}：${item.text}`);
       await agentService.startTurn({
         runId, message, history, references, assets, mode, reasoningEffort: reasoning,
@@ -93,7 +88,7 @@ export function useAgentHarness() {
   }
 
   return {
-    items, mode, setMode, reasoning, setReasoning, tools,
+    items, mode, setMode, reasoning, setReasoning,
     cards: cardsQuery.data ?? [], cardsLoading: cardsQuery.isLoading,
     busy: Boolean(activeRunId), preview: agentService.preview,
     provider: agentService.preview ? undefined : "项目内 API Runtime",

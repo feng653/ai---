@@ -83,6 +83,7 @@ export type AgentChatMessage = {
   id: string;
   kind: "message";
   role: "user" | "agent";
+  commentary?: boolean;
   text: string;
   attachments?: Array<{ name: string; previewUrl: string }>;
 };

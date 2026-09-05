@@ -16,7 +16,7 @@ export type TimelineAction =
 
 function createRun(runId: string): AgentRunActivity {
   return {
-    id: `run-${runId}`,
+    id: `run-${runId}-${crypto.randomUUID()}`,
     kind: "run",
     runId,
     status: "running",
@@ -31,25 +31,31 @@ function updateRun(
   runId: string,
   update: (run: AgentRunActivity) => AgentRunActivity,
 ) {
-  const index = items.findIndex((item) => item.kind === "run" && item.runId === runId);
+  const index = items.map((item) => item.kind === "run" && item.runId === runId).lastIndexOf(true);
   if (index < 0) return [...items, update(createRun(runId))];
   return items.map((item, itemIndex) => itemIndex === index ? update(item as AgentRunActivity) : item);
 }
 
 function applyEvent(items: AgentTimelineItem[], runId: string, event: AgentEvent) {
-  if (event.type === "message") {
+  if (event.type === "message" || event.type === "decision_summary") {
     return [...items, {
       id: `message-${crypto.randomUUID()}`,
       kind: "message" as const,
       role: "agent" as const,
       text: event.text,
+      commentary: event.type === "decision_summary",
     }];
+  }
+  if (event.type === "approval_required") {
+    const previous = [...items].reverse().find((item) => item.kind === "run" && item.runId === runId);
+    if (previous?.kind === "run" && !previous.approval) {
+      items = [...items.filter((item) => item !== previous), previous];
+    } else {
+      items = [...items, createRun(runId)];
+    }
   }
   return updateRun(items, runId, (run) => {
     if (event.type === "status") return { ...run, label: event.label, status: "running" };
-    if (event.type === "decision_summary") {
-      return { ...run, summaries: [...run.summaries, event.text] };
-    }
     if (event.type === "tool_started") {
       return { ...run, label: `正在调用 ${event.name}`, tools: [...run.tools, {
         callId: event.callId, name: event.name, summary: event.summary, status: "running",

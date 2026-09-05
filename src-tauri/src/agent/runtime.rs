@@ -56,13 +56,21 @@ where
     validate_request(&request)?;
     state.prepare_run(&request.run_id)?;
     let mut events = EventEmitter::new(request_id, request.run_id.clone(), sink);
+    let observations = if request.mode == super::protocol::InteractionMode::Auto {
+        match tools::search_cards(storage, String::new())? {
+            ToolOutcome::Observation(result) => vec![format!("cards.search(query=空字符串) => {result}")],
+            ToolOutcome::Approval { .. } => unreachable!("search is read-only"),
+        }
+    } else {
+        Vec::new()
+    };
     run_steps(
         manager,
         storage,
         state,
         RunContinuation {
             request,
-            observations: Vec::new(),
+            observations,
             next_step: 0,
             owns_assets: true,
         },

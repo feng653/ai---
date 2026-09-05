@@ -42,7 +42,7 @@ pub fn execute(
     call: ModelToolCall,
 ) -> Result<ToolOutcome, AppError> {
     match call.name.as_str() {
-        "cards.search" => search_cards(storage, required(call.query, "query")?),
+        "cards.search" => search_cards(storage, call.query.unwrap_or_default()),
         "cards.get" => get_card(storage, required(call.card_id, "cardId")?),
         "knowledge.search" => search_knowledge(storage, required(call.query, "query")?),
         "cards.create" => {
@@ -107,11 +107,13 @@ pub fn execute(
     }
 }
 
-fn search_cards(storage: &Storage, query: String) -> Result<ToolOutcome, AppError> {
+pub(super) fn search_cards(storage: &Storage, query: String) -> Result<ToolOutcome, AppError> {
+    let library_count = storage.list_cards(CardFilter::default())?.len();
     let cards = storage.list_cards(CardFilter {
-        query: Some(query),
+        query: Some(query.clone()),
         ..Default::default()
     })?;
+    let count = cards.len();
     let rows = cards
         .into_iter()
         .take(8)
@@ -122,7 +124,8 @@ fn search_cards(storage: &Storage, query: String) -> Result<ToolOutcome, AppErro
             })
         })
         .collect::<Vec<_>>();
-    observation(json!({ "count": rows.len(), "cards": rows }))
+    observation(json!({ "count": count, "libraryCount": library_count,
+        "query": query, "returnedCount": rows.len(), "truncated": count > rows.len(), "cards": rows }))
 }
 
 fn get_card(storage: &Storage, card_id: String) -> Result<ToolOutcome, AppError> {

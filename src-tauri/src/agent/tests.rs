@@ -144,3 +144,25 @@ fn fills_single_explicit_reference_for_cards_get() {
     repair_referenced_card_call(&mut step, &request);
     assert_eq!(step.tool_call.unwrap().card_id.as_deref(), Some("card-1"));
 }
+
+#[test]
+fn search_lists_existing_cards_and_distinguishes_no_match_from_empty_library() {
+    let directory = tempfile::tempdir().unwrap();
+    let storage = Storage::open(directory.path()).unwrap();
+    for index in 0..10 {
+        storage.save_card(input(&format!("积分题 {index}")), None, None, false).unwrap();
+    }
+    for query in [None, Some(String::new()), Some("不存在的关键词".into())] {
+        let mut request = call("cards.search");
+        request.query = query.clone();
+        let ToolOutcome::Observation(result) = execute(&storage, "search", request).unwrap() else {
+            panic!("search must not require approval");
+        };
+        let result: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(result["libraryCount"], 10);
+        let unmatched = query.as_deref() == Some("不存在的关键词");
+        assert_eq!(result["count"], if unmatched { 0 } else { 10 });
+        assert_eq!(result["returnedCount"], if unmatched { 0 } else { 8 });
+        assert_eq!(result["truncated"], !unmatched);
+    }
+}

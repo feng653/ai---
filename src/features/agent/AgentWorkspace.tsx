@@ -28,20 +28,20 @@ export function AgentWorkspace() {
         <span className="harness-logo"><Bot size={19} /></span>
         <div><strong>知拾 Agent</strong><small><i />{harness.preview
           ? "模拟"
-          : harness.provider ? `${harness.provider}` : "桌面运行时"}</small></div>
+          : "AI 助手"}</small></div>
         <button title="新对话" aria-label="新对话" onClick={() => void newConversation()}>
           <MessageSquarePlus size={16} />
         </button>
         <button title="收起" aria-label="收起 AI Agent" onClick={() => setOpen(false)}><Minus size={17} /></button>
       </header>
-      <details className="compact-agent-options"><summary>选项</summary><AgentControls mode={harness.mode} reasoning={harness.reasoning} tools={harness.tools}
-        busy={harness.busy} onModeChange={harness.setMode} onReasoningChange={harness.setReasoning} /></details>
       <AgentTimeline items={harness.items.filter((item) => item.id !== "welcome")} busy={harness.busy} onResolve={(id, approved) =>
         void harness.resolveApproval(id, approved)} />
       {harness.busy && <button className="harness-stop" onClick={() => void harness.cancel()}>
         <Octagon size={13} />停止本轮
       </button>}
       <AgentComposer key={composerVersion} busy={harness.busy} cards={harness.cards}
+        controls={<AgentControls mode={harness.mode} reasoning={harness.reasoning}
+          busy={harness.busy} onModeChange={harness.setMode} onReasoningChange={harness.setReasoning} />}
         onSend={(text, attachments, references) => void harness.send(text, attachments, references)} />
     </section>}
     <button className="harness-fab" type="button" aria-label={open ? "收起 AI Agent" : "打开 AI Agent"}

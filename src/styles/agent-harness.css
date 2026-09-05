@@ -24,35 +24,14 @@
 .harness-modes button.active { color: var(--brand); background: #fff; box-shadow: 0 1px 4px rgba(20,45,31,.12); font-weight: 700; }
 .harness-options label { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: 8px; }
 .harness-options select { min-height: 27px; padding: 0 22px 0 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink-2); background: #fff; font-size: 8px; }
-.harness-tools { border-bottom: 1px solid var(--line); }
-.harness-tools summary { min-height: 34px; padding: 0 12px; display: flex; align-items: center; gap: 6px; color: var(--ink-2); cursor: pointer; list-style: none; font-size: 8px; }
-.harness-tools summary::-webkit-details-marker { display: none; }
-.harness-tools summary span { margin-left: auto; padding: 2px 6px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-weight: 700; }
-.harness-tools > div { max-height: 138px; padding: 0 10px 9px; overflow-y: auto; display: grid; gap: 4px; }
-.harness-tools article { padding: 6px 7px; display: grid; grid-template-columns: 95px minmax(0, 1fr) auto; align-items: center; gap: 6px; border-radius: 7px; background: var(--surface-soft); }
-.harness-tools code { color: var(--brand); font-size: 7px; }
-.harness-tools small { overflow: hidden; color: var(--ink-3); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
-.harness-tools em { padding: 2px 5px; border-radius: 99px; font-size: 7px; font-style: normal; }
-.harness-tools em.read { color: var(--brand); background: var(--brand-soft); }
-.harness-tools em.write { color: #8b6418; background: #fff3d5; }
 .harness-timeline { min-height: 160px; padding: 13px; overflow-y: auto; flex: 1; background: #fafbf9; }
 .harness-message { max-width: 92%; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 7px; }
 .harness-message.user { margin-left: auto; flex-direction: row-reverse; }
-.harness-message > span { width: 27px; height: 27px; flex: none; display: grid; place-items: center; border-radius: 9px; color: var(--brand); background: var(--brand-soft); }
-.harness-message.user > span { color: var(--ink-2); background: #e9ece8; }
 .harness-message > div { min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px 11px 11px; background: #fff; }
 .harness-message.user > div { border-color: var(--brand); border-radius: 11px 4px 11px 11px; color: #fff; background: var(--brand); }
 .harness-message p { margin: 0; font-size: 9px; line-height: 1.65; white-space: pre-wrap; }
 .harness-message-images { margin-bottom: 6px; display: flex; gap: 5px; }
 .harness-message-images img { width: 68px; height: 58px; object-fit: cover; border-radius: 7px; }
-.harness-run { margin: 0 0 12px 34px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
-.harness-run > header { display: flex; align-items: center; gap: 6px; color: var(--brand); }
-.harness-run > header strong { font-size: 8px; }
-.harness-run > header small { margin-left: auto; color: var(--ink-3); font-size: 7px; }
-.harness-run > p { margin: 7px 0 0; color: var(--ink-2); font-size: 8px; line-height: 1.5; }
-.harness-tool-call { margin-top: 6px; padding: 6px; display: grid; grid-template-columns: auto 90px minmax(0, 1fr) auto; align-items: center; gap: 5px; border-radius: 7px; color: var(--ink-3); background: var(--surface-soft); font-size: 7px; }
-.harness-tool-call code { color: var(--brand); }
-.harness-tool-call span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .harness-approval { margin-top: 8px; overflow: hidden; border: 1px solid #d7c28d; border-radius: 9px; background: #fffdf7; }
 .harness-approval > header { padding: 7px; display: flex; align-items: center; gap: 6px; color: #8b6418; background: #fff6dd; }
 .harness-approval header div { display: grid; gap: 1px; }
@@ -72,3 +51,27 @@
 .harness-stop { margin: 7px auto 0; min-height: 26px; padding: 0 9px; border: 1px solid #dfb9b0; border-radius: 7px; display: flex; align-items: center; gap: 4px; color: var(--red); background: #fff5f3; font-size: 8px; }
 .harness-window .agent-composer { margin-top: 8px; }
 @media (max-width: 560px) { .harness-float { right: 10px; bottom: 10px; } .harness-window { width: calc(100vw - 20px); height: calc(100vh - 78px); border-radius: 15px; } }
+.harness-window .harness-timeline { background: #fff; padding: 20px; }
+.harness-window .harness-message { max-width: 100%; margin-bottom: 22px; }
+.harness-window .harness-message.agent > div { padding: 0; border: 0; background: transparent; width: 100%; }
+.harness-window .harness-message.user { max-width: 88%; }
+.harness-window .harness-message.user > div { border: 0; border-radius: 16px; color: var(--ink); background: var(--surface-soft); padding: 10px 14px; }
+.harness-message .math-content { font-size: 13px; line-height: 1.75; overflow-wrap: anywhere; }
+.harness-message .math-content p { font-size: inherit; line-height: inherit; white-space: normal; margin: 0 0 10px; }
+.harness-message .math-content > :last-child { margin-bottom: 0; }
+.harness-message pre { overflow-x: auto; max-width: 100%; }
+.harness-window .agent-composer { margin: 0 12px 12px; padding: 12px; border-radius: 18px; background: var(--surface-soft); flex: none; }
+.harness-window .agent-message-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.harness-window .agent-composer textarea { min-height: 70px; max-height: 180px; padding: 0; font-size: 13px; line-height: 1.65; background: transparent; }
+.harness-window .agent-composer > footer { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.harness-window .agent-composer > footer > button { min-height: 34px; font-size: 11px; padding: 6px 8px; }
+.harness-window .harness-controls { margin-left: auto; }
+.harness-window .harness-options { border: 0; padding: 0; gap: 6px; flex-wrap: wrap; }
+.harness-window .harness-options label { font-size: 10px; gap: 4px; }
+.harness-window .harness-options select { font-size: 11px; min-height: 32px; }
+.harness-window .harness-modes button { font-size: 11px; min-height: 30px; padding: 0 7px; }
+.harness-window .harness-live { margin: 8px 0; font-size: 12px; }
+.harness-window .harness-approval { margin-bottom: 20px; }
+.harness-window .harness-approval :is(strong, p, small, button, footer span) { font-size: 12px; }
+.harness-window :is(button, select, textarea):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .harness-window, .harness-window .spin { animation: none; } }

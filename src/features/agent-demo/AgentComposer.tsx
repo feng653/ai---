@@ -1,5 +1,5 @@
 import { ImagePlus, Send, X } from "lucide-react";
-import { useRef, useState, type DragEvent } from "react";
+import { useRef, useState, type ReactNode, type DragEvent } from "react";
 import type { Card } from "../../domain/card";
 import { agentId } from "./agentWorkflow";
 import { useCardMentions } from "../agent/useCardMentions";
@@ -7,6 +7,7 @@ import type { AgentAttachment } from "./types";
 
 type Props = {
   busy: boolean;
+  controls?: ReactNode;
   cards: Card[];
   onSend: (text: string, attachments: AgentAttachment[], referencedCardIds: string[]) => void;
 };
@@ -20,7 +21,7 @@ function readImage(file: File): Promise<AgentAttachment> {
   });
 }
 
-export function AgentComposer({ busy, cards, onSend }: Props) {
+export function AgentComposer({ busy, cards, onSend, controls }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const mention = useCardMentions(cards);
   const text = mention.text;
@@ -97,6 +98,7 @@ export function AgentComposer({ busy, cards, onSend }: Props) {
         <button type="button" onClick={() => inputRef.current?.click()} disabled={attachments.length >= 3 || busy}>
           <ImagePlus size={17} />添加图片 <small>{attachments.length}/3</small>
         </button>
+        {controls}
         <button className="agent-send" type="button" onClick={submit} disabled={busy || (!text.trim() && !attachments.length)}>
           <Send size={16} />发送
         </button>

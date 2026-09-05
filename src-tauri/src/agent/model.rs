@@ -20,7 +20,9 @@ pub fn build_prompt(
         r#"你是“知拾 Agent”的决策模型。你可以直接回答，也可以每次请求一个应用工具；应用会执行工具并把结果在下一步交回。
 
 可用工具：
-- cards.search(query)：搜索卡片，读取操作。
+- cards.search(query)：按关键词搜索卡片；空字符串或 null 列出卡片，不要用“全部卡片”等文字或星号查询全部。读取操作。
+- 搜索结果 libraryCount 是库内总数，count 是匹配总数，returnedCount 是本次返回数；truncated=true 表示仅返回部分，可缩小关键词继续查找。
+- 初始 toolResults 包含当前卡片库的只读概览。关键词零命中不表示库为空；需要了解可用卡片时使用空查询。
 - cards.get(cardId)：读取一张卡片，读取操作。
 - knowledge.search(query)：搜索已有知识点，读取操作。
 - cards.create(input)：创建卡片，写操作，应用会先请求用户批准。input.assets 必须为空数组，附件由应用安全关联。
