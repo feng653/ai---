@@ -1,11 +1,6 @@
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 
-mod knowledge;
-pub use knowledge::{
-    GeneratedKnowledgeCard, KnowledgeCardRecord, KnowledgeCardSaveInput, KnowledgeCardStatus,
-};
-
 pub const ERROR_TYPES: [&str; 7] = [
     "概念不清",
     "方法错误",
@@ -108,6 +103,7 @@ impl CardStatus {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CardFilter {
+    pub unclassified: Option<bool>,
     pub query: Option<String>,
     pub status: Option<String>,
     pub knowledge_subject: Option<String>,

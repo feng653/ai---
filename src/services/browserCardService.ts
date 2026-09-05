@@ -26,6 +26,7 @@ function storeCards(cards: Card[]): void {
 }
 
 function matchesFilter(card: Card, filter: CardFilter): boolean {
+  if (filter.unclassified && card.knowledgePoints.some((point) => point.name.trim())) return false;
   if (filter.kind && filter.kind !== "all" && (card.kind ?? "mistake") !== filter.kind) return false;
   if (filter.status && filter.status !== "all" && card.status !== filter.status) return false;
   const hasKnowledgeFilter = filter.knowledgeSubject || filter.knowledgeChapter || filter.knowledgePoint;

@@ -2,8 +2,7 @@ mod assets;
 mod card_records;
 mod cards;
 #[cfg(test)]
-mod knowledge_card_tests;
-mod knowledge_cards;
+mod classification_tests;
 mod practice;
 #[cfg(test)]
 mod tests;

@@ -8,10 +8,8 @@ mod codex_app_server_process;
 mod codex_app_server_tests;
 mod codex_assets;
 mod codex_auth;
-mod codex_learning;
 mod codex_practice;
 mod deepseek;
-mod knowledge;
 #[cfg(test)]
 mod live_tests;
 mod manager;
@@ -35,7 +33,6 @@ mod proposal;
 mod proposal_tests;
 mod settings;
 
-pub use knowledge::KnowledgeCardRequest;
 pub use manager::AiManager;
 pub use manager_state::ProviderSummary;
 pub use practice::PracticeGenerationRequest;

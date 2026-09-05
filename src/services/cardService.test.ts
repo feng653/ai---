@@ -7,6 +7,17 @@ const service = new BrowserCardService();
 beforeEach(() => localStorage.clear());
 
 describe("BrowserCardService", () => {
+  it("finds unclassified cards and removes them from pending after classification", async () => {
+    const input = { ...emptyCardInput(), question: "待归档原题" };
+    const saved = await service.save({ input });
+    expect((await service.list({ unclassified: true, kind: "mistake" })).map((card) => card.id)).toEqual([saved.id]);
+    expect(await service.list({ unclassified: true, query: "不存在" })).toHaveLength(0);
+    expect(await service.list({ unclassified: true, query: "待归档" })).toHaveLength(1);
+    await service.save({ id: saved.id, expectedRevision: saved.revision,
+      input: { ...input, knowledgePoints: [{ subject: "数学", chapter: null, name: "综合" }] } });
+    expect(await service.list({ unclassified: true })).toHaveLength(0);
+    expect(await service.list({ knowledgeSubject: "数学", knowledgeChapter: UNCATEGORIZED_CHAPTER_FILTER })).toHaveLength(1);
+  });
   it("searches across diagnosis and knowledge points", async () => {
     expect(await service.list({ query: "正数分支" })).toHaveLength(1);
     expect(await service.list({ knowledgePoint: "一元二次不等式" })).toHaveLength(1);

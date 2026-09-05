@@ -1,5 +1,4 @@
 import { Search, X } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCards } from "../../hooks/useCards";
 import { KnowledgeContextView } from "./KnowledgeContextView";
@@ -7,11 +6,11 @@ import { useKnowledgeWorkspace } from "./KnowledgeWorkspaceContext";
 
 export function CardsPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
-  const { selection, setSelection } = useKnowledgeWorkspace();
+  const { selection, setSelection, query, setQuery, view, setView } = useKnowledgeWorkspace();
   const allCards = useCards({ kind: "mistake" });
   const cards = useCards({
     kind: "mistake", query,
+    unclassified: selection?.unclassified,
     knowledgeSubject: selection?.subject,
     knowledgeChapter: selection?.chapter,
     knowledgePoint: selection?.point,
@@ -28,6 +27,7 @@ export function CardsPage() {
       <span><b>{cards.data?.length ?? 0}</b> 条内容</span>
     </header>
     <KnowledgeContextView allCards={allCards.data ?? []} cards={cards.data ?? []}
+      view={view} onViewChange={setView}
       savedPracticeCards={practiceCards.data ?? []} selection={selection}
       loading={cards.isLoading} error={cards.isError ? cards.error : undefined}
       onSelectionChange={setSelection} onOpenCard={(id) => navigate(`/cards/${id}`)}

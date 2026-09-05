@@ -4,22 +4,6 @@ use crate::error::AppError;
 use reqwest::Client;
 use serde_json::{json, Value};
 
-pub async fn generate(
-    client: &Client,
-    config: &ApiProviderConfig,
-    api_key: &str,
-    prompt: &str,
-) -> Result<String, AppError> {
-    let body = request_body(
-        config,
-        prompt,
-        "你是知拾知识卡片编辑器。严格限定当前知识点，只输出精炼 JSON。",
-        1024,
-    );
-    let text = post_json(client, config, api_key, "chat/completions", &body).await?;
-    extract_content(&text)
-}
-
 pub async fn generate_practice(
     client: &Client,
     config: &ApiProviderConfig,

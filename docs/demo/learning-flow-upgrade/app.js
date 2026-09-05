@@ -38,14 +38,14 @@
     const id = D.uid('m'); s.drafts[id] = { id, type: 'mistake', subject: s.treePath[0] || '数学', chapter: s.treePath[1] || '', points: s.treePath[2] || '', question: '', assets: [], baseRev: 0, changed: true };
     edit(id);
   }
-  function valid(item) { return Boolean((item.question || '').trim() || (item.type !== 'knowledge' && item.assets?.length)); }
+  function valid(item) { return Boolean((item.question || '').trim() || item.assets?.length); }
   function fieldError(item) {
-    if (!valid(item)) return '请填写题目或添加图片；知识卡标题不能为空。';
+    if (!valid(item)) return '请填写题目或添加图片。';
     const points = (item.points || '').split(/[、,，\n]/).map(value => value.trim()).filter(Boolean);
     if (item.type === 'mistake' && points.length > 3) return '错题最多关联 3 个主要知识点，请用顿号分隔。';
     if (item.type === 'practice') {
       const existing = new Set(s.cards.filter(value => value.type !== 'practice').flatMap(value => (value.points || '').split(/[、,，\n]/).map(point => point.trim())));
-      if (!points.length || points.some(point => !existing.has(point))) return '练习需关联已有知识点，请使用错题或知识卡中已有的名称。';
+      if (!points.length || points.some(point => !existing.has(point))) return '练习需关联已有知识点，请使用错题中已有的名称。';
     }
     return '';
   }
@@ -107,7 +107,7 @@
     agentOpen = !agentOpen; renderAgent(); if (agentOpen) $('agent-message').focus(); else $('agent-launcher').focus();
   }
   function createProposal(item, text) {
-    const after = D.copy(item), key = item.type === 'knowledge' ? 'body' : 'solution';
+    const after = D.copy(item), key = 'solution';
     const explicit = text.match(/(?:改成|改为)[：:\s]*([\s\S]+)/);
     after[explicit ? (text.includes('补充') ? 'note' : key) : 'note'] = explicit ? explicit[1] : `${item.note || ''}${item.note ? '\n' : ''}示例建议：逐项检查条件，保留完整推导。`;
     s.proposal = { before: D.copy(item), after, error: '' };

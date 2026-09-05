@@ -1,11 +1,11 @@
 # Demo 索引
 
-- [learning-flow-upgrade/index.html](./learning-flow-upgrade/index.html)：以图片收录、知识树找错题、错因概念问答为核心的重设计原型，保留旧知识卡与练习，Agent 使用 @ 逐级引用，包含 AI 供应商设置及可收起侧栏；Agent 演示全类型卡片编辑与联网来源呈现。AI 和搜索为明确标注的模拟，人工交互未验收；范围与待验项见同目录 README。
+- [learning-flow-upgrade/index.html](./learning-flow-upgrade/index.html)：以图片收录、知识树找错题、错因概念问答为核心的重设计原型，保留知识树与练习，Agent 使用 @ 逐级引用，包含 AI 供应商设置及可收起侧栏；Agent 演示错题与练习卡片编辑与联网来源呈现。AI 和搜索为明确标注的模拟，人工交互未验收；范围与待验项见同目录 README。
 - `agent-harness/index.html`：通用 AI Agent Harness 演示，支持纯聊天、多步工具调用、思考状态、写操作审批、拒绝、取消和运行记录。
-- `ai-agent-workflows/index.html`：照片错题到学习闭环交互原型，验证“唯一全局 Agent 入口 + 创建页一键派发”的职责分离、Agent 内照片任务、串行队列、重启恢复、明确来源按钮、逐字段/逐卡审核，以及知识卡和练习批次后续流程；同目录 `contract-freeze.md` 仅为已废止的历史记录，当前依据见 `docs/AI学习闭环-全流程功能清单.md` 与 `docs/AI生成练习卡-PRD.md`。
+- [ai-agent-workflows/index.html](./ai-agent-workflows/index.html)：旧原型已退役；只保留跳转入口，转到当前错题整理原型。
 - `error-card-library/index.html`：错题卡片新增、整理、筛选和详情交互演示。
-- `knowledge-tree/index.html`：知识树、知识卡片和可配置数量复习题演示。
-- `tree-sidebar-layout/index.html`：统一视觉风格的学习空间草图，包含柔和知识树、知识卡片、练习题和仅展示 AI 供应商的设置页。
-- `knowledge-workspace-redesign/index.html`：基于 UI 重设计清单的完整工作台 Demo，含折页项目图标、知识树与卡片详情变形、编辑/裁剪/AI 审阅、供应商及自定义 API 设置和 Agent 小窗全流程动画；同目录 `功能还原对照表.md` 记录逐项映射。
+- [knowledge-tree/index.html](./knowledge-tree/index.html)：旧原型已退役；只保留跳转入口，转到当前错题整理原型。
+- [tree-sidebar-layout/index.html](./tree-sidebar-layout/index.html)：旧原型已退役；只保留跳转入口，转到当前错题整理原型。
+- [knowledge-workspace-redesign/index.html](./knowledge-workspace-redesign/index.html)：旧原型已退役；只保留跳转入口，转到当前错题整理原型。
 
 每个 demo 的 HTML、CSS、JavaScript、测试和专用资源只放在自己的目录中。新增 demo 时，请新建语义明确的独立目录，并使用 `index.html` 作为入口。

@@ -7,6 +7,7 @@ import {
 } from "./knowledgeTree";
 
 type Props = {
+  hidden?: boolean;
   cards: Card[];
   selection: KnowledgeSelection | null;
   onChange: (selection: KnowledgeSelection | null) => void;
@@ -40,7 +41,7 @@ function TreeBranch({ node, selectedKey, expanded, searching, onToggle, onSelect
   </li>;
 }
 
-export function KnowledgeTreeFilter({ cards, selection, onChange }: Props) {
+export function KnowledgeTreeFilter({ cards, selection, onChange, hidden }: Props) {
   const [query, setQuery] = useState("");
   const tree = useMemo(() => buildKnowledgeTree(cards), [cards]);
   const visible = useMemo(() => searchKnowledgeTree(tree, query), [query, tree]);
@@ -57,7 +58,7 @@ export function KnowledgeTreeFilter({ cards, selection, onChange }: Props) {
   });
   const select = (next: KnowledgeSelection) => onChange(selection?.key === next.key ? null : next);
 
-  return <aside className="knowledge-tree-panel" aria-label="知识点分类">
+  return <aside className="knowledge-tree-panel" aria-label="知识点分类" hidden={hidden} style={hidden ? { display: "none" } : undefined}>
     <header><h2>知识脉络</h2><span>{cards.length}</span></header>
     <label className="knowledge-tree-search">
       <Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)}

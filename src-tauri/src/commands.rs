@@ -1,11 +1,8 @@
 use crate::ai::{
-    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, KnowledgeCardRequest,
-    PracticeGenerationRequest, ProviderSummary,
+    AgentRequest, AiManager, AiProgress, AiProposal, ApiProviderInput, PracticeGenerationRequest,
+    ProviderSummary,
 };
-use crate::domain::{
-    Card, CardAsset, CardFilter, CardInput, GeneratedKnowledgeCard, KnowledgeCardRecord,
-    KnowledgeCardSaveInput, PracticeCardDraft, ProviderStatus,
-};
+use crate::domain::{Card, CardAsset, CardFilter, CardInput, PracticeCardDraft, ProviderStatus};
 use crate::error::AppError;
 use crate::storage::Storage;
 use serde::Serialize;
@@ -45,26 +42,6 @@ pub fn save_practice_cards(
     drafts: Vec<PracticeCardDraft>,
 ) -> Result<Vec<Card>, AppError> {
     storage.save_practice_cards(drafts)
-}
-
-#[tauri::command]
-pub fn list_knowledge_cards(
-    storage: State<'_, Storage>,
-) -> Result<Vec<KnowledgeCardRecord>, AppError> {
-    storage.list_knowledge_cards()
-}
-
-#[tauri::command]
-pub fn save_knowledge_card(
-    storage: State<'_, Storage>,
-    input: KnowledgeCardSaveInput,
-) -> Result<KnowledgeCardRecord, AppError> {
-    storage.save_knowledge_card(input)
-}
-
-#[tauri::command]
-pub fn delete_knowledge_card(storage: State<'_, Storage>, key: String) -> Result<(), AppError> {
-    storage.delete_knowledge_card(&key)
 }
 
 #[tauri::command]
@@ -193,26 +170,6 @@ pub async fn organize_card(
                 );
             },
         )
-        .await
-}
-
-#[tauri::command]
-pub async fn generate_knowledge_card(
-    manager: State<'_, Arc<AiManager>>,
-    window: Window,
-    request: KnowledgeCardRequest,
-    request_id: String,
-) -> Result<GeneratedKnowledgeCard, AppError> {
-    manager
-        .generate_knowledge_card(request, move |progress| {
-            let _ = window.emit(
-                "ai-progress",
-                AiProgressPayload {
-                    request_id: request_id.clone(),
-                    progress,
-                },
-            );
-        })
         .await
 }
 

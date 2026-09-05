@@ -70,6 +70,7 @@ export type CardListItem = Pick<
 >;
 
 export type CardFilter = {
+  unclassified?: boolean;
   query?: string;
   status?: CardStatus | "all";
   knowledgeSubject?: string;

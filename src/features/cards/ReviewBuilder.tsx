@@ -2,7 +2,7 @@ import { Check, Minus, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { PracticeDifficulty, PracticeGenerationRequest } from "../../domain/ai";
 import { UNCATEGORIZED_CHAPTER_FILTER, type Card } from "../../domain/card";
-import { buildKnowledgeCards } from "./learningContent";
+import { buildReviewTopics } from "./learningContent";
 import type { KnowledgeSelection } from "./knowledgeTree";
 import { buildPracticeGenerationRequest, pointKey, reviewSources } from "./reviewCards";
 import { AiRequirementsField } from "./AiRequirementsField";
@@ -22,7 +22,7 @@ const difficulties: Array<{ value: PracticeDifficulty; label: string; hint: stri
 ];
 
 export function ReviewBuilder({ allCards, initialSelection, error, onCancel, onGenerate }: Props) {
-  const points = useMemo(() => buildKnowledgeCards(allCards, null), [allCards]);
+  const points = useMemo(() => buildReviewTopics(allCards, null), [allCards]);
   const initialKey = initialSelection?.point ? pointKey({
     subject: initialSelection.subject,
     chapter: initialSelection.chapter === UNCATEGORIZED_CHAPTER_FILTER ? null : initialSelection.chapter,

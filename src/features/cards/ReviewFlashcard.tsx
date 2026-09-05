@@ -1,12 +1,16 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { ReviewCardDialog } from "./ReviewCardDialog";
 import { AssetPreview } from "../../components/AssetPreview";
 import { MathContent } from "../../components/MathContent";
 import type { Card } from "../../domain/card";
 
 export function ReviewFlashcard({ card }: { card: Card }) {
   const [flipped, setFlipped] = useState(false);
+  const [origin, setOrigin] = useState<DOMRect | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const expandRef = useRef<HTMLButtonElement>(null);
   const id = useId();
-  return <div className={`review-flashcard${flipped ? " flipped" : ""}`}>
+  return <div ref={ref} className={`review-flashcard${flipped ? " flipped" : ""}`}>
     <div className="review-flashcard-body">
       <section id={`${id}-front`} className="review-flashcard-face" aria-hidden={flipped} inert={flipped}>
         <span className="review-face-label">题目</span>
@@ -21,5 +25,7 @@ export function ReviewFlashcard({ card }: { card: Card }) {
     </div>
     <button type="button" className="review-flashcard-toggle" aria-label={flipped ? "翻回题目" : "翻面查看答案"}
       aria-describedby={`${id}-${flipped ? "back" : "front"}`} onClick={() => setFlipped((value) => !value)} />
+    {flipped && <button ref={expandRef} type="button" className="review-card-expand" onClick={() => setOrigin(ref.current!.getBoundingClientRect())}>查看详情</button>}
+    {origin && <ReviewCardDialog card={card} origin={origin} opener={expandRef.current} onClose={() => setOrigin(null)} />}
   </div>;
 }

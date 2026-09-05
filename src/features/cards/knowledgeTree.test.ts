@@ -4,6 +4,14 @@ import { seedCards } from "../../services/seedCards";
 import { buildKnowledgeTree, searchKnowledgeTree, selectionPath } from "./knowledgeTree";
 
 describe("knowledge tree", () => {
+  it("keeps unclassified image cards separate from real subjects and knowledge cards", () => {
+    const pending = { ...seedCards[0], id: "image-only", question: "", knowledgePoints: [] };
+    const tree = buildKnowledgeTree([...seedCards, pending]);
+    expect(tree[0]).toMatchObject({ label: "待归档", count: 1, children: [], selection: { unclassified: true } });
+    expect(selectionPath(tree[0].selection)).toBe("待归档");
+    expect(tree.find((node) => node.label === "数学")?.count).toBe(3);
+    expect(buildKnowledgeTree(seedCards).some((node) => node.selection.unclassified)).toBe(false);
+  });
   it("aggregates distinct card counts at all three levels", () => {
     const tree = buildKnowledgeTree(seedCards);
     const math = tree.find((node) => node.label === "数学")!;

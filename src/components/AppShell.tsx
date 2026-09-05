@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AgentWorkspace } from "../features/agent/AgentWorkspace";
 import { KnowledgeTreeFilter } from "../features/cards/KnowledgeTreeFilter";
-import { KnowledgeWorkspaceContext } from "../features/cards/KnowledgeWorkspaceContext";
+import { KnowledgeWorkspaceContext, type LibraryView } from "../features/cards/KnowledgeWorkspaceContext";
 import type { KnowledgeSelection } from "../features/cards/knowledgeTree";
 import { useEditorDraftPath } from "../features/cards/editorDraftStore";
 import { useCards } from "../hooks/useCards";
@@ -27,6 +27,8 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => setMobileOpen(false), [location.pathname]);
   const [selection, setSelection] = useState<KnowledgeSelection | null>(null);
+  const [query, setQuery] = useState("");
+  const [view, setView] = useState<LibraryView>("cards");
   const allCards = useCards({ kind: "mistake" });
   const mistakeIds = useMemo(() => new Set((allCards.data ?? []).map((card) => card.id)), [allCards.data]);
   const draftPath = useEditorDraftPath(mistakeIds);
@@ -34,7 +36,7 @@ export function AppShell() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true",
   );
-  const workspace = useMemo(() => ({ selection, setSelection }), [selection]);
+  const workspace = useMemo(() => ({ selection, setSelection, query, setQuery, view, setView }), [selection, query, view]);
 
   function toggleSidebar() {
     setIsSidebarCollapsed((collapsed) => {
@@ -62,8 +64,9 @@ export function AppShell() {
           <NavLink to={draftPath || "/cards/new"} title={captureLabel}><CirclePlus /><span>{captureLabel}</span></NavLink>
           <NavLink to="/settings/ai" title="AI 接入"><PlugZap /><span>AI 接入</span></NavLink>
         </nav>
-        {location.pathname === "/" && <KnowledgeTreeFilter cards={allCards.data ?? []}
-          selection={selection} onChange={setSelection} />}
+        <KnowledgeTreeFilter cards={allCards.data ?? []}
+          hidden={location.pathname !== "/" || isSidebarCollapsed}
+          selection={selection} onChange={setSelection} />
         <div className="sidebar-footer">
           {!isSidebarCollapsed && <button className="sidebar-toggle" onClick={toggleSidebar}
             aria-label="收起侧边栏" title="收起侧边栏"><PanelLeftClose /><span>收起侧边栏</span></button>}

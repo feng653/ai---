@@ -1,6 +1,7 @@
 import { UNCATEGORIZED_CHAPTER_FILTER, type Card } from "../../domain/card";
 
 export type KnowledgeSelection = {
+  unclassified?: boolean;
   key: string;
   label: string;
   subject: string;
@@ -62,8 +63,14 @@ export function buildKnowledgeTree(cards: Card[]): KnowledgeTreeNode[] {
         )),
     };
   };
-  return [...subjects.values()].sort(sortByLabel)
+  const result = [...subjects.values()].sort(sortByLabel)
     .map((subject) => convert(subject, 1, subject.label));
+  const pending = cards.filter((card) => !card.knowledgePoints.some((point) => point.name.trim())).length;
+  if (pending) result.unshift({
+    key: "pending-classification", label: "待归档", level: 1, count: pending, children: [],
+    selection: { key: "pending-classification", label: "待归档", subject: "", unclassified: true },
+  });
+  return result;
 }
 
 export function searchKnowledgeTree(nodes: KnowledgeTreeNode[], query: string): KnowledgeTreeNode[] {
@@ -79,6 +86,7 @@ export function searchKnowledgeTree(nodes: KnowledgeTreeNode[], query: string): 
 
 export function selectionPath(selection: KnowledgeSelection | null): string {
   if (!selection) return "全部知识点";
+  if (selection.unclassified) return "待归档";
   const chapter = selection.chapter === UNCATEGORIZED_CHAPTER_FILTER ? "未分章节" : selection.chapter;
   return [selection.subject, chapter, selection.point].filter(Boolean).join(" / ");
 }

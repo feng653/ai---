@@ -1,7 +1,13 @@
 import { createContext, useContext } from "react";
 import type { KnowledgeSelection } from "./knowledgeTree";
 
+export type LibraryView = "cards" | "review";
+
 type KnowledgeWorkspaceState = {
+  query: string;
+  setQuery: (query: string) => void;
+  view: LibraryView;
+  setView: (view: LibraryView) => void;
   selection: KnowledgeSelection | null;
   setSelection: (selection: KnowledgeSelection | null) => void;
 };

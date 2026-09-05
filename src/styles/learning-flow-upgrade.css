@@ -29,3 +29,16 @@
   .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 40; background: #10201550; border: 0; }
   .mobile-sidebar-open .mobile-brand { position: relative; z-index: 46; }
 }
+.review-flashcard-face { height: 320px; min-height: 0; overflow: hidden; justify-content: flex-start; padding-bottom: 62px; }
+.review-flashcard-face > .math-content { min-height: 0; overflow: hidden; }
+.review-flashcard-solution { min-height: 0; overflow: hidden; }
+.review-card-expand { position: absolute; z-index: 2; bottom: 12px; right: 14px; min-height: 40px; padding: 8px 16px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--brand); background: var(--surface); }
+.review-card-dialog { width: calc(100vw - 40px); height: calc(100dvh - 40px); max-width: none; max-height: none; margin: auto; padding: 0; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--surface); color: var(--ink-1); transform-origin: top left; box-shadow: 0 24px 80px #0004; }
+.review-card-dialog::backdrop { background: #10201570; backdrop-filter: blur(10px); }
+.review-card-dialog > header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--line); }
+.review-card-dialog > header button { min-width: 64px; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-soft); color: inherit; }
+.review-card-dialog-content { height: calc(100% - 78px); overflow: auto; padding: 24px clamp(20px, 6vw, 100px); overflow-wrap: anywhere; }
+.review-card-dialog-content section { max-width: 1000px; margin: 0 auto 32px; }
+.review-card-dialog-content .math-content { font-size: 18px; line-height: 1.9; }
+.review-card-dialog-content img { max-width: 100%; max-height: 50vh; object-fit: contain; }
+@media (max-width: 600px) { .review-card-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); border-radius: 12px; } }

@@ -94,59 +94,6 @@ describe("TauriAiService", () => {
     }));
   });
 
-  it("generates a scoped knowledge card and filters its progress events", async () => {
-    const unlisten = vi.fn();
-    let handler: ((event: { payload: Record<string, string> }) => void) | undefined;
-    vi.mocked(listen).mockImplementation(async (_event, callback) => {
-      handler = callback as typeof handler;
-      return unlisten;
-    });
-    vi.mocked(invoke).mockImplementation(async (command, args) => {
-      expect(command).toBe("generate_knowledge_card");
-      const requestId = (args as { requestId: string }).requestId;
-      handler?.({ payload: { requestId, stage: "analyzing", message: "正在提炼" } });
-      return {
-        runId: "run-knowledge", promptVersion: "knowledge-v1",
-        coreMethod: "只写当前知识点。", mistakeReminder: "核对实际错误。",
-        sourceRevisions: [{ cardId: "card-1", revision: 2 }], warnings: [],
-      };
-    });
-    const request = {
-      topic: { subject: "数学", chapter: "函数", name: "单调性" },
-      sourceCards: [{
-        id: "card-1", revision: 2, question: "题目", userAnswer: "答案", correctAnswer: "正解",
-        solution: "方法", errorLocation: "步骤", errorReason: "错因",
-        knowledgePoints: [{ subject: "数学", chapter: "函数", name: "单调性" }],
-      }],
-    };
-    const progress = vi.fn();
-    await expect(new TauriAiService().generateKnowledgeCard(request, progress))
-      .resolves.toMatchObject({ runId: "run-knowledge" });
-    expect(invoke).toHaveBeenCalledWith("generate_knowledge_card", {
-      request, requestId: expect.any(String),
-    });
-    expect(progress).toHaveBeenCalledWith({ stage: "analyzing", message: "正在提炼" });
-    expect(unlisten).toHaveBeenCalledOnce();
-  });
-
-  it("persists and removes knowledge card drafts through dedicated commands", async () => {
-    vi.mocked(invoke).mockResolvedValue([]);
-    const service = new TauriAiService();
-    await service.listKnowledgeCards();
-    expect(invoke).toHaveBeenCalledWith("list_knowledge_cards");
-    const input = {
-      key: "数学/函数/单调性", subject: "数学", chapter: "函数", name: "单调性", status: "draft" as const,
-      content: {
-        runId: "run-1", promptVersion: "knowledge-v1", coreMethod: "方法", mistakeReminder: "提醒",
-        sourceRevisions: [{ cardId: "card-1", revision: 2 }], warnings: [],
-      },
-    };
-    await service.saveKnowledgeCard(input);
-    expect(invoke).toHaveBeenCalledWith("save_knowledge_card", { input });
-    await service.deleteKnowledgeCard(input.key);
-    expect(invoke).toHaveBeenCalledWith("delete_knowledge_card", { key: input.key });
-  });
-
   it("generates practice drafts through AI with request-scoped progress", async () => {
     const unlisten = vi.fn();
     vi.mocked(listen).mockResolvedValue(unlisten);
@@ -173,7 +120,6 @@ describe("BrowserUnavailableAiService", () => {
     const service = new BrowserUnavailableAiService();
     await expect(service.connect()).resolves.toMatchObject({ state: "unavailable" });
     await expect(service.organize()).rejects.toThrow("桌面应用");
-    await expect(service.generateKnowledgeCard({} as never)).rejects.toThrow("桌面应用");
     await expect(service.generatePracticeCards({} as never)).rejects.toThrow("桌面应用");
   });
 });

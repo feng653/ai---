@@ -15,6 +15,9 @@ impl Storage {
         let mut sql = String::from("SELECT DISTINCT c.id FROM cards c");
         let mut conditions = Vec::new();
         let mut values = Vec::<rusqlite::types::Value>::new();
+        if filter.unclassified == Some(true) {
+            conditions.push("NOT EXISTS (SELECT 1 FROM card_knowledge_points pending JOIN knowledge_points pkp ON pkp.id = pending.knowledge_point_id WHERE pending.card_id = c.id AND TRIM(pkp.name) <> '')");
+        }
         let knowledge_subject = filter
             .knowledge_subject
             .filter(|value| !value.trim().is_empty());
