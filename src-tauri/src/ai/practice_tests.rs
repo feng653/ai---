@@ -94,3 +94,30 @@ fn omitted_mode_preserves_legacy_requests() {
     let input: PracticeGenerationRequest = serde_json::from_value(value).unwrap();
     assert_eq!(input.mode, super::practice::PracticeMode::Similar);
 }
+
+#[test]
+fn practice_schema_omits_unsupported_uniqueness_but_parser_rejects_duplicate_sources() {
+    let schema = super::practice::PRACTICE_SCHEMA;
+    assert!(!schema.contains("uniqueItems"));
+    for ids in [r#"["source-1","source-1"]"#, r#"["unknown"]"#, "[]"] {
+        let json = format!(
+            r#"{{"cards":[{{"sourceCardIds":{ids},"question":"问题","correctAnswer":"答案","solution":"解析"}}]}}"#
+        );
+        assert_eq!(
+            parse_output(&json, &request()).unwrap_err().code,
+            "INVALID_AI_OUTPUT"
+        );
+    }
+}
+
+#[test]
+#[ignore = "requires ZHISHI_LIVE_DATA_DIR and generates one practice card without saving it"]
+fn live_codex_practice_schema_is_accepted() {
+    let directory = std::env::var_os("ZHISHI_LIVE_DATA_DIR").expect("data directory required");
+    let provider = super::codex::CodexProvider::new(std::path::Path::new(&directory));
+    let mut input = request();
+    input.mode = super::practice::PracticeMode::Recall;
+    let cards = provider.generate_practice_cards(input, |_| {}).unwrap();
+    assert_eq!(cards.len(), 1);
+    assert_eq!(cards[0].source_revisions[0].card_id, "source-1");
+}
