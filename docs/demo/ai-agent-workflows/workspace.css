@@ -99,10 +99,9 @@ h1 { margin: 0; font: 620 clamp(24px, 3vw, 34px) "Songti SC", "STSong", serif; l
 .search { height: 42px; width: min(250px, 24vw); padding: 0 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
 .search svg { width: 16px; color: var(--ink-4); }
 .search input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 11px; }
-.agent-entry, .button { min-height: 42px; padding: 0 15px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-size: 11px; font-weight: 720; transition: transform var(--fast), border-color var(--fast), background var(--fast); }
-.agent-entry { color: #fff; border-color: var(--forest); background: var(--forest); }
-.agent-entry:hover, .button.primary:hover { background: var(--forest-2); transform: translateY(-1px); }
-.agent-entry svg, .button svg { width: 15px; }
+.button { min-height: 42px; padding: 0 15px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-size: 11px; font-weight: 720; transition: transform var(--fast), border-color var(--fast), background var(--fast); }
+.button.primary:hover { background: var(--forest-2); transform: translateY(-1px); }
+.button svg { width: 15px; }
 .button.primary { color: #fff; border-color: var(--forest); background: var(--forest); }
 .button.secondary { background: #fff; }
 .button.danger { color: #fff; border-color: var(--rose); background: var(--rose); }
@@ -144,7 +143,6 @@ h1 { margin: 0; font: 620 clamp(24px, 3vw, 34px) "Songti SC", "STSong", serif; l
 .knowledge-card.selected { border-color: #7ca288; box-shadow: inset 0 0 0 1px #7ca288; }
 .knowledge-card:hover { transform: translateY(-2px); border-color: #b1c1b4; }
 .knowledge-card header { display: flex; align-items: center; gap: 7px; }
-.knowledge-card header input { width: 17px; height: 17px; accent-color: var(--forest); }
 .knowledge-card header span { margin-left: auto; color: var(--ink-4); font-size: 8px; }
 .knowledge-card h3 { margin: 16px 0 9px; font-size: 14px; line-height: 1.45; }
 .knowledge-card p { margin: 0; color: var(--ink-3); font-size: 9px; line-height: 1.65; }

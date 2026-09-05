@@ -1,12 +1,12 @@
 (() => {
-const STORAGE_KEY = "zhishi-agent-card-prototype-v4";
+const STORAGE_KEY = "zhishi-agent-card-prototype-v6";
 
 const knowledgeCards = [
-  { id: "K-21", type: "易错细节", title: "导数符号表要覆盖全部区间", body: "以临界点切分定义域，逐段判断导数符号。写完后用区间并集反查，避免只记录递增区间。", points: ["导数与单调性", "区间表示", "符号表"], updated: "今天 10:24", status: "已保存" },
-  { id: "K-18", type: "判断清单", title: "边界点与单调区间端点", body: "临界点用于切分区间，但端点是否写入要结合定义域、连续性和题目约定判断。", points: ["导数与单调性", "函数定义域"], updated: "昨天 21:08", status: "已保存" },
-  { id: "K-11", type: "方法", title: "从定义域反查遗漏区间", body: "答案完成后，检查所有单调区间的并集与临界点能否覆盖原定义域。", points: ["函数定义域", "单调区间"], updated: "9 月 2 日", status: "已保存" },
-  { id: "K-09", type: "概念", title: "驻点不一定是极值点", body: "导数为零只是候选条件；还需要比较两侧导数符号或使用其他判定。", points: ["极值", "导数"], updated: "8 月 30 日", status: "已保存" },
-  { id: "K-05", type: "自定义 · 复盘", title: "待补充的极值复盘", body: "", points: ["极值"], updated: "8 月 28 日", status: "待补充" },
+  { id: "K-21", type: "易错细节", title: "导数与单调性", body: "以临界点切分定义域，逐段判断导数符号。写完后用区间并集反查，避免只记录递增区间。", points: ["区间表示", "符号表"], sourceCount: 3, updated: "今天 10:24", status: "已保存" },
+  { id: "K-18", type: "判断清单", title: "函数定义域", body: "临界点用于切分区间，但端点是否写入要结合定义域、连续性和题目约定判断。", points: ["分段讨论", "连续区间"], sourceCount: 2, updated: "昨天 21:08", status: "已保存" },
+  { id: "K-11", type: "方法", title: "单调区间", body: "答案完成后，检查所有单调区间的并集与临界点能否覆盖原定义域。", points: ["反查定义域"], sourceCount: 2, updated: "9 月 2 日", status: "已保存" },
+  { id: "K-09", type: "概念", title: "极值", body: "导数为零只是候选条件；还需要比较两侧导数符号或使用其他判定。", points: ["驻点", "导数"], sourceCount: 1, updated: "8 月 30 日", status: "已保存" },
+  { id: "K-05", type: "复盘", title: "最值", body: "", points: ["极值比较"], sourceCount: 1, updated: "8 月 28 日", status: "待补充" },
 ];
 
 const mistakes = [
@@ -29,26 +29,50 @@ const batches = [
 
 function defaults() {
   return {
-    page: "knowledge", view: "knowledge-list", selectedCardId: "K-21", selectedBatchId: "B-06",
-    previousView: "knowledge-list", flipIndex: 0, flipSide: "front", filterStatus: "all", manageMode: false,
-    knowledgeFilters: { text: "", point: "all", type: "all" },
-    selectedExercises: [], pickerKind: "practice", pickerTab: "knowledge", pickerPreviewId: "K-21",
+    journey: "capture", page: "capture", view: "capture-new", selectedCardId: "K-21", selectedBatchId: "B-06",
+    previousPage: "capture", previousView: "capture-new", flipIndex: 0, flipSide: "front", filterStatus: "all", manageMode: false,
+    knowledgeFilters: { text: "", point: "all", type: "all" }, selectedExercises: [],
     selectedSources: { knowledge: ["K-21", "K-18"], mistakes: ["E-104"] },
-    panel: { open: false, kind: "practice" },
-    config: { count: 6, difficulty: "medium", template: "concept", prompt: "重点检查边界点和符号表。", knowledgeCount: "auto", maxCards: 3 },
-    proposalIndex: 0, proposalStates: ["pending", "pending", "pending"],
-    agent: { open: false, task: "", status: "idle", label: "准备就绪", badge: "", phase: 0 },
+    pickerKind: "practice", pickerTab: "knowledge", pickerPreviewId: "K-21", pickerDraft: null,
+    config: { count: 6, difficulty: "medium", template: "concept", prompt: "重点检查边界点和符号表。", knowledgePoint: "导数与单调性", maxCards: 3 },
+    proposalIndex: 0, proposalStates: ["pending", "pending", "pending"], tasks: [], nextTaskNumber: 1,
+    capture: {
+      draftId: "D-091", draftRevision: 3, draftStatus: "照片草稿已暂存",
+      photos: [{ id: "IMG-44-2", name: "错题照片_44(2).jpg", size: "2.4 MB", bytes: 2516582 }],
+      scope: "第 44 题（2）", requirements: "只整理第（2）问；保留我的手写作答。",
+      taskId: "", dispatching: false, proposalApplied: false, saved: false,
+      fieldChoices: [true, true, false],
+    },
+    agent: {
+      open: false, view: "home", taskId: "", draftKind: "",
+      draftAttachments: [], draftScope: "第 44 题（2）", draftRequirements: "保留我的手写作答。",
+    },
   };
 }
 
 function load() {
-  try { return { ...defaults(), ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; }
-  catch { return defaults(); }
+  const base = defaults();
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    return {
+      ...base, ...saved,
+      knowledgeFilters: { ...base.knowledgeFilters, ...saved.knowledgeFilters },
+      selectedSources: { ...base.selectedSources, ...saved.selectedSources },
+      config: { ...base.config, ...saved.config },
+      capture: { ...base.capture, ...saved.capture },
+      agent: { ...base.agent, ...saved.agent },
+      tasks: Array.isArray(saved.tasks) ? saved.tasks : [],
+    };
+  } catch { return base; }
 }
 
 const state = load();
 function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function reset() { Object.assign(state, defaults()); persist(); }
+function reset() {
+  Object.keys(state).forEach((key) => delete state[key]);
+  Object.assign(state, defaults());
+  persist();
+}
 
 window.AgentPrototypeData = { batches, exercises, knowledgeCards, mistakes, persist, reset, state };
 })();
